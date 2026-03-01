@@ -9,174 +9,93 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="style.css">
 <style>
-/* ─── Player ─────────────────────────────────────── */
 .player-frame-wrap {
-  position: relative;
-  width: 100%;
-  background: #000;
-  aspect-ratio: 16/9;
-  max-height: 80vh;
-  overflow: hidden;
+  position: relative; width: 100%; background: #000;
+  aspect-ratio: 16/9; max-height: 80vh; overflow: hidden;
 }
-.player-frame-wrap iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  display: block;
-}
+.player-frame-wrap iframe { width:100%; height:100%; border:none; display:block; }
+
 .player-loading {
-  position: absolute;
-  inset: 0;
-  background: #000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.2rem;
-  z-index: 10;
-  transition: opacity .5s;
+  position:absolute; inset:0; background:#000;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:1.1rem; z-index:10; transition:opacity .5s;
 }
-.player-loading.hidden { opacity: 0; pointer-events: none; }
+.player-loading.hidden { opacity:0; pointer-events:none; }
 .spinner {
-  width: 52px; height: 52px;
-  border: 4px solid rgba(229,9,20,.2);
-  border-top-color: #e50914;
-  border-radius: 50%;
-  animation: spin .85s linear infinite;
+  width:52px; height:52px;
+  border:4px solid rgba(229,9,20,.2); border-top-color:#e50914;
+  border-radius:50%; animation:spin .85s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-logo { font-family:'Bebas Neue',sans-serif; font-size: 2.4rem; letter-spacing:.05em; }
-.loading-logo span { color: #e50914; }
-.loading-label { color: #888; font-size: .875rem; text-align:center; max-width:260px; line-height:1.5; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.load-logo { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; letter-spacing:.05em; }
+.load-logo span { color:#e50914; }
+.load-label { color:#888; font-size:.875rem; text-align:center; }
 
-/* ─── Source bar ─────────────────────────────────── */
-.source-bar {
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  padding: .65rem 2rem;
-  display: flex;
-  align-items: center;
-  gap: .6rem;
-  flex-wrap: wrap;
+/* Server bar */
+.server-bar {
+  background:var(--bg2); border-bottom:1px solid var(--border);
+  padding:.65rem 2rem; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;
 }
-.source-bar-label {
-  color: var(--muted);
-  font-size: .78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  display: flex; align-items: center; gap: .35rem;
-  margin-right: .25rem;
+.server-label {
+  color:var(--muted); font-size:.78rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:.06em;
+  display:flex; align-items:center; gap:.35rem; margin-right:.4rem;
 }
-.src-btn {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  padding: .32rem .95rem;
-  border-radius: 6px;
-  font-size: .8rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'Outfit', sans-serif;
-  transition: .18s;
-  display: flex; align-items: center; gap: .35rem;
+.srv-btn {
+  background:var(--bg3); border:1px solid var(--border); color:var(--muted);
+  padding:.32rem 1rem; border-radius:6px; font-size:.8rem; font-weight:600;
+  cursor:pointer; font-family:'Outfit',sans-serif; transition:.18s;
+  display:flex; align-items:center; gap:.35rem;
 }
-.src-btn:hover { border-color: var(--red); color: var(--text); }
-.src-btn.active { background: var(--red); border-color: var(--red); color: #fff; }
-.src-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.srv-btn:hover { border-color:var(--red); color:var(--text); }
+.srv-btn.active { background:var(--red); border-color:var(--red); color:#fff; }
+.srv-dot { width:7px; height:7px; border-radius:50%; background:currentColor; flex-shrink:0; }
 
-/* ─── Episode panel ──────────────────────────────── */
-.episode-panel {
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  padding: .9rem 2rem 1rem;
+/* Episode panel */
+.ep-panel {
+  background:var(--bg2); border-bottom:1px solid var(--border);
+  padding:.9rem 2rem 1rem;
 }
-.ep-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: .75rem;
-  margin-bottom: .75rem;
+.ep-panel-head {
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:.75rem; margin-bottom:.75rem;
 }
-.ep-panel-title {
-  font-size: .9rem;
-  font-weight: 700;
-  display: flex; align-items: center; gap: .45rem;
+.ep-panel-title { font-size:.9rem; font-weight:700; display:flex; align-items:center; gap:.45rem; }
+.ep-panel-title i { color:var(--red); }
+.season-tabs { display:flex; gap:.4rem; flex-wrap:wrap; }
+.s-tab {
+  background:var(--bg3); border:1px solid var(--border); color:var(--muted);
+  padding:.28rem .8rem; border-radius:5px; font-size:.78rem; font-weight:700;
+  cursor:pointer; font-family:'Outfit',sans-serif; transition:.18s;
 }
-.ep-panel-title i { color: var(--red); }
-.season-tabs { display: flex; gap: .4rem; flex-wrap: wrap; }
-.season-tab {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  padding: .28rem .75rem;
-  border-radius: 5px;
-  font-size: .78rem;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: 'Outfit', sans-serif;
-  transition: .18s;
-}
-.season-tab:hover { border-color: var(--red); color: var(--text); }
-.season-tab.active { background: var(--red); border-color: var(--red); color: #fff; }
-.episodes-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .45rem;
-  max-height: 150px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
+.s-tab:hover { border-color:var(--red); color:var(--text); }
+.s-tab.active { background:var(--red); border-color:var(--red); color:#fff; }
+.ep-grid { display:flex; flex-wrap:wrap; gap:.45rem; max-height:155px; overflow-y:auto; padding-right:4px; }
 .ep-btn {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  padding: .3rem .7rem;
-  border-radius: 5px;
-  font-size: .78rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'Outfit', sans-serif;
-  transition: .18s;
-  min-width: 48px;
-  text-align: center;
+  background:var(--bg3); border:1px solid var(--border); color:var(--muted);
+  padding:.3rem .7rem; border-radius:5px; font-size:.78rem; font-weight:600;
+  cursor:pointer; font-family:'Outfit',sans-serif; transition:.18s;
+  min-width:48px; text-align:center;
 }
-.ep-btn:hover { border-color: var(--red); color: var(--text); }
-.ep-btn.active { background: var(--red); border-color: var(--red); color: #fff; }
+.ep-btn:hover { border-color:var(--red); color:var(--text); }
+.ep-btn.active { background:var(--red); border-color:var(--red); color:#fff; }
 
-/* ─── Info panel ─────────────────────────────────── */
+/* Now playing badge */
 .now-badge {
-  display: inline-flex; align-items: center; gap: .4rem;
-  background: rgba(229,9,20,.1);
-  border: 1px solid rgba(229,9,20,.22);
-  color: var(--red);
-  font-size: .72rem;
-  font-weight: 700;
-  padding: .22rem .7rem;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: .07em;
-  margin-bottom: .65rem;
+  display:inline-flex; align-items:center; gap:.4rem;
+  background:rgba(229,9,20,.1); border:1px solid rgba(229,9,20,.22); color:var(--red);
+  font-size:.72rem; font-weight:700; padding:.22rem .7rem; border-radius:4px;
+  text-transform:uppercase; letter-spacing:.07em; margin-bottom:.65rem;
 }
-.now-badge .pulse { animation: pulse 1.6s ease infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+.now-badge .pulse { animation:pulse 1.6s ease infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-/* ─── Source credit ──────────────────────────────── */
-.source-credit {
-  background: rgba(255,255,255,.03);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: .6rem 1rem;
-  font-size: .8rem;
-  color: var(--muted);
-  margin-bottom: 1rem;
-  display: flex; align-items: center; gap: .5rem;
-  flex-wrap: wrap;
+.tip-bar {
+  background:rgba(255,255,255,.03); border:1px solid var(--border);
+  border-radius:8px; padding:.55rem 1rem; font-size:.8rem; color:var(--muted);
+  margin-bottom:1rem; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;
 }
-.source-credit i { color: var(--red); }
-.source-credit a { color: var(--red); }
-.source-credit a:hover { text-decoration: underline; }
+.tip-bar i { color:var(--red); flex-shrink:0; }
 </style>
 </head>
 <body class="player-body">
@@ -186,48 +105,45 @@
     <a href="javascript:history.back()" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
     <a href="index.html" class="logo">NEX<span>TV</span></a>
   </div>
-  <div class="nav-right">
-    <div id="authArea"></div>
-  </div>
+  <div class="nav-right"><div id="authArea"></div></div>
 </nav>
 
 <div class="player-wrap" style="margin-top:var(--nav-h);">
 
-  <!-- VIDEO PLAYER -->
+  <!-- PLAYER -->
   <div class="player-frame-wrap">
     <div class="player-loading" id="playerLoading">
-      <div class="loading-logo">NEX<span>TV</span></div>
+      <div class="load-logo">NEX<span>TV</span></div>
       <div class="spinner"></div>
-      <p class="loading-label" id="loadingLabel">Loading full movie...</p>
+      <p class="load-label" id="loadLabel">Connecting to stream...</p>
     </div>
     <iframe id="mainFrame" src="" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>
   </div>
 
-  <!-- SOURCE BAR (shown only for archive.org content with mirror) -->
-  <div class="source-bar" id="sourceBar">
-    <span class="source-bar-label"><i class="fas fa-server"></i> Mirror:</span>
-    <button class="src-btn active" id="srcBtn1" onclick="setMirror(1)">
-      <span class="src-dot"></span> Archive.org
-    </button>
-    <button class="src-btn" id="srcBtn2" onclick="setMirror(2)">
-      <span class="src-dot"></span> Direct Link
-    </button>
+  <!-- SERVER SELECTOR -->
+  <div class="server-bar">
+    <span class="server-label"><i class="fas fa-server"></i> Server:</span>
+    <button class="srv-btn active" id="srv1" onclick="setServer(1)"><span class="srv-dot"></span>VidSrc 1</button>
+    <button class="srv-btn"        id="srv2" onclick="setServer(2)"><span class="srv-dot"></span>VidSrc 2</button>
+    <button class="srv-btn"        id="srv3" onclick="setServer(3)"><span class="srv-dot"></span>2Embed</button>
+    <button class="srv-btn"        id="srv4" onclick="setServer(4)"><span class="srv-dot"></span>VidSrc 3</button>
+    <button class="srv-btn"        id="srv5" onclick="setServer(5)"><span class="srv-dot"></span>MoviesAPI</button>
   </div>
 
-  <!-- EPISODE PANEL (series/anime/cartoons only) -->
-  <div class="episode-panel" id="episodePanel" style="display:none;">
-    <div class="ep-panel-header">
-      <span class="ep-panel-title"><i class="fas fa-list-ul"></i> <span id="epPanelLabel">Episodes</span></span>
+  <!-- EPISODE PANEL (series only) -->
+  <div class="ep-panel" id="epPanel" style="display:none;">
+    <div class="ep-panel-head">
+      <span class="ep-panel-title"><i class="fas fa-list-ul"></i> Episodes</span>
       <div class="season-tabs" id="seasonTabs"></div>
     </div>
-    <div class="episodes-row" id="episodesRow"></div>
+    <div class="ep-grid" id="epGrid"></div>
   </div>
 
   <!-- INFO -->
   <div class="player-info">
-    <div class="source-credit" id="sourceCredit">
+    <div class="tip-bar">
       <i class="fas fa-info-circle"></i>
-      <span id="sourceCreditText">Streaming from <a href="https://archive.org" target="_blank" rel="noopener">Internet Archive</a> — 100% free &amp; legal public domain content</span>
+      If the video doesn't load, try a different server button above. Each server has different content availability.
     </div>
     <div class="now-badge"><i class="fas fa-circle pulse"></i> Now Playing</div>
     <div class="player-meta">
@@ -263,204 +179,170 @@ const params = new URLSearchParams(location.search);
 const id     = params.get('id');
 const movie  = id && DB.getMovie(id);
 
-let currentMirror  = 1;
+let currentServer  = 1;
 let currentSeason  = 1;
-let currentEpIndex = 0;  // index into episodeIds[season] or youtubePlaylist
+let currentEpisode = 1;
 
-// ── Build embed URL ─────────────────────────────────────────────
-function buildUrl(m, mirror, season, epIdx) {
-  if (m.videoType === 'youtube') {
-    // YouTube: either single video or playlist entry
-    let ytId = m.videoSrc;
-    if (m.youtubePlaylist && m.youtubePlaylist[epIdx]) {
-      ytId = m.youtubePlaylist[epIdx].ytId;
-    }
-    return `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`;
+// ── Build embed URL ────────────────────────────────────────────
+function buildUrl(srv, m, season, ep) {
+  const tmdb     = m.tmdbId;
+  const isSeries = (m.type === 'series');
+
+  if (srv === 1) {
+    // vidsrc.to  (most reliable)
+    return isSeries
+      ? `https://vidsrc.to/embed/tv/${tmdb}/${season}/${ep}`
+      : `https://vidsrc.to/embed/movie/${tmdb}`;
   }
-
-  if (m.videoType === 'archive') {
-    // series: pick episode identifier
-    let identifier = m.videoSrc;
-    if (m.episodeIds && m.episodeIds[season]) {
-      identifier = m.episodeIds[season][epIdx] || m.episodeIds[season][0];
-    }
-
-    if (mirror === 2) {
-      // Direct archive.org details page in new tab (fallback)
-      return `https://archive.org/details/${identifier}`;
-    }
-    return `https://archive.org/embed/${identifier}?autoplay=1&start=0`;
+  if (srv === 2) {
+    // vidsrc.xyz
+    return isSeries
+      ? `https://vidsrc.xyz/embed/tv?tmdb=${tmdb}&season=${season}&episode=${ep}`
+      : `https://vidsrc.xyz/embed/movie?tmdb=${tmdb}`;
   }
-
+  if (srv === 3) {
+    // 2embed.cc
+    return isSeries
+      ? `https://www.2embed.cc/embedtv/${tmdb}&s=${season}&e=${ep}`
+      : `https://www.2embed.cc/embed/${tmdb}`;
+  }
+  if (srv === 4) {
+    // vidsrc.me  (vidsrc v3)
+    return isSeries
+      ? `https://vidsrc.me/embed/tv?tmdb=${tmdb}&season=${season}&episode=${ep}`
+      : `https://vidsrc.me/embed/movie?tmdb=${tmdb}`;
+  }
+  if (srv === 5) {
+    // moviesapi.club
+    return isSeries
+      ? `https://moviesapi.club/tv/${tmdb}-${season}-${ep}`
+      : `https://moviesapi.club/movie/${tmdb}`;
+  }
   return '';
 }
 
-// ── Load stream ─────────────────────────────────────────────────
+// ── Load stream ────────────────────────────────────────────────
 function loadStream() {
   if (!movie) return;
   const frame   = document.getElementById('mainFrame');
   const loading = document.getElementById('playerLoading');
-  const label   = document.getElementById('loadingLabel');
 
   const isSeries = (movie.type === 'series');
-  label.textContent = isSeries
-    ? `Loading S${currentSeason} · EP ${currentEpIndex + 1}...`
-    : `Loading full movie — ${movie.duration}...`;
+  document.getElementById('loadLabel').textContent = isSeries
+    ? `Loading S${String(currentSeason).padStart(2,'0')} · EP ${String(currentEpisode).padStart(2,'0')}…`
+    : `Loading full movie · ${movie.duration}…`;
 
   loading.classList.remove('hidden');
   frame.src = '';
 
   setTimeout(() => {
-    const url = buildUrl(movie, currentMirror, currentSeason, currentEpIndex);
-    if (currentMirror === 2 && movie.videoType === 'archive') {
-      // Open archive.org page in new tab (their direct pages work better than some embeds)
-      window.open(url, '_blank');
-      loading.classList.add('hidden');
-      showToast('Opening in Archive.org tab…');
-    } else {
-      frame.src = url;
-      setTimeout(() => loading.classList.add('hidden'), 3500);
-    }
+    frame.src = buildUrl(currentServer, movie, currentSeason, currentEpisode);
+    setTimeout(() => loading.classList.add('hidden'), 4000);
   }, 300);
 
-  // Highlight active ep button
-  document.querySelectorAll('.ep-btn').forEach((b, i) => {
-    b.classList.toggle('active', i === currentEpIndex);
+  // Highlight active ep btn
+  document.querySelectorAll('.ep-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.ep) === currentEpisode);
   });
 
-  window.scrollTo({ top: document.getElementById('navbar').offsetHeight + 10, behavior: 'smooth' });
+  window.scrollTo({ top: document.getElementById('navbar').offsetHeight, behavior: 'smooth' });
 }
 
-function setMirror(n) {
-  currentMirror = n;
-  document.getElementById('srcBtn1').classList.toggle('active', n === 1);
-  document.getElementById('srcBtn2').classList.toggle('active', n === 2);
+// ── Server switching ───────────────────────────────────────────
+function setServer(n) {
+  currentServer = n;
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('srv' + i).classList.toggle('active', i === n);
+  }
   loadStream();
+  const names = {1:'VidSrc 1',2:'VidSrc 2',3:'2Embed',4:'VidSrc 3',5:'MoviesAPI'};
+  showToast('Switched to ' + names[n]);
 }
 
-// ── Episode panel ────────────────────────────────────────────────
-function buildEpisodePanel(m) {
+// ── Episode panel ──────────────────────────────────────────────
+function buildEpPanel(m) {
   if (m.type !== 'series') return;
-  document.getElementById('episodePanel').style.display = 'block';
-  document.getElementById('epPanelLabel').textContent =
-    m.category === 'anime' ? 'Episodes' : m.category === 'cartoons' ? 'Shorts / Episodes' : 'Episodes';
+  document.getElementById('epPanel').style.display = 'block';
 
-  // Season tabs
   const tabsEl = document.getElementById('seasonTabs');
   tabsEl.innerHTML = '';
   for (let s = 1; s <= m.seasons; s++) {
     const btn = document.createElement('button');
-    btn.className = 'season-tab' + (s === 1 ? ' active' : '');
+    btn.className = 's-tab' + (s === 1 ? ' active' : '');
     btn.textContent = m.seasons === 1 ? 'All Episodes' : 'Season ' + s;
-    btn.dataset.season = s;
+    btn.dataset.s = s;
     btn.onclick = () => {
       currentSeason  = s;
-      currentEpIndex = 0;
-      document.querySelectorAll('.season-tab').forEach(t => t.classList.remove('active'));
+      currentEpisode = 1;
+      tabsEl.querySelectorAll('.s-tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
-      renderEpisodeButtons(m);
+      buildEpButtons(m);
       loadStream();
     };
     tabsEl.appendChild(btn);
   }
-  renderEpisodeButtons(m);
+  buildEpButtons(m);
 }
 
-function renderEpisodeButtons(m) {
-  const row = document.getElementById('episodesRow');
-  row.innerHTML = '';
-  let count = 8; // default
-
-  if (m.videoType === 'archive' && m.episodeIds && m.episodeIds[currentSeason]) {
-    count = m.episodeIds[currentSeason].length;
-  } else if (m.videoType === 'youtube' && m.youtubePlaylist) {
-    count = m.youtubePlaylist.length;
-  }
-
-  for (let i = 0; i < count; i++) {
+function buildEpButtons(m) {
+  const grid  = document.getElementById('epGrid');
+  const count = (m.episodeCount && m.episodeCount[currentSeason]) || 12;
+  grid.innerHTML = '';
+  for (let e = 1; e <= count; e++) {
     const btn = document.createElement('button');
-    btn.className = 'ep-btn' + (i === currentEpIndex ? ' active' : '');
-    const epNum = i + 1;
-    // Label
-    let label = 'EP ' + epNum;
-    if (m.videoType === 'youtube' && m.youtubePlaylist && m.youtubePlaylist[i]) {
-      label = 'EP ' + epNum;
-    }
-    btn.textContent = label;
-    btn.title = m.videoType === 'youtube' && m.youtubePlaylist
-      ? (m.youtubePlaylist[i] ? m.youtubePlaylist[i].title : label)
-      : label;
-    btn.dataset.idx = i;
-    btn.onclick = () => {
-      currentEpIndex = i;
-      loadStream();
-    };
-    row.appendChild(btn);
+    btn.className = 'ep-btn' + (e === currentEpisode ? ' active' : '');
+    btn.textContent = 'EP ' + e;
+    btn.dataset.ep = e;
+    btn.onclick = () => { currentEpisode = e; loadStream(); };
+    grid.appendChild(btn);
   }
 }
 
-// ── Source credit ───────────────────────────────────────────────
-function setSourceCredit(m) {
-  const el = document.getElementById('sourceCreditText');
-  if (m.videoType === 'youtube') {
-    el.innerHTML = '<i class="fas fa-play-circle" style="color:var(--red)"></i> Streaming via <a href="https://youtube.com" target="_blank" rel="noopener">YouTube</a> — free &amp; legal content';
-    // hide mirror bar for youtube
-    document.getElementById('sourceBar').style.display = 'none';
-  } else {
-    el.innerHTML = '<i class="fas fa-info-circle"></i> Streaming from <a href="https://archive.org/details/' + m.videoSrc + '" target="_blank" rel="noopener">Internet Archive</a> — 100% free &amp; legal public domain. If it doesn\'t load, click <strong>Direct Link</strong> above.';
-  }
-}
-
-// ── Main init ───────────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────────
 if (!movie) {
   document.getElementById('playerTitle').textContent = 'Title not found';
   document.getElementById('playerLoading').classList.add('hidden');
 } else {
   document.title = movie.title + ' – Nex TV';
 
-  document.getElementById('playerTitle').textContent = movie.title;
-  document.getElementById('playerDetails').innerHTML =
+  document.getElementById('playerTitle').textContent  = movie.title;
+  document.getElementById('playerDetails').innerHTML  =
     `<span class="badge-year">${movie.year}</span>
      <span class="badge-dur"><i class="fas fa-clock"></i> ${movie.duration}</span>
      <span class="badge-rating"><i class="fas fa-star"></i> ${movie.rating}</span>
      <span class="badge-genre">${movie.genre.join(' · ')}</span>`;
-  document.getElementById('playerDesc').textContent = movie.description;
-  document.getElementById('playerCast').innerHTML =
+  document.getElementById('playerDesc').textContent   = movie.description;
+  document.getElementById('playerCast').innerHTML     =
     `<strong><i class="fas fa-users"></i> Cast:</strong> ${movie.cast.join(', ')}
      &nbsp;&nbsp;<strong><i class="fas fa-video"></i> Director:</strong> ${movie.director}`;
 
-  setSourceCredit(movie);
-  buildEpisodePanel(movie);
+  buildEpPanel(movie);
   loadStream();
 
   const session = DB.getSession();
-  if (session) {
-    DB.addToHistory(session.id, movie.id);
-    updateWLButton();
-  }
+  if (session) { DB.addToHistory(session.id, movie.id); updateWLBtn(); }
 
   const related = DB.getMovies()
     .filter(m => m.id !== movie.id &&
       (m.category === movie.category || m.genre.some(g => movie.genre.includes(g))))
     .slice(0, 10);
-  renderRow('relatedRow', related.length ? related : DB.getMovies().filter(m => m.id !== movie.id).slice(0, 8));
+  renderRow('relatedRow', related.length ? related
+    : DB.getMovies().filter(m => m.id !== movie.id).slice(0, 8));
 }
 
-function updateWLButton() {
-  const session = DB.getSession();
-  if (!session || !movie) return;
-  const user  = DB.getUserById(session.id);
-  const inList = user?.watchlist?.includes(movie.id);
-  const btn   = document.getElementById('playerWL');
+function updateWLBtn() {
+  const s = DB.getSession(); if (!s || !movie) return;
+  const u = DB.getUserById(s.id);
+  const inList = u?.watchlist?.includes(movie.id);
+  const btn = document.getElementById('playerWL');
   btn.innerHTML = inList ? '<i class="fas fa-bookmark"></i> In My List' : '<i class="far fa-bookmark"></i> My List';
   btn.classList.toggle('active', !!inList);
 }
-
 function toggleWL() {
-  const session = DB.getSession();
-  if (!session) { window.location.href = 'login.html'; return; }
-  DB.toggleWatchlist(session.id, movie.id);
-  updateWLButton();
+  const s = DB.getSession();
+  if (!s) { window.location.href = 'login.html'; return; }
+  DB.toggleWatchlist(s.id, movie.id);
+  updateWLBtn();
   showToast('Watchlist updated!');
 }
 </script>
