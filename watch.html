@@ -90,6 +90,11 @@
 .now-badge .pulse { animation:pulse 1.6s ease infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
+/* Block common ad overlay elements from vidsrc */
+.player-frame-wrap > *:not(iframe):not(.player-loading) {
+  display:none !important;
+}
+
 .tip-bar {
   background:rgba(255,255,255,.03); border:1px solid var(--border);
   border-radius:8px; padding:.55rem 1rem; font-size:.8rem; color:var(--muted);
@@ -117,7 +122,11 @@
       <div class="spinner"></div>
       <p class="load-label" id="loadLabel">Connecting to stream...</p>
     </div>
-    <iframe id="mainFrame" src="" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>
+    <iframe id="mainFrame" src=""
+      allowfullscreen
+      allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox"
+      referrerpolicy="no-referrer"></iframe>
   </div>
 
   <!-- SERVER SELECTOR -->
@@ -172,6 +181,23 @@
 <script src="db.js"></script>
 <script src="app.js"></script>
 <script>
+// ── Popup / Ad blocker ─────────────────────────────────────────
+// Override window.open to silently kill ad popups
+const _origOpen = window.open.bind(window);
+window.open = function(url, name, features) {
+  // Allow fullscreen requests, block everything else opened without user gesture
+  if (name === '_blank' && features && features.includes('fullscreen')) {
+    return _origOpen(url, name, features);
+  }
+  return null; // kill popup
+};
+
+// Kill any new tabs/windows opened by iframe via postMessage tricks
+window.addEventListener('blur', () => {
+  // When focus leaves (popup opened), re-focus immediately
+  setTimeout(() => window.focus(), 100);
+});
+
 DB.init();
 renderNav();
 

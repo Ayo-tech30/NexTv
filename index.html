@@ -58,6 +58,16 @@
     </div>
     <div class="cards-row" id="trendingRow"></div>
   </section>
+
+  <!-- MOST SEARCHED -->
+  <section class="row-section most-searched-section">
+    <div class="row-header">
+      <h2><i class="fas fa-fire"></i> Most Searched <span class="hot-badge">HOT</span></h2>
+      <a href="search.html" class="see-all">Search All <i class="fas fa-chevron-right"></i></a>
+    </div>
+    <div class="most-searched-grid" id="mostSearchedGrid"></div>
+  </section>
+
   <section class="row-section">
     <div class="row-header">
       <h2><i class="fas fa-film"></i> Movies</h2>
@@ -133,6 +143,7 @@
   renderHero();
   const all = DB.getMovies();
   renderRow('trendingRow', [...all].sort((a,b)=>b.rating-a.rating).slice(0,10));
+  renderMostSearched('mostSearchedGrid', all);
   renderRow('moviesRow', all.filter(m=>m.category==='movies'));
   renderRow('seriesRow', all.filter(m=>m.category==='series'));
   renderRow('animeRow', all.filter(m=>m.category==='anime'));

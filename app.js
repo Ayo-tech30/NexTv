@@ -82,8 +82,8 @@ function makeCard(movie) {
   const inWL = session && DB.getUserById(session.id)?.watchlist?.includes(movie.id);
   return `<div class="movie-card" data-id="${movie.id}">
     <div class="card-poster">
-      <img src="${movie.poster}" alt="${movie.title}" loading="lazy"
-           onerror="this.src='https://via.placeholder.com/300x450/1a1a1a/e50914?text=${encodeURIComponent(movie.title)}'">
+      <img src="${movie.poster}" alt="${movie.title}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(movie.title)"
+           >
       <div class="card-overlay">
         <button class="card-play" onclick="openModal('${movie.id}')"><i class="fas fa-play"></i></button>
         <button class="card-wl ${inWL?'active':''}" onclick="handleWL(event,'${movie.id}')">
@@ -184,7 +184,7 @@ function openModal(id) {
   const inWL = session && DB.getUserById(session.id)?.watchlist?.includes(id);
 
   document.getElementById('modalPoster').src = m.poster;
-  document.getElementById('modalPoster').onerror = function(){ this.src=`https://via.placeholder.com/300x450/1a1a1a/e50914?text=${encodeURIComponent(m.title)}`; };
+  document.getElementById('modalPoster').onerror = function(){ this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(m.title); };
   document.getElementById('modalBackdrop').style.backgroundImage = `url('${m.backdrop}')`;
   document.getElementById('modalTitle').textContent = m.title;
   document.getElementById('modalMeta').innerHTML =
@@ -242,3 +242,46 @@ document.addEventListener('DOMContentLoaded', () => {
   const mo = document.getElementById('movieModal');
   if (mo) mo.addEventListener('click', e => { if (e.target === mo) closeModal(); });
 });
+
+// ── Most Searched ──────────────────────────────────────────────────────────────
+// Curated "most searched" titles — mix of movies, anime, series, cartoons
+const MOST_SEARCHED_IDS = [
+  'm2','m3','m12','m13','m44','m57','m42','m43',  // movies
+  'a1','a2','a3','a4','a29','a26','a27','a28',     // anime
+  's1','s2','s3','s5','s8',                         // series
+  'c27','c26','c2','c24'                            // cartoons
+];
+
+function renderMostSearched(containerId, allMovies) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const picks = MOST_SEARCHED_IDS
+    .map(id => allMovies.find(m => m.id === id))
+    .filter(Boolean);
+  el.innerHTML = picks.map((m, i) => {
+    const session = DB.getSession();
+    const inWL = session && DB.getUserById(session.id)?.watchlist?.includes(m.id);
+    const rankColors = ['#e50914','#e50914','#ff6b35','#ff6b35','#ffd700','#ffd700','#aaa','#aaa','#aaa','#aaa','#aaa','#aaa','#aaa','#aaa','#aaa','#aaa','#aaa','#aaa','#aaa','#aaa','#aaa'];
+    return `
+    <div class="ms-card" data-id="${m.id}" onclick="openModal('${m.id}')">
+      <div class="ms-rank" style="color:${rankColors[i]||'#aaa'}">${i + 1}</div>
+      <div class="ms-poster">
+        <img src="${m.poster}" alt="${m.title}" loading="lazy"
+             onerror="this.onerror=null;this.src='https://placehold.co/120x180/1a1a2e/e50914?text='+encodeURIComponent('${m.title.substring(0,10)}')">
+        <div class="ms-overlay">
+          <button class="ms-play" onclick="event.stopPropagation();window.location.href='watch.html?id=${m.id}'">
+            <i class="fas fa-play"></i>
+          </button>
+        </div>
+      </div>
+      <div class="ms-info">
+        <h4 class="ms-title">${m.title}</h4>
+        <div class="ms-meta">
+          <span>${m.year}</span>
+          <span class="ms-rating"><i class="fas fa-star"></i> ${m.rating}</span>
+        </div>
+        <span class="ms-cat ${m.category}">${({series:'SERIES',anime:'ANIME',cartoons:'CARTOON',movies:'MOVIE'})[m.category]||'MOVIE'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
