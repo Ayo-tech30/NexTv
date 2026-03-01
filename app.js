@@ -91,7 +91,7 @@ function makeCard(movie) {
         </button>
       </div>
       <div class="card-rating"><i class="fas fa-star"></i> ${movie.rating}</div>
-      <div class="card-category">${{series:'SERIES',anime:'ANIME',cartoons:'CARTOON',movies:'MOVIE'}[movie.category]||'MOVIE'}</div>
+      <div class="card-category">${({series:'SERIES',anime:'ANIME',cartoons:'CARTOON',movies:'MOVIE'})[movie.category]||'MOVIE'}</div>
     </div>
     <div class="card-info">
       <h4 class="card-title">${movie.title}</h4>
