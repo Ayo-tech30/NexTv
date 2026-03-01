@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Movies – Nex TV</title>
+<link rel="icon" type="image/jpeg" href="logo.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav id="navbar">
+  <div class="nav-left">
+    <button class="hamburger" id="menuToggle"><i class="fas fa-bars"></i></button>
+    <a href="index.html" class="logo">NEX<span>TV</span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="movies.html" class="active">Movies</a></li>
+      <li><a href="series.html">TV Shows</a></li>
+      <li><a href="anime.html">Anime</a></li>
+      <li><a href="cartoons.html">Cartoons</a></li>
+      <li><a href="watchlist.html">My List</a></li>
+    </ul>
+  </div>
+  <div class="nav-right">
+    <a href="search.html" class="nav-icon"><i class="fas fa-search"></i></a>
+    <div id="authArea"></div>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="page-hero-content">
+    <h1><i class="fas fa-film"></i> Movies</h1>
+    <p>All the best films, free to watch anytime.</p>
+  </div>
+</div>
+
+<main class="main-content">
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label>Genre</label>
+      <select id="genreFilter" onchange="applyFilters()">
+        <option value="">All Genres</option>
+        <option>Action</option><option>Adventure</option><option>Crime</option>
+        <option>Drama</option><option>History</option><option>Sci-Fi</option><option>Thriller</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Sort By</label>
+      <select id="sortFilter" onchange="applyFilters()">
+        <option value="rating">Top Rated</option>
+        <option value="year">Newest</option>
+        <option value="title">A–Z</option>
+      </select>
+    </div>
+  </div>
+  <div class="grid-full" id="moviesGrid"></div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-logo">NEX<span>TV</span></div>
+    <div class="footer-links"><a href="#">About</a><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Help</a></div>
+    <p class="footer-copy">&copy; 2025 Nex TV.</p>
+  </div>
+</footer>
+
+<div class="modal-overlay" id="movieModal">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-body">
+      <img class="modal-poster" id="modalPoster" src="" alt="">
+      <div class="modal-info">
+        <h2 id="modalTitle"></h2>
+        <div class="modal-meta" id="modalMeta"></div>
+        <p id="modalDesc"></p>
+        <div class="modal-cast" id="modalCast"></div>
+        <div class="modal-actions">
+          <button class="btn-play" id="modalPlay"><i class="fas fa-play"></i> Watch Now</button>
+          <button class="btn-wl" id="modalWL"><i class="far fa-bookmark"></i> My List</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="db.js"></script>
+<script src="app.js"></script>
+<script>
+  DB.init(); renderNav();
+  function applyFilters() {
+    let movies = DB.getMovies().filter(m => m.category === 'movies');
+    const genre = document.getElementById('genreFilter').value;
+    const sort = document.getElementById('sortFilter').value;
+    if (genre) movies = movies.filter(m => m.genre.includes(genre));
+    if (sort === 'rating') movies.sort((a,b) => b.rating - a.rating);
+    if (sort === 'year') movies.sort((a,b) => b.year - a.year);
+    if (sort === 'title') movies.sort((a,b) => a.title.localeCompare(b.title));
+    renderGrid('moviesGrid', movies);
+  }
+  applyFilters();
+</script>
+</body>
+</html>

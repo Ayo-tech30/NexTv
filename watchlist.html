@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/jpeg" href="logo.jpg">
+<title>My List – Nex TV</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav id="navbar">
+  <div class="nav-left">
+    <button class="hamburger" id="menuToggle"><i class="fas fa-bars"></i></button>
+    <a href="index.html" class="logo">NEX<span>TV</span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="movies.html">Movies</a></li>
+      <li><a href="series.html">TV Shows</a></li>
+      <li><a href="anime.html">Anime</a></li>
+      <li><a href="cartoons.html">Cartoons</a></li>
+      <li><a href="watchlist.html" class="active">My List</a></li>
+    </ul>
+  </div>
+  <div class="nav-right">
+    <a href="search.html" class="nav-icon"><i class="fas fa-search"></i></a>
+    <div id="authArea"></div>
+  </div>
+</nav>
+<div class="page-hero">
+  <div class="page-hero-content">
+    <h1><i class="fas fa-bookmark"></i> My List</h1>
+    <p>Your saved movies and shows.</p>
+  </div>
+</div>
+<main class="main-content">
+  <div class="empty-state" id="notLoggedIn" style="display:none;">
+    <i class="fas fa-lock"></i>
+    <p>Please <a href="login.html" class="link-inline">sign in</a> to see your list.</p>
+  </div>
+  <div class="empty-state" id="emptyList" style="display:none;">
+    <i class="fas fa-bookmark"></i>
+    <p>Your list is empty. Browse and add movies!</p>
+    <a href="movies.html" class="btn-play" style="margin-top:1rem; text-decoration:none; display:inline-flex; gap:.5rem; align-items:center; padding:.75rem 1.5rem;"><i class="fas fa-film"></i> Browse Movies</a>
+  </div>
+  <div class="grid-full" id="wlGrid"></div>
+</main>
+<div class="modal-overlay" id="movieModal">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-body">
+      <img class="modal-poster" id="modalPoster" src="" alt="">
+      <div class="modal-info">
+        <h2 id="modalTitle"></h2>
+        <div class="modal-meta" id="modalMeta"></div>
+        <p id="modalDesc"></p>
+        <div class="modal-cast" id="modalCast"></div>
+        <div class="modal-actions">
+          <button class="btn-play" id="modalPlay"><i class="fas fa-play"></i> Watch Now</button>
+          <button class="btn-wl" id="modalWL"><i class="far fa-bookmark"></i> My List</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="db.js"></script>
+<script src="app.js"></script>
+<script>
+  DB.init(); renderNav();
+  const session = DB.getSession();
+  if (!session) {
+    document.getElementById('notLoggedIn').style.display = 'flex';
+  } else {
+    const user = DB.getUserById(session.id);
+    const wl = (user && user.watchlist) || [];
+    if (!wl.length) {
+      document.getElementById('emptyList').style.display = 'flex';
+    } else {
+      renderGrid('wlGrid', wl.map(id => DB.getMovie(id)).filter(Boolean));
+    }
+  }
+</script>
+</body>
+</html>

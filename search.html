@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search – Nex TV</title>
+<link rel="icon" type="image/jpeg" href="logo.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav id="navbar">
+  <div class="nav-left">
+    <button class="hamburger" id="menuToggle"><i class="fas fa-bars"></i></button>
+    <a href="index.html" class="logo">NEX<span>TV</span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="movies.html">Movies</a></li>
+      <li><a href="series.html">TV Shows</a></li>
+      <li><a href="anime.html">Anime</a></li>
+      <li><a href="cartoons.html">Cartoons</a></li>
+      <li><a href="watchlist.html">My List</a></li>
+    </ul>
+  </div>
+  <div class="nav-right">
+    <a href="search.html" class="nav-icon active"><i class="fas fa-search"></i></a>
+    <div id="authArea"></div>
+  </div>
+</nav>
+
+<main class="main-content search-page" style="padding-top:calc(var(--nav-h) + 2rem);">
+  <h1 style="font-family:'Bebas Neue',sans-serif; font-size:2rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:.5rem;">
+    <i class="fas fa-search" style="color:var(--red)"></i> Search
+  </h1>
+  <div class="search-box-wrap" style="margin-bottom:2rem;">
+    <i class="fas fa-search search-icon-lg"></i>
+    <input type="text" class="search-input-lg" id="searchInput" placeholder="Search movies, shows, anime, cartoons..." oninput="doSearch()" autofocus>
+    <button class="search-clear" id="searchClear" onclick="clearSearch()"><i class="fas fa-times"></i></button>
+  </div>
+  <div id="searchResults">
+    <div class="empty-state">
+      <i class="fas fa-search"></i>
+      <p>Start typing to search all titles...</p>
+    </div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="movieModal">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-body">
+      <img class="modal-poster" id="modalPoster" src="" alt="">
+      <div class="modal-info">
+        <h2 id="modalTitle"></h2>
+        <div class="modal-meta" id="modalMeta"></div>
+        <p id="modalDesc"></p>
+        <div class="modal-cast" id="modalCast"></div>
+        <div class="modal-actions">
+          <button class="btn-play" id="modalPlay"><i class="fas fa-play"></i> Watch Now</button>
+          <button class="btn-wl" id="modalWL"><i class="far fa-bookmark"></i> My List</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="db.js"></script>
+<script src="app.js"></script>
+<script>
+  DB.init(); renderNav();
+  const inp = document.getElementById('searchInput');
+  const clr = document.getElementById('searchClear');
+
+  function doSearch() {
+    const q = inp.value.trim().toLowerCase();
+    clr.style.display = q ? 'block' : 'none';
+    const results = document.getElementById('searchResults');
+    if (!q) {
+      results.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>Start typing to search all titles...</p></div>';
+      return;
+    }
+    const found = DB.getMovies().filter(m =>
+      m.title.toLowerCase().includes(q) ||
+      m.genre.some(g => g.toLowerCase().includes(q)) ||
+      m.description.toLowerCase().includes(q) ||
+      (m.director && m.director.toLowerCase().includes(q)) ||
+      m.cast.some(c => c.toLowerCase().includes(q))
+    );
+    if (!found.length) {
+      results.innerHTML = `<div class="empty-state"><i class="fas fa-film"></i><p>No results for "<strong>${q}</strong>"</p></div>`;
+    } else {
+      results.innerHTML = `<p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem;">${found.length} result${found.length!==1?'s':''} for "<strong>${q}</strong>"</p><div class="grid-full" id="searchGrid"></div>`;
+      renderGrid('searchGrid', found);
+    }
+  }
+
+  function clearSearch() {
+    inp.value = '';
+    clr.style.display = 'none';
+    doSearch();
+    inp.focus();
+  }
+</script>
+</body>
+</html>

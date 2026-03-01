@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/jpeg" href="logo.jpg">
+<title>Create Account – Nex TV</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-body">
+<div class="auth-bg"></div>
+<div class="auth-wrap">
+  <a href="index.html" class="logo auth-logo">NEX<span>TV</span></a>
+  <div class="auth-card">
+    <h2>Create Account</h2>
+    <p class="auth-sub">Join Nex TV – it's free forever.</p>
+    <form id="regForm" onsubmit="doRegister(event)">
+      <div class="form-group">
+        <label><i class="fas fa-user"></i> Full Name</label>
+        <input type="text" id="regName" placeholder="Your name" required>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-envelope"></i> Email</label>
+        <input type="email" id="regEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-lock"></i> Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="regPass" placeholder="Create a strong password" required oninput="checkStrength(this.value)">
+          <button type="button" class="pw-toggle" onclick="togglePw('regPass', this)"><i class="fas fa-eye"></i></button>
+        </div>
+        <!-- Password Strength -->
+        <div class="pw-strength-bar">
+          <div class="pw-strength-fill" id="strengthFill"></div>
+        </div>
+        <div class="pw-strength-info" id="strengthInfo">
+          <span class="pw-label" id="strengthLabel">Enter a password</span>
+          <div class="pw-checks">
+            <span class="pw-check" id="chkLen"><i class="fas fa-circle"></i> 8+ chars</span>
+            <span class="pw-check" id="chkUpper"><i class="fas fa-circle"></i> Uppercase</span>
+            <span class="pw-check" id="chkNum"><i class="fas fa-circle"></i> Number</span>
+            <span class="pw-check" id="chkSym"><i class="fas fa-circle"></i> Symbol</span>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-lock"></i> Confirm Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="regPass2" placeholder="Repeat your password" required>
+          <button type="button" class="pw-toggle" onclick="togglePw('regPass2', this)"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      <div class="form-error" id="regError"></div>
+      <button type="submit" class="btn-auth"><i class="fas fa-user-plus"></i> Create Account</button>
+    </form>
+    <div class="auth-divider"><span>Already have an account?</span></div>
+    <a href="login.html" class="btn-auth-outline">Sign In</a>
+  </div>
+</div>
+
+<script src="db.js"></script>
+<script src="app.js"></script>
+<script>
+  DB.init();
+  if (DB.getSession()) window.location.href = 'index.html';
+
+  function checkStrength(val) {
+    const fill = document.getElementById('strengthFill');
+    const label = document.getElementById('strengthLabel');
+    const checks = {
+      chkLen: val.length >= 8,
+      chkUpper: /[A-Z]/.test(val),
+      chkNum: /[0-9]/.test(val),
+      chkSym: /[^A-Za-z0-9]/.test(val)
+    };
+    let score = Object.values(checks).filter(Boolean).length;
+    Object.entries(checks).forEach(([id, ok]) => {
+      const el = document.getElementById(id);
+      el.className = 'pw-check ' + (ok ? 'ok' : '');
+      el.querySelector('i').className = ok ? 'fas fa-check-circle' : 'fas fa-circle';
+    });
+    const levels = [
+      { w: '0%', color: '', text: 'Enter a password' },
+      { w: '25%', color: '#e50914', text: 'Weak' },
+      { w: '50%', color: '#ff8c00', text: 'Fair' },
+      { w: '75%', color: '#ffd700', text: 'Good' },
+      { w: '100%', color: '#22c55e', text: 'Strong 💪' }
+    ];
+    const lv = levels[score];
+    fill.style.width = lv.w;
+    fill.style.background = lv.color;
+    label.textContent = lv.text;
+    label.style.color = lv.color || '#888';
+  }
+
+  function doRegister(e) {
+    e.preventDefault();
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const pass = document.getElementById('regPass').value;
+    const pass2 = document.getElementById('regPass2').value;
+    const errEl = document.getElementById('regError');
+    errEl.style.display = 'none';
+
+    if (pass !== pass2) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
+    if (pass.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
+
+    const result = DB.createUser(email, pass, name);
+    if (result.error) { errEl.textContent = result.error; errEl.style.display = 'block'; return; }
+    DB.login(email, pass);
+    window.location.href = 'index.html';
+  }
+</script>
+</body>
+</html>

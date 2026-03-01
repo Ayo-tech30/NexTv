@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/jpeg" href="logo.jpg">
+<title>Profile – Nex TV</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav id="navbar">
+  <div class="nav-left">
+    <button class="hamburger" id="menuToggle"><i class="fas fa-bars"></i></button>
+    <a href="index.html" class="logo">NEX<span>TV</span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="movies.html">Movies</a></li>
+      <li><a href="series.html">TV Shows</a></li>
+      <li><a href="anime.html">Anime</a></li>
+      <li><a href="cartoons.html">Cartoons</a></li>
+      <li><a href="watchlist.html">My List</a></li>
+    </ul>
+  </div>
+  <div class="nav-right">
+    <a href="search.html" class="nav-icon"><i class="fas fa-search"></i></a>
+    <div id="authArea"></div>
+  </div>
+</nav>
+<div class="page-hero">
+  <div class="page-hero-content">
+    <h1><i class="fas fa-user-circle"></i> My Profile</h1>
+  </div>
+</div>
+<main class="main-content">
+  <div class="empty-state" id="notLoggedIn" style="display:none;">
+    <i class="fas fa-lock"></i>
+    <p>Please <a href="login.html" class="link-inline">sign in</a>.</p>
+  </div>
+  <div id="profileBody" style="display:none;">
+    <div class="profile-grid">
+      <div class="profile-card">
+        <div class="avatar-ring"><div class="avatar-big" id="avatarDisplay"></div></div>
+        <h2 id="profileName"></h2>
+        <p id="profileEmail" class="profile-email"></p>
+        <span class="role-badge" id="roleBadge"></span>
+        <button class="btn-danger" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      </div>
+      <div class="profile-details">
+        <div class="stats-row">
+          <div class="stat-box"><i class="fas fa-bookmark"></i><span id="wlCount">0</span><small>Saved</small></div>
+          <div class="stat-box"><i class="fas fa-history"></i><span id="histCount">0</span><small>Watched</small></div>
+          <div class="stat-box"><i class="fas fa-calendar"></i><span id="joinDate">-</span><small>Joined</small></div>
+        </div>
+        <div id="adminPanel" style="display:none;">
+          <div class="admin-header"><i class="fas fa-shield-alt"></i> Admin Panel</div>
+          <div class="admin-stats" id="adminStats"></div>
+          <div class="admin-users" id="adminUsers"></div>
+        </div>
+        <h3 class="section-label"><i class="fas fa-history"></i> Continue Watching</h3>
+        <div class="history-list" id="historyList"></div>
+      </div>
+    </div>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+<script src="db.js"></script>
+<script src="app.js"></script>
+<script>
+  DB.init(); renderNav();
+  const session = DB.getSession();
+  if (!session) { document.getElementById('notLoggedIn').style.display='flex'; }
+  else {
+    document.getElementById('profileBody').style.display='block';
+    const user = DB.getUserById(session.id);
+    document.getElementById('profileName').textContent = user.name;
+    document.getElementById('profileEmail').textContent = user.email;
+    document.getElementById('avatarDisplay').textContent = user.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('roleBadge').textContent = user.role==='admin'?'👑 Admin':'🎬 Member';
+    document.getElementById('roleBadge').className='role-badge '+user.role;
+    document.getElementById('wlCount').textContent=(user.watchlist||[]).length;
+    document.getElementById('histCount').textContent=(user.watchHistory||[]).length;
+    document.getElementById('joinDate').textContent=new Date(user.createdAt).getFullYear();
+    const hist=(user.watchHistory||[]).slice(0,6);
+    const histEl=document.getElementById('historyList');
+    histEl.innerHTML=!hist.length?'<p class="muted-text">No watch history yet.</p>':
+      hist.map(h=>{const m=DB.getMovie(h.movieId);if(!m)return'';
+      return`<a href="watch.html?id=${m.id}" class="history-item">
+        <img src="${m.poster}" alt="" onerror="this.src='https://via.placeholder.com/60x90/1a1a1a/666?text=N'">
+        <div><strong>${m.title}</strong><span>${m.year} · ${m.duration}</span></div>
+        <i class="fas fa-play-circle"></i></a>`;}).join('');
+    if(user.role==='admin'){
+      document.getElementById('adminPanel').style.display='block';
+      const allUsers=DB.getUsers(),allMovies=DB.getMovies();
+      document.getElementById('adminStats').innerHTML=
+        `<div class="admin-stat"><i class="fas fa-users"></i><strong>${allUsers.length}</strong> Users</div>
+         <div class="admin-stat"><i class="fas fa-film"></i><strong>${allMovies.length}</strong> Titles</div>
+         <div class="admin-stat"><i class="fas fa-star"></i><strong>Free</strong> Plan</div>`;
+      document.getElementById('adminUsers').innerHTML=
+        `<h4><i class="fas fa-users-cog"></i> All Users</h4>
+         <div class="users-table-wrap"><table class="users-table">
+           <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+           <tbody>${allUsers.map(u=>`<tr><td>${u.name}</td><td>${u.email}</td>
+             <td><span class="role-badge ${u.role}">${u.role}</span></td>
+             <td>${new Date(u.createdAt).toLocaleDateString()}</td></tr>`).join('')}</tbody>
+         </table></div>`;
+    }
+  }
+  function doLogout(){ DB.logout(); window.location.href='index.html'; }
+</script>
+</body>
+</html>

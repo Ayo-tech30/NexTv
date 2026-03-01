@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watch – Nex TV</title>
+<link rel="icon" type="image/jpeg" href="logo.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.yt-player-wrap {
+  position: relative;
+  width: 100%;
+  background: #000;
+  aspect-ratio: 16/9;
+  max-height: 75vh;
+  overflow: hidden;
+}
+.yt-player-wrap iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+.quality-bar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: .6rem 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.quality-bar span {
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.quality-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: .35rem .9rem;
+  border-radius: 5px;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  transition: .2s;
+}
+.quality-btn:hover { border-color: var(--red); color: var(--red); }
+.quality-btn.active { background: var(--red); border-color: var(--red); color: #fff; }
+.player-note {
+  background: rgba(229,9,20,.08);
+  border: 1px solid rgba(229,9,20,.2);
+  border-radius: 8px;
+  padding: .6rem 1rem;
+  font-size: .82rem;
+  color: rgba(240,240,240,.7);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.player-note i { color: var(--red); flex-shrink: 0; }
+.sources-row {
+  display: flex;
+  gap: .6rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.2rem;
+}
+.source-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: .4rem .9rem;
+  border-radius: 6px;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  transition: .2s;
+}
+.source-btn:hover { border-color: var(--red); color: var(--text); }
+.source-btn.active { background: rgba(229,9,20,.15); border-color: var(--red); color: var(--red); }
+</style>
+</head>
+<body class="player-body">
+
+<nav id="navbar" class="nav-player">
+  <div class="nav-left">
+    <a href="javascript:history.back()" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+    <a href="index.html" class="logo">NEX<span>TV</span></a>
+  </div>
+  <div class="nav-right">
+    <div id="authArea"></div>
+  </div>
+</nav>
+
+<div class="player-wrap">
+  <!-- YouTube Player -->
+  <div class="yt-player-wrap" id="ytPlayerWrap">
+    <iframe
+      id="ytFrame"
+      src=""
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen
+      referrerpolicy="strict-origin-when-cross-origin">
+    </iframe>
+  </div>
+
+  <!-- Quality & Source Controls -->
+  <div class="quality-bar" id="qualityBar">
+    <span><i class="fas fa-sliders-h"></i> Quality:</span>
+    <button class="quality-btn" onclick="setQuality('auto')">Auto</button>
+    <button class="quality-btn active" onclick="setQuality('hd1080')">1080p HD</button>
+    <button class="quality-btn" onclick="setQuality('hd720')">720p</button>
+    <button class="quality-btn" onclick="setQuality('large')">480p</button>
+    <button class="quality-btn" onclick="setQuality('medium')">360p</button>
+    <span style="margin-left:auto;"><i class="fas fa-info-circle"></i> Quality set via YouTube player settings</span>
+  </div>
+
+  <div class="player-info" id="playerInfo">
+    <div class="player-note">
+      <i class="fas fa-play-circle"></i>
+      Watching via YouTube embed. Use the quality selector above or the YouTube gear icon for highest resolution. Click fullscreen for best experience.
+    </div>
+    <div class="player-meta">
+      <div>
+        <h1 id="playerTitle">Loading...</h1>
+        <div class="player-details" id="playerDetails"></div>
+      </div>
+      <div class="player-actions-side">
+        <button class="btn-wl" id="playerWL" onclick="toggleWL()"><i class="far fa-bookmark"></i> My List</button>
+      </div>
+    </div>
+    <p id="playerDesc" class="player-desc"></p>
+    <div class="player-cast" id="playerCast"></div>
+  </div>
+
+  <div class="related-section">
+    <h2><i class="fas fa-play-circle"></i> More Like This</h2>
+    <div class="cards-row" id="relatedRow"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="db.js"></script>
+<script src="app.js"></script>
+<script>
+  DB.init(); renderNav();
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  const movie = id && DB.getMovie(id);
+  let ytPlayer = null;
+
+  function setQuality(q) {
+    document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    // YouTube IFrame API quality suggestion
+    if (ytPlayer && ytPlayer.setPlaybackQuality) {
+      ytPlayer.setPlaybackQuality(q);
+    }
+    showToast('Quality preference: ' + q.replace('hd','') + (q.startsWith('hd') ? 'p HD' : q === 'large' ? ' 480p' : q === 'medium' ? ' 360p' : ''));
+  }
+
+  if (!movie) {
+    document.getElementById('playerTitle').textContent = 'Movie not found';
+  } else {
+    document.title = movie.title + ' – Nex TV';
+
+    // Build YouTube embed URL
+    const ytSrc = `https://www.youtube.com/embed/${movie.videoId}?autoplay=1&rel=0&modestbranding=1&vq=hd1080&enablejsapi=1`;
+    document.getElementById('ytFrame').src = ytSrc;
+
+    document.getElementById('playerTitle').textContent = movie.title;
+    document.getElementById('playerDetails').innerHTML =
+      `<span class="badge-year">${movie.year}</span>
+       <span class="badge-dur"><i class="fas fa-clock"></i> ${movie.duration}</span>
+       <span class="badge-rating"><i class="fas fa-star"></i> ${movie.rating}</span>
+       <span class="badge-genre">${movie.genre.join(', ')}</span>`;
+    document.getElementById('playerDesc').textContent = movie.description;
+    document.getElementById('playerCast').innerHTML =
+      `<strong><i class="fas fa-users"></i> Cast:</strong> ${movie.cast.join(', ')}
+       &nbsp;&nbsp;<strong><i class="fas fa-video"></i> Director:</strong> ${movie.director}`;
+
+    const session = DB.getSession();
+    if (session) {
+      DB.addToHistory(session.id, movie.id);
+      updateWLButton();
+    }
+
+    // Related
+    const related = DB.getMovies().filter(m => m.id !== movie.id && (m.category === movie.category || m.genre.some(g => movie.genre.includes(g)))).slice(0, 8);
+    renderRow('relatedRow', related.length ? related : DB.getMovies().filter(m => m.id !== movie.id).slice(0, 6));
+  }
+
+  function updateWLButton() {
+    const session = DB.getSession();
+    if (!session || !movie) return;
+    const user = DB.getUserById(session.id);
+    const inList = user && user.watchlist && user.watchlist.includes(movie.id);
+    const btn = document.getElementById('playerWL');
+    btn.innerHTML = inList
+      ? '<i class="fas fa-bookmark"></i> In My List'
+      : '<i class="far fa-bookmark"></i> My List';
+    btn.classList.toggle('active', inList);
+  }
+
+  function toggleWL() {
+    const session = DB.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+    DB.toggleWatchlist(session.id, movie.id);
+    updateWLButton();
+    showToast('Watchlist updated!');
+  }
+</script>
+</body>
+</html>
