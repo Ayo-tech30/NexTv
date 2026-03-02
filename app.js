@@ -544,10 +544,18 @@ function openTrailer(movieId) {
   // Remove existing trailer modal if any
   const existing = document.getElementById('trailerModal');
   if (existing) existing.remove();
-  
+
+  // Always use YouTube — either a known trailer ID or search for it
   const src = ytId 
-    ? `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0`
-    : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(m.title + ' official trailer')}&autoplay=1`;
+    ? `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`
+    : `https://www.youtube.com/results?search_query=${encodeURIComponent(m.title + ' official trailer ' + m.year)}`;
+  
+  // If no ytId, open YouTube search in new tab instead of broken embed
+  if (!ytId) {
+    window.open(src, '_blank');
+    showToast('Opening trailer on YouTube...');
+    return;
+  }
 
   const modal = document.createElement('div');
   modal.id = 'trailerModal';

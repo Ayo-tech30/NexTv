@@ -569,18 +569,18 @@ const MOVIES = [
 
   // ═══════════════════════ MORE MOVIES ═══════════════════════
 
-  {id:'m26', tmdbId:'475557', title:'Joker: Folie à Deux', year:2024, genre:['Crime','Drama','Musical'], rating:5.5, duration:'2h 18m',
+  {id:'m26', tmdbId:'1056360', title:'Joker: Folie à Deux', year:2024, genre:['Crime','Drama','Musical'], rating:5.5, duration:'2h 18m',
    director:'Todd Phillips', cast:['Joaquin Phoenix','Lady Gaga','Brendan Gleeson'],
    description:"Arthur Fleck is institutionalized at Arkham State Hospital while awaiting trial for his crimes as Joker. He meets the love of his life, Harley Quinn.",
-   poster:'https://image.tmdb.org/t/p/w500/oPMbfFfDOBHzttfWlBJ3AiJSWTj.jpg',
-   backdrop:'https://image.tmdb.org/t/p/original/ftkBgDUFLCJxNUhALNEpJO1AbLN.jpg',
+   poster:'https://image.tmdb.org/t/p/w500/f4J9W0UvGJJ7bPBXnBWxHNvDuOj.jpg',
+   backdrop:'https://image.tmdb.org/t/p/original/sg7Dp5mjz2qbXJMsyYEA3V8sTGv.jpg',
    type:'movie', featured:false, category:'movies'},
 
-  {id:'m27', tmdbId:'569094', title:'Spider-Man 2 (2004)', year:2004, genre:['Action','Adventure'], rating:7.5, duration:'2h 7m',
+  {id:'m27', tmdbId:'36557', title:'Spider-Man 2 (2004)', year:2004, genre:['Action','Adventure'], rating:7.5, duration:'2h 7m',
    director:'Sam Raimi', cast:['Tobey Maguire','Kirsten Dunst','Alfred Molina'],
    description:"Peter Parker is beset with troubles in his failing personal life as he battles the brilliant scientist Doctor Otto Octavius. A superhero classic.",
-   poster:'https://image.tmdb.org/t/p/w500/qKeXWVWJPqHhEpKijBwHUiXCzWF.jpg',
-   backdrop:'https://image.tmdb.org/t/p/original/iFXLWJmrBHBMvZDGSyUjXNmOvnK.jpg',
+   poster:'https://image.tmdb.org/t/p/w500/9TBD4QJKGJO7YMGBBTM0YSDBF7N.jpg',
+   backdrop:'https://image.tmdb.org/t/p/original/wFqVLtBFhpQM3ys2XOSD3EOIJTW.jpg',
    type:'movie', featured:false, category:'movies'},
 
   {id:'m28', tmdbId:'533535', title:'Deadpool & Wolverine', year:2024, genre:['Action','Comedy'], rating:7.7, duration:'2h 8m',
@@ -963,11 +963,11 @@ const MOVIES = [
    backdrop:'https://image.tmdb.org/t/p/original/nQt0RFRlkNTJeqYm2CqD9oQ2v4H.jpg',
    type:'movie', featured:false, category:'movies'},
 
-  {id:'m60', tmdbId:'385687', title:'Mission: Impossible – Dead Reckoning', year:2023, genre:['Action','Thriller'], rating:7.7, duration:'2h 43m',
+  {id:'m60', tmdbId:'575264', title:'Mission: Impossible – Dead Reckoning', year:2023, genre:['Action','Thriller'], rating:7.7, duration:'2h 43m',
    director:'Christopher McQuarrie', cast:['Tom Cruise','Hayley Atwell','Ving Rhames'],
    description:"Ethan Hunt and his IMF team must track down a terrifyingly dangerous weapon before it falls into the wrong hands. The most thrilling Mission: Impossible yet.",
-   poster:'https://image.tmdb.org/t/p/w500/NNxYkU70HPurnNCSiCjYAmacwm.jpg',
-   backdrop:'https://image.tmdb.org/t/p/original/4fSmdKkLzJePDInJBqsON1rFnzF.jpg',
+   poster:'https://image.tmdb.org/t/p/w500/NhvMBrCVXfkmFtxmCeL6Jfkztb.jpg',
+   backdrop:'https://image.tmdb.org/t/p/original/lgkgWvKKXHo2OXcC53tGGNzDZPe.jpg',
    type:'movie', featured:false, category:'movies'},
 
   // ═══════════════════ MORE CARTOONS ═══════════════════
@@ -1201,40 +1201,12 @@ const MOVIES = [
    backdrop:'https://image.tmdb.org/t/p/original/bHarw8xrmQeqf3t8HpgEJSFSs9I.jpg',
    type:'movie', featured:false, category:'movies'},
 
-  {id:'m77', tmdbId:'76341', title:'Mad Max: Fury Road', year:2015, genre:['Action','Sci-Fi'], rating:8.1, duration:'2h 0m',
-   director:'George Miller', cast:['Tom Hardy','Charlize Theron','Nicholas Hoult'],
-   description:"In a post-apocalyptic wasteland, Max teams up with rebel Furiosa to flee from a warlord in a non-stop, blood-pumping chase across the desert. Perhaps the greatest action film ever made.",
-   poster:'https://image.tmdb.org/t/p/w500/hA2ple9q4qnwxp3hKVNhroipsir.jpg',
-   backdrop:'https://image.tmdb.org/t/p/original/phszHPFBOef6PCOoMkiKSmwBVRx.jpg',
-   type:'movie', featured:false, category:'movies'},
-
   {id:'m78', tmdbId:'14574', title:'The Social Network', year:2010, genre:['Drama','Biography'], rating:7.7, duration:'2h 0m',
    director:'David Fincher', cast:['Jesse Eisenberg','Andrew Garfield','Justin Timberlake'],
    description:"The meteoric rise of Facebook and the bitter legal battles that followed. Fincher and Sorkin craft one of the most electrifying dramas of its decade.",
    poster:'https://image.tmdb.org/t/p/w500/n0ybibhJtQ5icDqTp8eRytcIHso.jpg',
    backdrop:'https://image.tmdb.org/t/p/original/lktCmDzTKIlMgZcnrjNDN57XMRo.jpg',
    type:'movie', featured:false, category:'movies'},
-
-  {id:'m79', tmdbId:'533535', title:'Deadpool & Wolverine', year:2024, genre:['Action','Comedy'], rating:7.7, duration:'2h 8m',
-   director:'Shawn Levy', cast:['Ryan Reynolds','Hugh Jackman','Emma Corrin'],
-   description:"Deadpool is recruited by the TVA and drags a reluctant Wolverine along to save the multiverse. The wildest, most self-aware MCU film yet.",
-   poster:'https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg',
-   backdrop:'https://image.tmdb.org/t/p/original/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg',
-   type:'movie', featured:true, category:'movies'},
-
-  {id:'m80', tmdbId:'945961', title:'Alien: Romulus', year:2024, genre:['Horror','Sci-Fi'], rating:7.3, duration:'1h 59m',
-   director:'Fede Alvarez', cast:['Cailee Spaeny','David Jonsson','Archie Renaux'],
-   description:"A group of young colonists scavenging a derelict space station come face to face with the most terrifying life form in the universe. A terrifying return to form for the franchise.",
-   poster:'https://image.tmdb.org/t/p/w500/b33nnKl1GSFbao4l3fZDDqsMx0F.jpg',
-   backdrop:'https://image.tmdb.org/t/p/original/9SSEUrSqhljBMzRe4aBTh17LP9Q.jpg',
-   type:'movie', featured:true, category:'movies'},
-
-  {id:'m81', tmdbId:'315162', title:'Puss in Boots: The Last Wish', year:2022, genre:['Animation','Adventure'], rating:7.9, duration:'1h 42m',
-   director:'Joel Crawford', cast:['Antonio Banderas','Salma Hayek','Harvey Guillen'],
-   description:"Puss in Boots discovers he has burned through eight of his nine lives and sets out on an epic journey to find the mythical Last Wish and restore them. Stunning animation.",
-   poster:'https://image.tmdb.org/t/p/w500/kuf6dutpsT0vSVehic3EZIqkOBt.jpg',
-   backdrop:'https://image.tmdb.org/t/p/original/AmR3JfKAMJJ74JGnunERQQzd2jA.jpg',
-   type:'movie', featured:true, category:'movies'},
 
   {id:'m82', tmdbId:'823464', title:'Godzilla x Kong: The New Empire', year:2024, genre:['Action','Sci-Fi'], rating:6.2, duration:'1h 55m',
    director:'Adam Wingard', cast:['Rebecca Hall','Brian Tyree Henry','Dan Stevens'],
@@ -1368,13 +1340,6 @@ const MOVIES = [
    backdrop:'https://image.tmdb.org/t/p/original/8Y43POKjjqZptVdMTiuSBT0CIhJ.jpg',
    type:'movie', featured:false, category:'movies'},
 
-  {id:'m90', tmdbId:'505642', title:'Black Panther: Wakanda Forever', year:2022, genre:['Action','Drama'], rating:6.7, duration:'2h 41m',
-   director:'Ryan Coogler', cast:['Letitia Wright','Lupita Nyongo','Angela Bassett'],
-   description:"Wakanda mourns King T'Challa while facing a new threat from the underwater nation Talokan. A powerful, emotional tribute to Chadwick Boseman.",
-   poster:'https://image.tmdb.org/t/p/w500/sv1xJUazXoQuIDTqnVDTABAwKx.jpg',
-   backdrop:'https://image.tmdb.org/t/p/original/xDMIl84Qo5Tsu62c9DGWhmPI67A.jpg',
-   type:'movie', featured:false, category:'movies'},
-
   {id:'m91', tmdbId:'136797', title:'No Time to Die', year:2021, genre:['Action','Thriller'], rating:7.3, duration:'2h 43m',
    director:'Cary Joji Fukunaga', cast:['Daniel Craig','Rami Malek','Ana de Armas'],
    description:"James Bond has left active service. But a sinister new villain wielding a dangerous technology draws him back into the field. Daniel Craig's emotional farewell to 007.",
@@ -1389,13 +1354,6 @@ const MOVIES = [
    backdrop:'https://image.tmdb.org/t/p/original/5YZbUmjbMa3ClvSW1Wj3D6XGkVA.jpg',
    type:'movie', featured:false, category:'movies'},
 
-  {id:'m93', tmdbId:'1011985', title:'Kung Fu Panda 4', year:2024, genre:['Animation','Comedy'], rating:6.5, duration:'1h 34m',
-   director:'Mike Mitchell', cast:['Jack Black','Awkwafina','Bryan Cranston'],
-   description:"Po must train a new Dragon Warrior while battling a shape-shifting sorceress who wants to steal his powers. More panda comedy goodness for the whole family.",
-   poster:'https://image.tmdb.org/t/p/w500/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg',
-   backdrop:'https://image.tmdb.org/t/p/original/3tPORj9RYUnFgPpJJbJdBfgjKof.jpg',
-   type:'movie', featured:false, category:'movies'},
-
   {id:'m94', tmdbId:'763215', title:'Damsel', year:2024, genre:['Fantasy','Action'], rating:6.3, duration:'1h 50m',
    director:'Juan Carlos Fresnadillo', cast:['Millie Bobby Brown','Ray Winstone','Angela Bassett'],
    description:"A dutiful damsel agrees to marry a handsome prince, only to discover she has been set up to be sacrificed to a cave-dwelling dragon. She must rely on her own wits to survive.",
@@ -1407,15 +1365,8 @@ const MOVIES = [
    director:'Jamie Payne', cast:['Idris Elba','Andy Serkis','Cynthia Erivo'],
    description:"Brilliant but disgraced detective John Luther breaks out of prison to hunt a sadistic serial killer who is exploiting Londoners online. Idris Elba at his most intense.",
    poster:'https://image.tmdb.org/t/p/w500/3rBBSIf7QBMV7iVVRYBrzXFDFZ.jpg',
-   backdrop:'https://image.tmdb.org/t/p/original/5YZbUmjbMa3ClvSW1Wj3D6XGkVA.jpg',
+   backdrop:'https://image.tmdb.org/t/p/original/9mFPFb2hD1jXAMbbBjfqWpxRTAT.jpg',
    type:'movie', featured:false, category:'movies'},
-
-  {id:'m96', tmdbId:'346698', title:'Barbie', year:2023, genre:['Comedy','Fantasy'], rating:6.9, duration:'1h 54m',
-   director:'Greta Gerwig', cast:['Margot Robbie','Ryan Gosling','America Ferrera'],
-   description:"Barbie and Ken leave Barbieland for the real world after Barbie has an existential crisis. A dazzling, satirical, endlessly quotable cultural phenomenon.",
-   poster:'https://image.tmdb.org/t/p/w500/iuFNMS8vlbF9kQOBR0S7oDg0p5O.jpg',
-   backdrop:'https://image.tmdb.org/t/p/original/nHf61UzkfFno5X1ofIjWpbVj203.jpg',
-   type:'movie', featured:true, category:'movies'},
 
   // ══════════════ EXTRA ANIME BATCH ══════════════
 
