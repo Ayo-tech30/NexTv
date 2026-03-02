@@ -246,10 +246,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Most Searched ──────────────────────────────────────────────────────────────
 // Curated "most searched" titles — mix of movies, anime, series, cartoons
 const MOST_SEARCHED_IDS = [
-  'm2','m3','m12','m13','m44','m57','m42','m43',  // movies
-  'a1','a2','a3','a4','a29','a26','a27','a28',     // anime
-  's1','s2','s3','s5','s8',                         // series
-  'c27','c26','c2','c24'                            // cartoons
+  'm2','m3','m12','m71','m79','m77','m81','m80',   // movies
+  'a1','a2','a3','a41','a42','a44','a47','a46',    // anime
+  's1','s2','s3','s5',                             // series
+  'c40','c41','c43','c1'                           // cartoons
 ];
 
 function renderMostSearched(containerId, allMovies) {

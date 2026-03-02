@@ -38,12 +38,25 @@
     <input type="text" class="search-input-lg" id="searchInput" placeholder="Search movies, shows, anime, cartoons..." oninput="doSearch()" autofocus>
     <button class="search-clear" id="searchClear" onclick="clearSearch()"><i class="fas fa-times"></i></button>
   </div>
-  <div id="searchResults">
-    <div class="empty-state">
-      <i class="fas fa-search"></i>
-      <p>Start typing to search all titles...</p>
-    </div>
+
+  <!-- MOST SEARCHED — shown when idle -->
+  <div id="idleSection">
+    <section class="row-section most-searched-section" style="margin-bottom:2.5rem;">
+      <div class="row-header">
+        <h2><i class="fas fa-chart-line"></i> Most Searched <span class="hot-badge">HOT</span></h2>
+      </div>
+      <div class="most-searched-grid" id="mostSearchedGrid"></div>
+    </section>
+    <section class="row-section" style="margin-bottom:2.5rem;">
+      <div class="row-header">
+        <h2><i class="fas fa-fire"></i> Trending Now</h2>
+      </div>
+      <div class="cards-row" id="trendingRow"></div>
+    </section>
   </div>
+
+  <!-- RESULTS — shown when typing -->
+  <div id="searchResults" style="display:none;"></div>
 </main>
 
 <div class="modal-overlay" id="movieModal">
@@ -71,28 +84,42 @@
 <script src="app.js"></script>
 <script>
   DB.init(); renderNav();
+
   const inp = document.getElementById('searchInput');
   const clr = document.getElementById('searchClear');
+  const resultsEl = document.getElementById('searchResults');
+  const idleEl    = document.getElementById('idleSection');
+
+  // Populate idle section
+  const all = DB.getMovies();
+  renderMostSearched('mostSearchedGrid', all);
+  renderRow('trendingRow', [...all].sort((a,b) => b.rating - a.rating).slice(0, 12));
 
   function doSearch() {
     const q = inp.value.trim().toLowerCase();
     clr.style.display = q ? 'block' : 'none';
-    const results = document.getElementById('searchResults');
+
     if (!q) {
-      results.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>Start typing to search all titles...</p></div>';
+      idleEl.style.display = 'block';
+      resultsEl.style.display = 'none';
       return;
     }
-    const found = DB.getMovies().filter(m =>
+
+    idleEl.style.display = 'none';
+    resultsEl.style.display = 'block';
+
+    const found = all.filter(m =>
       m.title.toLowerCase().includes(q) ||
       m.genre.some(g => g.toLowerCase().includes(q)) ||
       m.description.toLowerCase().includes(q) ||
       (m.director && m.director.toLowerCase().includes(q)) ||
       m.cast.some(c => c.toLowerCase().includes(q))
     );
+
     if (!found.length) {
-      results.innerHTML = `<div class="empty-state"><i class="fas fa-film"></i><p>No results for "<strong>${q}</strong>"</p></div>`;
+      resultsEl.innerHTML = `<div class="empty-state"><i class="fas fa-film"></i><p>No results for "<strong>${q}</strong>"</p></div>`;
     } else {
-      results.innerHTML = `<p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem;">${found.length} result${found.length!==1?'s':''} for "<strong>${q}</strong>"</p><div class="grid-full" id="searchGrid"></div>`;
+      resultsEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem;">${found.length} result${found.length!==1?'s':''} for "<strong>${q}</strong>"</p><div class="grid-full" id="searchGrid"></div>`;
       renderGrid('searchGrid', found);
     }
   }
@@ -100,7 +127,8 @@
   function clearSearch() {
     inp.value = '';
     clr.style.display = 'none';
-    doSearch();
+    idleEl.style.display = 'block';
+    resultsEl.style.display = 'none';
     inp.focus();
   }
 </script>
