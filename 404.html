@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>404 – Page Not Found | Nex TV</title>
+<link rel="icon" type="image/jpeg" href="logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; text-align:center; padding:2rem; position:relative; overflow:hidden; }
+  .bg-404 { position:fixed; inset:0; background:radial-gradient(ellipse at 30% 50%,rgba(229,9,20,.08),transparent 60%), radial-gradient(ellipse at 70% 60%,rgba(0,212,180,.05),transparent 60%); pointer-events:none; }
+  .big-404 { font-family:'Bebas Neue',sans-serif; font-size:clamp(8rem,25vw,18rem); line-height:.9; color:var(--red); opacity:.08; position:absolute; top:50%; left:50%; transform:translate(-50%,-55%); pointer-events:none; user-select:none; }
+  .content { position:relative; z-index:1; max-width:500px; }
+  .logo-404 { font-family:'Bebas Neue',sans-serif; font-size:2rem; margin-bottom:2rem; }
+  .logo-404 span { color:var(--red); }
+  h1 { font-size:1.8rem; font-weight:700; margin-bottom:.5rem; }
+  p { color:var(--muted); font-size:.95rem; margin-bottom:2rem; line-height:1.6; }
+  .actions-404 { display:flex; gap:.75rem; flex-wrap:wrap; justify-content:center; }
+  .suggestions { margin-top:3rem; }
+  .suggestions h3 { font-size:1rem; font-weight:700; margin-bottom:1rem; color:var(--muted); }
+  .suggestion-row { display:flex; gap:.75rem; justify-content:center; flex-wrap:wrap; }
+  .sug-card { width:100px; cursor:pointer; transition:transform .2s; }
+  .sug-card:hover { transform:translateY(-4px); }
+  .sug-card img { width:100%; aspect-ratio:2/3; object-fit:cover; border-radius:8px; }
+  .sug-card span { font-size:.72rem; display:block; margin-top:.3rem; }
+</style>
+</head>
+<body>
+<div class="bg-404"></div>
+<div class="big-404">404</div>
+
+<div class="content">
+  <div class="logo-404">NEX<span>TV</span></div>
+  <h1>Lost in the multiverse?</h1>
+  <p>The page you're looking for doesn't exist or was moved. But there's plenty of great content waiting for you.</p>
+  <div class="actions-404">
+    <a href="index.html" class="btn-play" onclick="event.preventDefault();navigateTo('index.html')">
+      <i class="fas fa-home"></i> Go Home
+    </a>
+    <a href="search.html" class="btn-more" onclick="event.preventDefault();navigateTo('search.html')">
+      <i class="fas fa-search"></i> Search
+    </a>
+    <button class="btn-more" onclick="shufflePlay()">
+      <i class="fas fa-shuffle"></i> Surprise Me
+    </button>
+  </div>
+
+  <div class="suggestions" id="suggestions404">
+    <h3>You might enjoy these instead</h3>
+    <div class="suggestion-row" id="suggRow"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="movieModal">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-body">
+      <img class="modal-poster" id="modalPoster" src="" alt="">
+      <div class="modal-info">
+        <h2 id="modalTitle"></h2>
+        <div class="modal-meta" id="modalMeta"></div>
+        <p id="modalDesc"></p>
+        <div class="modal-cast" id="modalCast"></div>
+        <div class="modal-actions">
+          <button class="btn-play" id="modalPlay"><i class="fas fa-play"></i> Watch Now</button>
+          <button class="btn-wl" id="modalWL"><i class="far fa-bookmark"></i> My List</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="db.js"></script>
+<script src="app.js"></script>
+<script>
+  DB.init();
+  const all = DB.getMovies();
+  const picks = [...all].sort(()=>Math.random()-0.5).slice(0,5);
+  const row = document.getElementById('suggRow');
+  if (row) {
+    row.innerHTML = picks.map(m=>`
+      <div class="sug-card" onclick="openModal('${m.id}')">
+        <img src="${m.poster}" alt="${m.title}" loading="lazy">
+        <span>${m.title}</span>
+      </div>`).join('');
+  }
+</script>
+</body>
+</html>

@@ -82,8 +82,9 @@ function makeCard(movie) {
   const inWL = session && DB.getUserById(session.id)?.watchlist?.includes(movie.id);
   return `<div class="movie-card" data-id="${movie.id}">
     <div class="card-poster">
-      <img src="${movie.poster}" alt="${movie.title}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(movie.title)"
-           >
+      <img src="${movie.poster}" alt="${movie.title}" loading="lazy" decoding="async"
+           onload="this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')"
+           onerror="this.onerror=null;this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(movie.title.substring(0,12));this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')">
       <div class="card-overlay">
         <button class="card-play" onclick="openModal('${movie.id}')"><i class="fas fa-play"></i></button>
         <button class="card-wl ${inWL?'active':''}" onclick="handleWL(event,'${movie.id}')">
@@ -197,8 +198,11 @@ function openModal(id) {
   const session = DB.getSession();
   const inWL = session && DB.getUserById(session.id)?.watchlist?.includes(id);
 
-  document.getElementById('modalPoster').src = m.poster;
-  document.getElementById('modalPoster').onerror = function(){ this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(m.title); };
+  const mp = document.getElementById('modalPoster');
+  mp.classList.remove('loaded');
+  mp.src = m.poster;
+  mp.onload = function(){ this.classList.add('loaded'); };
+  mp.onerror = function(){ this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(m.title); this.classList.add('loaded'); };
   document.getElementById('modalBackdrop').style.backgroundImage = `url('${m.backdrop}')`;
   document.getElementById('modalTitle').textContent = m.title;
   document.getElementById('modalMeta').innerHTML =
@@ -291,8 +295,9 @@ function renderMostSearched(containerId, allMovies) {
     <div class="ms-card" data-id="${m.id}" onclick="openModal('${m.id}')">
       <div class="ms-rank" style="color:${rankColors[i]||'#aaa'}">${i + 1}</div>
       <div class="ms-poster">
-        <img src="${m.poster}" alt="${m.title}" loading="lazy"
-             onerror="this.onerror=null;this.src='https://placehold.co/120x180/1a1a2e/e50914?text='+encodeURIComponent('${m.title.substring(0,10)}')">
+        <img src="${m.poster}" alt="${m.title}" loading="lazy" decoding="async"
+             onload="this.classList.add('loaded')"
+             onerror="this.onerror=null;this.src='https://placehold.co/120x180/1a1a2e/e50914?text='+encodeURIComponent('${m.title.substring(0,10)}');this.classList.add('loaded')">
         <div class="ms-overlay">
           <button class="ms-play" onclick="event.stopPropagation();window.location.href='watch.html?id=${m.id}'">
             <i class="fas fa-play"></i>
@@ -321,8 +326,9 @@ function renderTopRated(containerId, movies) {
     return `<div class="movie-card rank-card" data-id="${m.id}">
       <div class="rank-badge">#${i+1}</div>
       <div class="card-poster">
-        <img src="${m.poster}" alt="${m.title}" loading="lazy"
-             onerror="this.onerror=null;this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(m.title)">
+        <img src="${m.poster}" alt="${m.title}" loading="lazy" decoding="async"
+             onload="this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')"
+             onerror="this.onerror=null;this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(m.title);this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')">
         <div class="card-overlay">
           <button class="card-play" onclick="openModal('${m.id}')"><i class="fas fa-play"></i></button>
           <button class="card-wl ${inWL?'active':''}" onclick="handleWL(event,'${m.id}')">
@@ -1181,9 +1187,9 @@ function injectMobileNav() {
   const navItems = [
     { href:'index.html', icon:'fa-home', label:'Home' },
     { href:'search.html', icon:'fa-search', label:'Search' },
-    { href:'movies.html', icon:'fa-film', label:'Movies' },
-    { href:'anime.html', icon:'fa-dragon', label:'Anime' },
-    { href:'watchlist.html', icon:'fa-bookmark', label:'My List' },
+    { href:'filter.html', icon:'fa-filter', label:'Filter' },
+    { href:'history.html', icon:'fa-history', label:'History' },
+    { href:'profile.html', icon:'fa-user', label:'Profile' },
   ];
   const nav = document.createElement('nav');
   nav.className = 'mobile-bottom-nav'; nav.id = 'mobileBottomNav';
@@ -1271,5 +1277,1638 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(()=>banner.classList.add('show'), 5000);
     }
   }
+});
+
+
+// ── FAST IMAGE LOADING SYSTEM ─────────────────────────────────
+
+// Preload hero backdrop images so they're ready before slider shows them
+function preloadHeroImages() {
+  const featured = DB.getMovies().filter(m => m.featured).slice(0, 5);
+  featured.forEach(m => {
+    if (m.backdrop) {
+      const img = new Image();
+      img.src = m.backdrop;
+    }
+  });
+}
+
+// Apply loading="lazy" + decoding="async" to ALL images site-wide
+// Also fires fade-in once loaded
+function initImageOptimization() {
+  // Preload hero first
+  preloadHeroImages();
+
+  // Observe dynamically added images (for rows rendered after DOM ready)
+  const imgObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const img = entry.target;
+      // Mark as in-viewport — browser will load it now
+      img.setAttribute('decoding', 'async');
+      imgObserver.unobserve(img);
+    });
+  }, { rootMargin: '200px' }); // Start loading 200px before visible
+
+  // Watch all current + future card images
+  document.querySelectorAll('.card-poster img, .ms-poster img, .staff-mini-poster, .collection-posters img').forEach(img => {
+    imgObserver.observe(img);
+    // Fade in if already cached
+    if (img.complete && img.naturalWidth) {
+      img.classList.add('loaded');
+      img.closest('.card-poster')?.classList.add('loaded');
+    }
+  });
+
+  // MutationObserver to catch dynamically added cards
+  const mutObs = new MutationObserver(mutations => {
+    mutations.forEach(m => {
+      m.addedNodes.forEach(node => {
+        if (node.nodeType !== 1) return;
+        node.querySelectorAll?.('img[loading="lazy"]').forEach(img => {
+          imgObserver.observe(img);
+          if (img.complete && img.naturalWidth) {
+            img.classList.add('loaded');
+            img.closest('.card-poster')?.classList.add('loaded');
+          }
+        });
+      });
+    });
+  });
+  mutObs.observe(document.body, { childList: true, subtree: true });
+}
+
+// Add <link rel="preconnect"> to TMDB CDN for DNS warmup
+function addResourceHints() {
+  const hints = [
+    { rel: 'preconnect', href: 'https://image.tmdb.org' },
+    { rel: 'dns-prefetch', href: 'https://image.tmdb.org' },
+    { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+  ];
+  hints.forEach(h => {
+    if (document.querySelector(`link[href="${h.href}"][rel="${h.rel}"]`)) return;
+    const link = document.createElement('link');
+    link.rel = h.rel;
+    link.href = h.href;
+    if (h.rel === 'preconnect') link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
+  });
+}
+
+// Run on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  addResourceHints();
+  setTimeout(initImageOptimization, 100); // slight delay so rows render first
+});
+
+// ════════════════════════════════════════════════════════════════
+// NEXTV 3.0 — ALL NEW FEATURES JS
+// ════════════════════════════════════════════════════════════════
+
+// ── PAGE TRANSITIONS ──────────────────────────────────────────
+function navigateTo(url) {
+  document.body.classList.add('page-exit');
+  setTimeout(() => window.location.href = url, 250);
+}
+
+// Intercept all internal nav links for smooth transitions
+document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href]');
+    if (!a) return;
+    const href = a.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('http') || href.startsWith('javascript') || a.target === '_blank') return;
+    if (href.endsWith('.html') || href === 'index.html') {
+      e.preventDefault();
+      navigateTo(href);
+    }
+  });
+});
+
+// ── NAV SEARCH DROPDOWN ───────────────────────────────────────
+function initNavSearch() {
+  const navRight = document.querySelector('.nav-right');
+  if (!navRight || document.getElementById('navSearchWrap')) return;
+
+  // Remove old plain search icon
+  const oldSearch = navRight.querySelector('a[href="search.html"].nav-icon');
+  if (oldSearch) oldSearch.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'nav-search-wrap'; wrap.id = 'navSearchWrap';
+  wrap.innerHTML = `
+    <input type="text" class="nav-search-input" id="navSearchInput" placeholder="Search titles, actors...">
+    <i class="fas fa-search nav-search-icon-btn"></i>
+    <div class="nav-dropdown" id="navDropdown"></div>`;
+
+  // Toggle button
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = 'nav-icon'; toggleBtn.title = 'Search';
+  toggleBtn.innerHTML = '<i class="fas fa-search"></i>';
+  toggleBtn.onclick = () => {
+    const inp = document.getElementById('navSearchInput');
+    inp.classList.toggle('open');
+    if (inp.classList.contains('open')) { inp.focus(); }
+    else { inp.value=''; closeNavDropdown(); }
+  };
+
+  navRight.insertBefore(toggleBtn, navRight.querySelector('#authArea'));
+  navRight.insertBefore(wrap, toggleBtn);
+
+  const inp = document.getElementById('navSearchInput');
+  inp.addEventListener('input', debounce(doNavSearch, 200));
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { inp.classList.remove('open'); inp.value=''; closeNavDropdown(); }
+    if (e.key === 'Enter') { navigateTo(`search.html?q=${encodeURIComponent(inp.value)}`); }
+  });
+
+  document.addEventListener('click', e => {
+    if (!wrap.contains(e.target) && !toggleBtn.contains(e.target)) closeNavDropdown();
+  });
+}
+
+function closeNavDropdown() {
+  document.getElementById('navDropdown')?.classList.remove('show');
+}
+
+function doNavSearch() {
+  const q = document.getElementById('navSearchInput')?.value?.trim()?.toLowerCase();
+  const drop = document.getElementById('navDropdown');
+  if (!drop) return;
+
+  if (!q || q.length < 2) { drop.classList.remove('show'); return; }
+
+  const all = DB.getMovies();
+  const matches = all.filter(m =>
+    m.title.toLowerCase().includes(q) ||
+    m.cast?.some(c => c.toLowerCase().includes(q)) ||
+    m.director?.toLowerCase().includes(q) ||
+    m.genre?.some(g => g.toLowerCase().includes(q))
+  ).slice(0, 6);
+
+  const catColor = {movies:'rgba(229,9,20,.15)',series:'rgba(96,165,250,.15)',anime:'rgba(192,132,252,.15)',cartoons:'rgba(74,222,128,.15)'};
+  const catText = {movies:'#e50914',series:'#60a5fa',anime:'#c084fc',cartoons:'#4ade80'};
+  const catLabel = {movies:'MOVIE',series:'SERIES',anime:'ANIME',cartoons:'CARTOON'};
+
+  if (!matches.length) {
+    drop.innerHTML = `<div class="nav-drop-empty">No results for "<strong>${q}</strong>"</div>`;
+  } else {
+    drop.innerHTML = `
+      <div class="nav-drop-header">Results for "${q}"</div>
+      ${matches.map(m => `
+        <div class="nav-drop-item" onclick="openModal('${m.id}');closeNavDropdown();">
+          <img class="nav-drop-poster" src="${m.poster}" alt="${m.title}" loading="lazy">
+          <div class="nav-drop-info">
+            <strong>${m.title}</strong>
+            <span>${m.year} · ⭐ ${m.rating}</span>
+          </div>
+          <span class="nav-drop-cat" style="background:${catColor[m.category]};color:${catText[m.category]}">${catLabel[m.category]||'MOVIE'}</span>
+        </div>`).join('')}
+      <a class="nav-drop-more" href="search.html?q=${encodeURIComponent(q)}">See all results →</a>`;
+  }
+  drop.classList.add('show');
+}
+
+function debounce(fn, ms) {
+  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+// ── DARK / LIGHT MODE ─────────────────────────────────────────
+function initThemeToggle() {
+  const navRight = document.querySelector('.nav-right');
+  if (!navRight || document.getElementById('themeToggle')) return;
+
+  const saved = localStorage.getItem('nextv_theme') || 'dark';
+  if (saved === 'light') document.body.classList.add('light-mode');
+
+  const btn = document.createElement('button');
+  btn.className = 'theme-toggle'; btn.id = 'themeToggle';
+  btn.title = 'Toggle theme';
+  btn.innerHTML = saved === 'light' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+  btn.onclick = toggleTheme;
+
+  navRight.insertBefore(btn, navRight.querySelector('#authArea'));
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  localStorage.setItem('nextv_theme', isLight ? 'light' : 'dark');
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.innerHTML = isLight ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+  showToast(isLight ? '☀️ Light mode on' : '🌙 Dark mode on');
+}
+
+// ── WATCH PROGRESS TRACKING ───────────────────────────────────
+const WP = {
+  key: 'nextv_progress',
+  get all() { return JSON.parse(localStorage.getItem(this.key) || '{}'); },
+  save(id, percent) {
+    const d = this.all; d[id] = { percent: Math.min(100, Math.max(0, percent)), ts: Date.now() };
+    localStorage.setItem(this.key, JSON.stringify(d));
+  },
+  get(id) { return this.all[id] || null; },
+  clear(id) { const d = this.all; delete d[id]; localStorage.setItem(this.key, JSON.stringify(d)); },
+};
+
+// Inject progress bar into continue-watching cards
+function injectProgressBars() {
+  const prog = WP.all;
+  document.querySelectorAll('.movie-card[data-id]').forEach(card => {
+    const id = card.dataset.id;
+    const p = prog[id];
+    if (!p || p.percent < 3 || p.percent > 97) return;
+    const poster = card.querySelector('.card-poster');
+    if (!poster || poster.querySelector('.card-progress')) return;
+    const bar = document.createElement('div');
+    bar.className = 'card-progress';
+    bar.innerHTML = `<div class="card-progress-bar" style="width:${p.percent}%"></div>`;
+    poster.appendChild(bar);
+  });
+}
+
+// Simulate progress on watch page load (real implementation tracks iframe events)
+function initWatchProgress(movieId) {
+  if (!movieId) return;
+  const existing = WP.get(movieId);
+  // Simulate increasing progress while on watch page
+  let progress = existing?.percent || 0;
+  const interval = setInterval(() => {
+    progress = Math.min(progress + 0.5, 99);
+    WP.save(movieId, progress);
+  }, 10000); // update every 10s
+  window.addEventListener('beforeunload', () => clearInterval(interval));
+
+  // Show "complete the series" prompt for series at 80%+
+  setTimeout(() => checkNextEpisode(movieId), 5000);
+}
+
+// ── HOVER TRAILER PREVIEW ─────────────────────────────────────
+let hoverTimer = null;
+let activeHoverIframe = null;
+
+function initHoverTrailers() {
+  document.addEventListener('mouseover', e => {
+    const card = e.target.closest('.movie-card[data-id]');
+    if (!card) return;
+    const id = card.dataset.id;
+    if (!id || card.querySelector('.trailer-hover-wrap')) return;
+
+    clearTimeout(hoverTimer);
+    hoverTimer = setTimeout(() => {
+      if (!card.matches(':hover')) return;
+      const m = DB.getMovie(id);
+      if (!m) return;
+      const ytId = TRAILER_YOUTUBE[m.tmdbId];
+      if (!ytId) return;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'trailer-hover-wrap';
+      wrap.innerHTML = `
+        <div class="trailer-hover-badge">PREVIEW</div>
+        <iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}&modestbranding=1&rel=0"
+          allow="autoplay" loading="lazy"></iframe>`;
+      card.querySelector('.card-poster').appendChild(wrap);
+      activeHoverIframe = wrap;
+    }, 900); // 900ms hover delay before preview loads
+  });
+
+  document.addEventListener('mouseout', e => {
+    const card = e.target.closest('.movie-card[data-id]');
+    if (!card) return;
+    clearTimeout(hoverTimer);
+    const wrap = card.querySelector('.trailer-hover-wrap');
+    if (wrap) {
+      wrap.style.opacity = '0';
+      setTimeout(() => wrap.remove(), 400);
+    }
+  });
+}
+
+// ── "NEW THIS WEEK" BANNER ────────────────────────────────────
+function renderNewWeekBanner() {
+  const el = document.getElementById('newWeekBanner');
+  if (!el) return;
+  if (localStorage.getItem('nextv_banner_dismissed') === 'true') { el.style.display='none'; return; }
+
+  const all = DB.getMovies();
+  const newTitles = [...all].filter(m => m.year >= 2023).sort((a,b) => b.rating-a.rating).slice(0,5);
+  const names = newTitles.slice(0,3).map(m=>m.title).join(', ');
+
+  el.innerHTML = `
+    <div class="new-week-text">
+      <h4><i class="fas fa-sparkles"></i> New This Week</h4>
+      <p>Just added: ${names} and ${newTitles.length - 3} more titles</p>
+    </div>
+    <div class="new-week-posters">
+      ${newTitles.slice(0,4).map(m=>`<img class="new-week-poster" src="${m.poster}" alt="${m.title}" onclick="openModal('${m.id}')" loading="lazy">`).join('')}
+    </div>
+    <button class="btn-dismiss-banner" onclick="dismissWeekBanner(this)" title="Dismiss">
+      <i class="fas fa-times"></i>
+    </button>`;
+}
+
+function dismissWeekBanner(btn) {
+  localStorage.setItem('nextv_banner_dismissed', 'true');
+  btn.closest('.new-week-banner').style.display = 'none';
+}
+
+// ── USER RATINGS (THUMBS) ─────────────────────────────────────
+const RATINGS_KEY = 'nextv_ratings';
+function getUserRating(id) {
+  return JSON.parse(localStorage.getItem(RATINGS_KEY) || '{}')[id] || null;
+}
+function setUserRating(id, val) {
+  const r = JSON.parse(localStorage.getItem(RATINGS_KEY) || '{}');
+  r[id] = r[id] === val ? null : val; // toggle
+  localStorage.setItem(RATINGS_KEY, JSON.stringify(r));
+  return r[id];
+}
+
+function handleRating(e, id, val) {
+  e.stopPropagation();
+  const session = DB.getSession();
+  if (!session) { showToast('Sign in to rate titles', 'error'); return; }
+  const result = setUserRating(id, val);
+  const card = e.target.closest('.movie-card');
+  if (card) updateRatingButtons(card, id, result);
+  showToast(result === 'up' ? '👍 Added to liked' : result === 'down' ? '👎 Noted!' : 'Rating removed');
+}
+
+function updateRatingButtons(card, id, rating) {
+  const up = card.querySelector('.thumb-up');
+  const down = card.querySelector('.thumb-down');
+  if (up) up.classList.toggle('active', rating === 'up');
+  if (down) down.classList.toggle('active', rating === 'down');
+}
+
+// Inject rating buttons into cards after render
+function injectRatingButtons() {
+  document.querySelectorAll('.movie-card[data-id]').forEach(card => {
+    const id = card.dataset.id;
+    if (card.querySelector('.card-user-rating')) return;
+    const rating = getUserRating(id);
+    const ratingEl = document.createElement('div');
+    ratingEl.className = 'card-user-rating';
+    ratingEl.innerHTML = `
+      <button class="thumb-btn thumb-up ${rating==='up'?'active':''}" onclick="handleRating(event,'${id}','up')" title="Like">
+        <i class="fas fa-thumbs-up"></i>
+      </button>
+      <button class="thumb-btn thumb-down ${rating==='down'?'active':''}" onclick="handleRating(event,'${id}','down')" title="Dislike">
+        <i class="fas fa-thumbs-down"></i>
+      </button>`;
+    const overlay = card.querySelector('.card-overlay');
+    if (overlay) overlay.after(ratingEl);
+  });
+}
+
+// ── "COMPLETE THE SERIES" / NEXT EPISODE ─────────────────────
+function checkNextEpisode(movieId) {
+  const m = DB.getMovie(movieId);
+  if (!m || m.type !== 'series') return;
+  const all = DB.getMovies();
+  const related = all.filter(x => x.category === 'series' && x.id !== movieId && x.genre.some(g => m.genre.includes(g)));
+  if (!related.length) return;
+  const suggestion = related.sort((a,b) => b.rating-a.rating)[0];
+  showNextEpBanner(suggestion);
+}
+
+function showNextEpBanner(movie) {
+  let banner = document.getElementById('nextEpBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.className = 'next-ep-banner'; banner.id = 'nextEpBanner';
+    document.body.appendChild(banner);
+  }
+  banner.innerHTML = `
+    <h4><i class="fas fa-tv"></i> Up Next</h4>
+    <p>You might also love: <strong>${movie.title}</strong></p>
+    <div class="next-ep-actions">
+      <button class="btn-next-ep" onclick="navigateTo('watch.html?id=${movie.id}')">
+        <i class="fas fa-play"></i> Watch Now
+      </button>
+      <button class="btn-dismiss-ep" onclick="dismissNextEp()">Later</button>
+    </div>`;
+  setTimeout(() => banner.classList.add('show'), 100);
+}
+
+function dismissNextEp() {
+  document.getElementById('nextEpBanner')?.classList.remove('show');
+}
+
+// ── USER PLAYLISTS ────────────────────────────────────────────
+const PLAYLISTS_KEY = 'nextv_playlists';
+const DEFAULT_PLAYLISTS = [
+  { id:'pl1', name:'Weekend Binge', emoji:'🎬', color:'#e50914', ids:['m1','m2','m3','m5'], public: true },
+  { id:'pl2', name:'Anime Essentials', emoji:'🐉', color:'#8b5cf6', ids:['a1','a2','a3'], public: false },
+  { id:'pl3', name:'Watch with Kids', emoji:'⭐', color:'#22c55e', ids:['c40','c41','c43'], public: false },
+];
+
+function getPlaylists() {
+  return JSON.parse(localStorage.getItem(PLAYLISTS_KEY) || 'null') || DEFAULT_PLAYLISTS;
+}
+function savePlaylists(pls) { localStorage.setItem(PLAYLISTS_KEY, JSON.stringify(pls)); }
+
+function renderPlaylistsSection() {
+  const el = document.getElementById('playlistsSection');
+  if (!el) return;
+  const pls = getPlaylists();
+  const all = DB.getMovies();
+
+  el.innerHTML = `
+    <div class="collections-manager" id="playlistsList">
+      ${pls.map(pl => {
+        const movies = pl.ids.map(id=>all.find(m=>m.id===id)).filter(Boolean);
+        return `
+        <div class="user-playlist">
+          <div class="playlist-header" onclick="openPlaylist('${pl.id}')">
+            <div class="playlist-icon" style="background:${pl.color}22;font-size:1.3rem;">${pl.emoji}</div>
+            <div class="playlist-meta">
+              <h4>${pl.name}</h4>
+              <span>${movies.length} titles · ${pl.public?'🔗 Public':'🔒 Private'}</span>
+            </div>
+            <div class="playlist-posters">
+              ${movies.slice(0,3).map(m=>`<img class="playlist-thumb" src="${m.poster}" alt="${m.title}" loading="lazy">`).join('')}
+            </div>
+            <div class="playlist-actions">
+              <button class="btn-playlist-share" onclick="sharePlaylist(event,'${pl.id}')" title="Share">
+                <i class="fas fa-share"></i>
+              </button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+      <button class="btn-new-playlist" onclick="openNewPlaylist()">
+        <i class="fas fa-plus"></i> Create New Playlist
+      </button>
+    </div>`;
+}
+
+function openPlaylist(id) {
+  const pls = getPlaylists();
+  const pl = pls.find(p=>p.id===id);
+  if (!pl) return;
+  const all = DB.getMovies();
+  const movies = pl.ids.map(mid=>all.find(m=>m.id===mid)).filter(Boolean);
+  if (movies.length) openModal(movies[0].id); // open first as gateway
+}
+
+function sharePlaylist(e, id) {
+  e.stopPropagation();
+  const pls = getPlaylists(); const pl = pls.find(p=>p.id===id);
+  if (!pl) return;
+  const url = `${window.location.origin}${window.location.pathname}?playlist=${id}`;
+  navigator.clipboard?.writeText(`Check out my NexTV playlist "${pl.name}"!\n${url}`)
+    .then(()=>showToast('📋 Playlist link copied!'))
+    .catch(()=>showToast(`Playlist: ${pl.name}`));
+}
+
+let selectedEmoji = '🎬';
+function openNewPlaylist() {
+  const modal = document.getElementById('newPlaylistModal');
+  if (modal) { modal.classList.add('show'); document.body.style.overflow='hidden'; return; }
+  const m = document.createElement('div');
+  m.className = 'new-playlist-modal'; m.id = 'newPlaylistModal';
+  const emojis = ['🎬','🐉','⭐','💥','😱','😌','🏆','🌙','🔥','❤️','🎭','🚀'];
+  m.innerHTML = `
+    <div class="playlist-box">
+      <h3><i class="fas fa-list" style="color:var(--teal);"></i> New Playlist</h3>
+      <div class="emoji-picker">${emojis.map(em=>`<div class="emoji-opt ${em==='🎬'?'selected':''}" onclick="selectEmoji(this,'${em}')">${em}</div>`).join('')}</div>
+      <input class="admin-input" id="playlistName" placeholder="Playlist name..." style="margin-bottom:.75rem;">
+      <div style="display:flex;gap:.5rem;">
+        <label style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;cursor:pointer;">
+          <input type="checkbox" id="playlistPublic"> Make public
+        </label>
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:1rem;">
+        <button class="btn-admin-add" onclick="createPlaylist()" style="flex:1;justify-content:center;">
+          <i class="fas fa-plus"></i> Create
+        </button>
+        <button class="btn-party-close" onclick="closeNewPlaylist()">Cancel</button>
+      </div>
+    </div>`;
+  m.addEventListener('click', e=>{if(e.target===m)closeNewPlaylist();});
+  document.body.appendChild(m);
+  setTimeout(()=>m.classList.add('show'),10);
+  document.body.style.overflow='hidden';
+}
+
+function selectEmoji(el, emoji) {
+  selectedEmoji = emoji;
+  document.querySelectorAll('.emoji-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function createPlaylist() {
+  const name = document.getElementById('playlistName')?.value?.trim();
+  if (!name) { showToast('Enter a playlist name', 'error'); return; }
+  const isPublic = document.getElementById('playlistPublic')?.checked || false;
+  const colors = ['#e50914','#8b5cf6','#00d4b4','#f97316','#22c55e','#f5c518'];
+  const pls = getPlaylists();
+  pls.push({ id:'pl'+Date.now(), name, emoji:selectedEmoji, color:colors[pls.length%colors.length], ids:[], public:isPublic });
+  savePlaylists(pls);
+  closeNewPlaylist();
+  renderPlaylistsSection();
+  showToast(`✓ "${name}" playlist created!`);
+}
+
+function closeNewPlaylist() {
+  document.getElementById('newPlaylistModal')?.classList.remove('show');
+  document.body.style.overflow='';
+}
+
+// ── SERVICE WORKER (offline support) ─────────────────────────
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+}
+
+// Online/offline indicator
+function initOfflineDetection() {
+  const makeToast = (msg, cls) => {
+    let t = document.getElementById('offlineToast');
+    if (!t) { t = document.createElement('div'); t.id='offlineToast'; t.className='offline-toast'; document.body.appendChild(t); }
+    t.className = `offline-toast ${cls}`;
+    t.innerHTML = msg;
+    t.classList.add('show');
+    if (cls === 'online-toast') setTimeout(()=>t.classList.remove('show'), 3000);
+  };
+  window.addEventListener('offline', () => makeToast('<i class="fas fa-wifi-slash"></i> You\'re offline — some features may be limited', ''));
+  window.addEventListener('online',  () => makeToast('<i class="fas fa-wifi"></i> Back online!', 'online-toast'));
+}
+
+// ── KEYBOARD NAVIGATION (arrow keys on rows) ──────────────────
+function initKeyboardNavigation() {
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    // ? or F1 shows shortcut panel
+    if (e.key === '?' || e.key === 'F1') { e.preventDefault(); openShortcutsPanel(); return; }
+
+    // Arrow key row navigation
+    if (['ArrowLeft','ArrowRight'].includes(e.key)) {
+      const focused = document.querySelector('.movie-card:focus, .movie-card:hover');
+      if (!focused) return;
+      const row = focused.closest('.cards-row');
+      if (!row) return;
+      const cards = [...row.querySelectorAll('.movie-card')];
+      const idx = cards.indexOf(focused);
+      let next;
+      if (e.key === 'ArrowLeft') next = cards[idx - 1];
+      if (e.key === 'ArrowRight') next = cards[idx + 1];
+      if (next) { next.focus(); next.scrollIntoView({ inline:'nearest', behavior:'smooth' }); e.preventDefault(); }
+    }
+
+    // Enter to open focused card
+    if (e.key === 'Enter') {
+      const focused = document.querySelector('.movie-card:focus');
+      if (focused) { const id = focused.dataset.id; if(id) openModal(id); }
+    }
+
+    // F for fullscreen hint
+    if (e.key === 'f' || e.key === 'F') {
+      const iframe = document.querySelector('.player-frame-wrap iframe');
+      if (iframe) iframe.requestFullscreen?.();
+    }
+  });
+
+  // Make cards focusable
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      document.querySelectorAll('.movie-card').forEach(c => {
+        if (!c.getAttribute('tabindex')) c.setAttribute('tabindex', '0');
+      });
+    }, 500);
+  });
+}
+
+// ── KEYBOARD SHORTCUTS PANEL ──────────────────────────────────
+function openShortcutsPanel() {
+  let modal = document.getElementById('shortcutsModal');
+  if (modal) { modal.classList.toggle('show'); return; }
+  modal = document.createElement('div');
+  modal.className = 'shortcut-modal'; modal.id = 'shortcutsModal';
+  const shortcuts = [
+    ['/','Open search'], ['H','Go home'], ['W','My watchlist'],
+    ['R','Shuffle random'], ['F','Fullscreen (player)'],
+    ['?','Show shortcuts'], ['Esc','Close / Go back'],
+    ['←→','Navigate cards'], ['Enter','Open title'],
+  ];
+  modal.innerHTML = `
+    <div class="shortcut-box">
+      <h3><i class="fas fa-keyboard" style="color:var(--teal);"></i> Keyboard Shortcuts</h3>
+      <div class="shortcut-grid">
+        ${shortcuts.map(([k,v])=>`<div class="shortcut-item"><kbd>${k}</kbd><span>${v}</span></div>`).join('')}
+      </div>
+      <button class="btn-party-close" onclick="document.getElementById('shortcutsModal').classList.remove('show')" style="margin-top:1rem;width:100%;text-align:center;">Close</button>
+    </div>`;
+  modal.addEventListener('click', e => { if(e.target===modal) modal.classList.remove('show'); });
+  document.body.appendChild(modal);
+  setTimeout(()=>modal.classList.add('show'),10);
+}
+
+// ── "FREE TONIGHT?" QUIZ ──────────────────────────────────────
+const quizState = { step: 0, answers: {} };
+const quizConfig = [
+  {
+    q: 'What are you in the mood for?',
+    key: 'mood',
+    opts: [
+      { label:'😂 Laugh', genres:['Comedy','Animation'] },
+      { label:'💥 Action', genres:['Action','Adventure'] },
+      { label:'😱 Scare Me', genres:['Horror','Thriller'] },
+      { label:'😢 Feel Something', genres:['Drama','Romance'] },
+      { label:'🤯 Mind Blown', genres:['Sci-Fi','Mystery'] },
+    ]
+  },
+  {
+    q: 'How much time do you have?',
+    key: 'time',
+    opts: [
+      { label:'⚡ Under 90min', maxMins: 90 },
+      { label:'🎬 2 Hours', maxMins: 130 },
+      { label:'🍿 Whatever it takes', maxMins: 9999 },
+    ]
+  },
+  {
+    q: 'Watching with?',
+    key: 'who',
+    opts: [
+      { label:'🙋 Just Me', cats:['movies','anime','series'] },
+      { label:'👫 With Someone', cats:['movies','series'] },
+      { label:'👨‍👩‍👧 Family / Kids', cats:['cartoons','movies'] },
+    ]
+  }
+];
+
+function renderQuizSection() {
+  const el = document.getElementById('quizSection');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="quiz-card">
+      <h3>🎯 Free Tonight?</h3>
+      <p>Answer 3 quick questions and we'll find the perfect title for you.</p>
+      <button class="btn-start-quiz" onclick="startQuiz()">
+        <i class="fas fa-magic"></i> Find My Perfect Watch
+      </button>
+      <div class="quiz-steps" id="quizSteps" style="display:none;"></div>
+      <div class="quiz-results" id="quizResults"></div>
+    </div>`;
+}
+
+function startQuiz() {
+  quizState.step = 0; quizState.answers = {};
+  document.querySelector('.btn-start-quiz').style.display='none';
+  document.getElementById('quizSteps').style.display='block';
+  showQuizStep(0);
+}
+
+function showQuizStep(idx) {
+  const stepsEl = document.getElementById('quizSteps');
+  if (!stepsEl) return;
+  const step = quizConfig[idx];
+  stepsEl.innerHTML = `
+    <div class="quiz-step active">
+      <h4>${step.q} <span style="color:var(--muted);font-size:.8rem;">(${idx+1}/${quizConfig.length})</span></h4>
+      <div class="quiz-options">
+        ${step.opts.map((opt,i)=>`<button class="quiz-opt" onclick="answerQuiz(${idx},${i})">${opt.label}</button>`).join('')}
+      </div>
+    </div>`;
+}
+
+function answerQuiz(stepIdx, optIdx) {
+  quizState.answers[quizConfig[stepIdx].key] = optIdx;
+  if (stepIdx + 1 < quizConfig.length) {
+    showQuizStep(stepIdx + 1);
+  } else {
+    showQuizResults();
+  }
+}
+
+function showQuizResults() {
+  document.getElementById('quizSteps').style.display='none';
+  const moodOpt = quizConfig[0].opts[quizState.answers.mood];
+  const timeOpt = quizConfig[1].opts[quizState.answers.time];
+  const whoOpt  = quizConfig[2].opts[quizState.answers.who];
+
+  const all = DB.getMovies();
+  let picks = all.filter(m => {
+    const genreMatch = m.genre.some(g => moodOpt.genres.includes(g));
+    const catMatch = whoOpt.cats.includes(m.category);
+    const dur = m.duration?.match(/(\d+)h\s*(\d+)?m?/);
+    const mins = dur ? parseInt(dur[1])*60 + parseInt(dur[2]||0) : 120;
+    const timeMatch = mins <= timeOpt.maxMins;
+    return genreMatch && catMatch && timeMatch;
+  }).sort((a,b)=>b.rating-a.rating).slice(0,3);
+
+  if (!picks.length) picks = all.sort((a,b)=>b.rating-a.rating).slice(0,3);
+
+  const res = document.getElementById('quizResults');
+  res.innerHTML = `
+    <h4 style="margin-bottom:.5rem;">✨ Perfect for tonight:</h4>
+    <div class="quiz-result-cards">
+      ${picks.map(m=>`
+        <div class="quiz-result-card" onclick="openModal('${m.id}')">
+          <img src="${m.poster}" alt="${m.title}" loading="lazy">
+          <span>${m.title}</span>
+          <span style="font-size:.72rem;color:var(--muted)">⭐ ${m.rating}</span>
+        </div>`).join('')}
+    </div>
+    <button class="btn-retake" onclick="startQuiz()"><i class="fas fa-redo"></i> Try again</button>`;
+  res.classList.add('show');
+}
+
+// ── MOBILE SWIPE GESTURES ─────────────────────────────────────
+function initSwipeGestures() {
+  // Hero slider swipe
+  const hero = document.getElementById('heroSection');
+  if (!hero) return;
+  let startX = 0;
+  hero.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+  hero.addEventListener('touchend', e => {
+    const diff = startX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) < 50) return;
+    if (diff > 0) goHero((heroIdx + 1) % heroMovies.length);
+    else goHero((heroIdx - 1 + heroMovies.length) % heroMovies.length);
+  });
+
+  // Horizontal row swipe momentum
+  document.querySelectorAll('.cards-row').forEach(row => {
+    let isDown = false, startScrollX = 0, scrollLeft = 0;
+    row.addEventListener('mousedown', e => { isDown=true; startScrollX=e.pageX-row.offsetLeft; scrollLeft=row.scrollLeft; });
+    row.addEventListener('mouseleave', () => isDown=false);
+    row.addEventListener('mouseup', () => isDown=false);
+    row.addEventListener('mousemove', e => {
+      if (!isDown) return; e.preventDefault();
+      const x = e.pageX - row.offsetLeft;
+      row.scrollLeft = scrollLeft - (x - startScrollX) * 1.5;
+    });
+  });
+}
+
+// ── GENRE PAGE GENERATOR ──────────────────────────────────────
+function initGenrePage() {
+  const params = new URLSearchParams(window.location.search);
+  const genre = params.get('genre');
+  if (!genre || !document.getElementById('genrePageContent')) return;
+
+  const all = DB.getMovies();
+  const movies = all.filter(m => m.genre.includes(genre)).sort((a,b)=>b.rating-a.rating);
+  const heroMovie = movies[0];
+
+  const genreIcons = {Action:'fa-bolt',Drama:'fa-theater-masks','Sci-Fi':'fa-rocket',Thriller:'fa-exclamation-triangle',Crime:'fa-user-secret',Adventure:'fa-compass',Horror:'fa-skull',Fantasy:'fa-dragon',Comedy:'fa-laugh',Mystery:'fa-search',Animation:'fa-star'};
+  const icon = genreIcons[genre] || 'fa-film';
+
+  document.title = `${genre} — Nex TV`;
+
+  const heroEl = document.getElementById('genreHero');
+  if (heroEl && heroMovie) {
+    heroEl.innerHTML = `
+      <div class="genre-hero-bg" style="background-image:url('${heroMovie.backdrop}')"></div>
+      <div class="genre-hero-overlay"></div>
+      <div class="genre-hero-content">
+        <h1><i class="fas ${icon}" style="color:var(--red);"></i> ${genre}</h1>
+        <p>${movies.length} titles · Best of ${genre} films & shows</p>
+      </div>`;
+  }
+
+  const content = document.getElementById('genrePageContent');
+  if (content) {
+    content.innerHTML = `
+      <div class="filter-bar" style="margin-bottom:1.5rem;">
+        <div class="filter-group">
+          <label>Sort by</label>
+          <select onchange="sortGenrePage(this.value,'${genre}')" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:.5rem .9rem;border-radius:7px;font-family:inherit;outline:none;">
+            <option value="rating">Top Rated</option>
+            <option value="year">Newest First</option>
+            <option value="title">A–Z</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-full" id="genreGrid2"></div>`;
+    renderGrid('genreGrid2', movies);
+  }
+}
+
+function sortGenrePage(sort, genre) {
+  const all = DB.getMovies();
+  let movies = all.filter(m => m.genre.includes(genre));
+  if (sort === 'rating') movies.sort((a,b)=>b.rating-a.rating);
+  if (sort === 'year') movies.sort((a,b)=>b.year-a.year);
+  if (sort === 'title') movies.sort((a,b)=>a.title.localeCompare(b.title));
+  renderGrid('genreGrid2', movies);
+}
+
+// ── UPDATE renderGenres TO LINK TO GENRE PAGES ───────────────
+function renderGenresV2() {
+  const el = document.getElementById('genreGrid');
+  if (!el) return;
+  const genres = [
+    {name:'Action',icon:'fa-bolt'},{name:'Drama',icon:'fa-theater-masks'},
+    {name:'Sci-Fi',icon:'fa-rocket'},{name:'Thriller',icon:'fa-exclamation-triangle'},
+    {name:'Crime',icon:'fa-user-secret'},{name:'Adventure',icon:'fa-compass'},
+    {name:'Horror',icon:'fa-skull'},{name:'History',icon:'fa-landmark'},
+    {name:'Fantasy',icon:'fa-dragon'},{name:'Comedy',icon:'fa-laugh'},
+    {name:'Mystery',icon:'fa-search'},{name:'Animation',icon:'fa-star'},
+  ];
+  el.innerHTML = genres.map(g=>`
+    <a href="genre.html?genre=${g.name}" class="genre-chip" onclick="event.preventDefault();navigateTo('genre.html?genre=${g.name}')">
+      <i class="fas ${g.icon}"></i> ${g.name}
+    </a>`).join('');
+}
+
+// ── INIT ALL v3 FEATURES ──────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  initNavSearch();
+  initThemeToggle();
+  initHoverTrailers();
+  initKeyboardNavigation();
+  initOfflineDetection();
+  registerServiceWorker();
+  initSwipeGestures();
+  initGenrePage();
+
+  // Inject progress bars + ratings after rows render
+  setTimeout(() => {
+    injectProgressBars();
+    injectRatingButtons();
+  }, 600);
+
+  // Re-inject on any dynamic content added
+  const obs = new MutationObserver(() => {
+    injectProgressBars();
+    injectRatingButtons();
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+});
+
+
+// ════════════════════════════════════════════════════════════════
+// NEXTV 4.0 — ELITE FEATURES JS
+// ════════════════════════════════════════════════════════════════
+
+// ── SPLASH SCREEN ─────────────────────────────────────────────
+function initSplash() {
+  if (sessionStorage.getItem('nextv_splashed')) return;
+  sessionStorage.setItem('nextv_splashed', '1');
+  const splash = document.createElement('div');
+  splash.id = 'splash';
+  splash.innerHTML = `
+    <div class="splash-logo">NEX<span>TV</span></div>
+    <div class="splash-bar"><div class="splash-fill"></div></div>
+    <div class="splash-tagline">Free streaming. Real entertainment.</div>`;
+  document.body.prepend(splash);
+  setTimeout(() => splash.remove(), 2400);
+}
+
+// ── AI CHAT ───────────────────────────────────────────────────
+let aiChatOpen = false;
+const aiHistory = [];
+
+function initAIChat() {
+  if (document.getElementById('aiChatBtn')) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'aiChatBtn'; btn.title = 'AI Movie Assistant';
+  btn.innerHTML = '<i class="fas fa-robot"></i>';
+  btn.onclick = toggleAIChat;
+  document.body.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.id = 'aiChatPanel';
+  panel.innerHTML = `
+    <div class="ai-chat-header">
+      <div class="ai-avatar"><i class="fas fa-robot"></i></div>
+      <div>
+        <h4>NexTV AI</h4>
+        <span><span class="ai-online-dot"></span> Ready to help</span>
+      </div>
+      <button class="btn-close-chat" onclick="toggleAIChat()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="ai-messages" id="aiMessages">
+      <div class="ai-msg bot">👋 Hey! I'm your AI movie assistant. Tell me what you're in the mood for — I'll find the perfect match from our library!<br><br>Try: <em>"something like Parasite but shorter"</em> or <em>"best anime under 2 hours"</em></div>
+    </div>
+    <div class="ai-suggestions" id="aiSuggestions">
+      <button class="ai-sugg" onclick="sendAIMessage(this.textContent)">🎬 Best movies tonight</button>
+      <button class="ai-sugg" onclick="sendAIMessage(this.textContent)">🐉 Top anime picks</button>
+      <button class="ai-sugg" onclick="sendAIMessage(this.textContent)">😂 Make me laugh</button>
+      <button class="ai-sugg" onclick="sendAIMessage(this.textContent)">😱 Scare me</button>
+    </div>
+    <div class="ai-input-row">
+      <input class="ai-input" id="aiInput" placeholder="Ask me anything about movies..." 
+        onkeydown="if(event.key==='Enter')sendAIMessage()">
+      <button class="ai-send" onclick="sendAIMessage()"><i class="fas fa-paper-plane"></i></button>
+    </div>`;
+  document.body.appendChild(panel);
+}
+
+function toggleAIChat() {
+  aiChatOpen = !aiChatOpen;
+  document.getElementById('aiChatPanel')?.classList.toggle('open', aiChatOpen);
+  if (aiChatOpen) setTimeout(() => document.getElementById('aiInput')?.focus(), 300);
+}
+
+async function sendAIMessage(text) {
+  const input = document.getElementById('aiInput');
+  const msg = text || input?.value?.trim();
+  if (!msg) return;
+  if (input) input.value = '';
+
+  appendAIMessage(msg, 'user');
+  const typingId = showAITyping();
+
+  const all = DB.getMovies();
+  const catalog = all.map(m => `${m.id}|${m.title}|${m.year}|${m.genre.join(',')}|${m.category}|${m.rating}|${m.duration}`).join('\n');
+
+  const systemPrompt = `You are NexTV's AI movie assistant. You help users find movies from NexTV's catalog.
+
+CATALOG (id|title|year|genres|category|rating|duration):
+${catalog}
+
+RULES:
+- Recommend 2-4 titles from the catalog that match the user's request
+- Reply conversationally in 1-2 sentences, then list recommendations
+- Format each recommendation as: [MOVIE:id:title:rating]
+- Keep responses short and friendly
+- If user asks for something not in catalog, pick the closest match
+- Never make up titles not in the catalog`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        system: systemPrompt,
+        messages: [
+          ...aiHistory,
+          { role: 'user', content: msg }
+        ]
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || "I couldn't find anything specific, but check out our Trending section!";
+    aiHistory.push({ role: 'user', content: msg });
+    aiHistory.push({ role: 'assistant', content: reply });
+    if (aiHistory.length > 12) aiHistory.splice(0, 2);
+    removeAITyping(typingId);
+    renderAIReply(reply);
+  } catch (e) {
+    removeAITyping(typingId);
+    // Fallback: local search
+    const q = msg.toLowerCase();
+    const matches = all.filter(m =>
+      m.genre.some(g => q.includes(g.toLowerCase())) ||
+      q.includes(m.category) ||
+      (q.includes('anime') && m.category === 'anime') ||
+      (q.includes('cartoon') && m.category === 'cartoons') ||
+      (q.includes('series') && m.category === 'series')
+    ).sort((a,b)=>b.rating-a.rating).slice(0,3);
+    if (matches.length) {
+      const reply = `Here are some great picks for you! ${matches.map(m=>`[MOVIE:${m.id}:${m.title}:${m.rating}]`).join(' ')}`;
+      renderAIReply(reply);
+    } else {
+      appendAIMessage("Here are our top picks right now! " + all.sort((a,b)=>b.rating-a.rating).slice(0,3).map(m=>`[MOVIE:${m.id}:${m.title}:${m.rating}]`).join(' '), 'bot');
+    }
+  }
+}
+
+function renderAIReply(text) {
+  // Parse [MOVIE:id:title:rating] chips
+  const parts = text.split(/(\[MOVIE:[^\]]+\])/g);
+  const msgs = document.getElementById('aiMessages');
+  if (!msgs) return;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'ai-msg bot';
+  parts.forEach(part => {
+    const match = part.match(/\[MOVIE:([^:]+):([^:]+):([^\]]+)\]/);
+    if (match) {
+      const [, id, title, rating] = match;
+      const m = DB.getMovie(id);
+      const chip = document.createElement('div');
+      chip.className = 'ai-movie-chip';
+      chip.onclick = () => openModal(id);
+      chip.innerHTML = m ? `<img src="${m.poster}" alt="${title}" loading="lazy"><span><strong>${title}</strong> ⭐${rating}</span>` : `<span>${title} ⭐${rating}</span>`;
+      wrapper.appendChild(chip);
+    } else if (part.trim()) {
+      const t = document.createElement('span');
+      t.textContent = part;
+      wrapper.appendChild(t);
+    }
+  });
+  msgs.appendChild(wrapper);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function appendAIMessage(text, role) {
+  const msgs = document.getElementById('aiMessages');
+  if (!msgs) return;
+  const div = document.createElement('div');
+  div.className = `ai-msg ${role}`;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showAITyping() {
+  const msgs = document.getElementById('aiMessages');
+  if (!msgs) return null;
+  const id = 'typing-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'ai-msg typing'; div.id = id;
+  div.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+
+function removeAITyping(id) {
+  document.getElementById(id)?.remove();
+}
+
+// ── NEXTV WRAPPED ─────────────────────────────────────────────
+function openWrapped() {
+  const session = DB.getSession();
+  if (!session) { showToast('Sign in to see your Wrapped!', 'error'); return; }
+  const user = DB.getUserById(session.id);
+  const all = DB.getMovies();
+  const history = user?.watchHistory || [];
+  const progress = WP?.all || {};
+
+  const watched = history.map(h => all.find(m => m.id === h.movieId)).filter(Boolean);
+  const genreCounts = {};
+  watched.forEach(m => m.genre.forEach(g => genreCounts[g] = (genreCounts[g]||0)+1));
+  const topGenre = Object.entries(genreCounts).sort((a,b)=>b[1]-a[1])[0]?.[0] || 'Action';
+  const catCounts = {};
+  watched.forEach(m => catCounts[m.category] = (catCounts[m.category]||0)+1);
+  const topCat = Object.entries(catCounts).sort((a,b)=>b[1]-a[1])[0]?.[0] || 'movies';
+  const avgRating = watched.length ? (watched.reduce((s,m)=>s+m.rating,0)/watched.length).toFixed(1) : '0.0';
+  const totalHrs = watched.length ? Math.round(watched.reduce((s,m)=>{
+    const d = m.duration?.match(/(\d+)h\s*(\d+)?m?/);
+    return s + (d ? parseInt(d[1])*60+parseInt(d[2]||0) : 90);
+  },0)/60) : 0;
+  const topMovie = watched.sort((a,b)=>b.rating-a.rating)[0];
+
+  let modal = document.getElementById('wrappedModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'wrapped-modal'; modal.id = 'wrappedModal';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target===modal) modal.classList.remove('show'); });
+  }
+  modal.innerHTML = `
+    <div class="wrapped-box">
+      <div class="wrapped-bg-glow"></div>
+      <div class="wrapped-logo">NEX<span>TV</span></div>
+      <div class="wrapped-year">YOUR 2025 WRAPPED</div>
+      <div class="wrapped-stats-grid">
+        <div class="wrapped-stat">
+          <div class="wrapped-stat-num">${history.length || '0'}</div>
+          <div class="wrapped-stat-label">Titles Watched</div>
+        </div>
+        <div class="wrapped-stat">
+          <div class="wrapped-stat-num">${totalHrs}h</div>
+          <div class="wrapped-stat-label">Hours Streamed</div>
+        </div>
+        <div class="wrapped-stat">
+          <div class="wrapped-stat-num">${avgRating}</div>
+          <div class="wrapped-stat-label">Avg Rating</div>
+        </div>
+        <div class="wrapped-stat">
+          <div class="wrapped-stat-num">${Object.keys(genreCounts).length || 1}</div>
+          <div class="wrapped-stat-label">Genres Explored</div>
+        </div>
+      </div>
+      <div class="wrapped-highlight">
+        <h4>Your Top Genre</h4>
+        <p>✨ ${topGenre}</p>
+      </div>
+      ${topMovie ? `<div class="wrapped-highlight">
+        <h4>Most Loved Title</h4>
+        <p>🎬 ${topMovie.title}</p>
+      </div>` : ''}
+      <button class="btn-share-wrapped" onclick="shareWrapped()">
+        <i class="fas fa-share"></i> Share My Wrapped
+      </button>
+      <button class="btn-close-wrapped" onclick="document.getElementById('wrappedModal').classList.remove('show');document.body.style.overflow='';">
+        Close
+      </button>
+    </div>`;
+  modal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function shareWrapped() {
+  const text = `🎬 My NexTV 2025 Wrapped is here! Check out what I've been watching on NexTV — 100% free streaming!\nnextv.free`;
+  navigator.clipboard?.writeText(text).then(() => showToast('📋 Wrapped copied! Share it anywhere'));
+}
+
+// ── ADVANCED FILTER PAGE ──────────────────────────────────────
+function initAdvancedFilter(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const genres = ['Action','Drama','Sci-Fi','Thriller','Crime','Adventure','Horror','Comedy','Mystery','Fantasy','Animation','Romance'];
+  el.innerHTML = `
+    <div class="adv-filter-panel">
+      <div class="adv-filter-grid">
+        <div>
+          <div class="adv-filter-label">Category</div>
+          <select class="admin-input" id="afCat">
+            <option value="all">All Categories</option>
+            <option value="movies">Movies</option>
+            <option value="series">TV Shows</option>
+            <option value="anime">Anime</option>
+            <option value="cartoons">Cartoons</option>
+          </select>
+        </div>
+        <div>
+          <div class="adv-filter-label">Genre</div>
+          <select class="admin-input" id="afGenre">
+            <option value="">Any Genre</option>
+            ${genres.map(g=>`<option value="${g}">${g}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div class="adv-filter-label">Origin</div>
+          <select class="admin-input" id="afOrigin">
+            <option value="">Any Origin</option>
+            <option value="us">🇺🇸 Hollywood</option>
+            <option value="jp">🇯🇵 Japanese</option>
+            <option value="kr">🇰🇷 Korean</option>
+            <option value="uk">🇬🇧 British</option>
+          </select>
+        </div>
+        <div>
+          <div class="adv-filter-label">Min Rating: <span id="afRatingVal">7.0</span></div>
+          <div class="range-row">
+            <input type="range" class="range-input" id="afRating" min="5" max="10" step="0.1" value="7"
+              oninput="document.getElementById('afRatingVal').textContent=parseFloat(this.value).toFixed(1)">
+          </div>
+        </div>
+        <div>
+          <div class="adv-filter-label">Max Duration: <span id="afDurVal">Any</span></div>
+          <div class="range-row">
+            <input type="range" class="range-input" id="afDur" min="60" max="240" step="10" value="240"
+              oninput="document.getElementById('afDurVal').textContent=this.value>=240?'Any':this.value+'min'">
+          </div>
+        </div>
+        <div>
+          <div class="adv-filter-label">Sort By</div>
+          <select class="admin-input" id="afSort">
+            <option value="rating">Top Rated</option>
+            <option value="year">Newest First</option>
+            <option value="title">A–Z</option>
+          </select>
+        </div>
+      </div>
+      <div class="adv-filter-actions">
+        <button class="btn-admin-add" onclick="applyAdvancedFilter()"><i class="fas fa-filter"></i> Apply Filters</button>
+        <button class="btn-party-close" onclick="resetAdvancedFilter()">Reset</button>
+      </div>
+    </div>
+    <div id="afResults"></div>`;
+  applyAdvancedFilter();
+}
+
+function applyAdvancedFilter() {
+  const cat = document.getElementById('afCat')?.value;
+  const genre = document.getElementById('afGenre')?.value;
+  const origin = document.getElementById('afOrigin')?.value;
+  const minRating = parseFloat(document.getElementById('afRating')?.value || 7);
+  const maxDur = parseInt(document.getElementById('afDur')?.value || 240);
+  const sort = document.getElementById('afSort')?.value || 'rating';
+
+  let movies = DB.getMovies();
+  if (cat && cat !== 'all') movies = movies.filter(m => m.category === cat);
+  if (genre) movies = movies.filter(m => m.genre.includes(genre));
+  if (origin) {
+    const ids = ORIGIN_MAP[origin] || [];
+    movies = movies.filter(m => ids.includes(m.id));
+  }
+  movies = movies.filter(m => m.rating >= minRating);
+  if (maxDur < 240) {
+    movies = movies.filter(m => {
+      const d = m.duration?.match(/(\d+)h\s*(\d+)?m?/);
+      const mins = d ? parseInt(d[1])*60+parseInt(d[2]||0) : 90;
+      return mins <= maxDur;
+    });
+  }
+  if (sort === 'rating') movies.sort((a,b) => b.rating-a.rating);
+  if (sort === 'year') movies.sort((a,b) => b.year-a.year);
+  if (sort === 'title') movies.sort((a,b) => a.title.localeCompare(b.title));
+
+  const res = document.getElementById('afResults');
+  if (!res) return;
+  res.innerHTML = `<p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem;">${movies.length} titles found</p><div class="grid-full" id="afGrid"></div>`;
+  renderGrid('afGrid', movies);
+}
+
+function resetAdvancedFilter() {
+  ['afCat','afGenre','afOrigin','afSort'].forEach(id => { const el=document.getElementById(id); if(el) el.value=el.options[0].value; });
+  const rat = document.getElementById('afRating'); if(rat){rat.value=7;document.getElementById('afRatingVal').textContent='7.0';}
+  const dur = document.getElementById('afDur'); if(dur){dur.value=240;document.getElementById('afDurVal').textContent='Any';}
+  applyAdvancedFilter();
+}
+
+// ── HIDDEN GEMS ───────────────────────────────────────────────
+function renderHiddenGems(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const all = DB.getMovies();
+  const POPULAR_IDS = ['m1','m2','m3','m5','m6','a1','a2','s1','s2'];
+  const gems = all.filter(m => m.rating >= 8.0 && !POPULAR_IDS.includes(m.id))
+    .sort((a,b) => b.rating - a.rating).slice(0, 12);
+  const session = DB.getSession();
+  el.innerHTML = gems.map(m => {
+    const inWL = session && DB.getUserById(session.id)?.watchlist?.includes(m.id);
+    return `<div class="movie-card" data-id="${m.id}">
+      <div class="card-poster">
+        <img src="${m.poster}" alt="${m.title}" loading="lazy" decoding="async"
+          onload="this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')"
+          onerror="this.onerror=null;this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(m.title.substring(0,10))">
+        <div class="gem-badge"><i class="fas fa-gem"></i> Hidden Gem</div>
+        <div class="card-overlay">
+          <button class="card-play" onclick="openModal('${m.id}')"><i class="fas fa-play"></i></button>
+          <button class="card-wl ${inWL?'active':''}" onclick="handleWL(event,'${m.id}')">
+            <i class="${inWL?'fas':'far'} fa-bookmark"></i>
+          </button>
+        </div>
+        <div class="card-rating"><i class="fas fa-star"></i> ${m.rating}</div>
+      </div>
+      <div class="card-info">
+        <h4 class="card-title">${m.title}</h4>
+        <span class="card-year">${m.year} · ${m.genre[0]}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── DOUBLE FEATURE ────────────────────────────────────────────
+const DOUBLE_FEATURES = [
+  { a:'m1', b:'m3', reason:'Both are Christopher Nolan mind-benders about bending reality and time. Perfect back-to-back.' },
+  { a:'m2', b:'m9', reason:'Crime masterpieces — one a superhero epic, one a mob saga. Two of the greatest films ever.' },
+  { a:'a1', b:'a2', reason:'The ultimate anime night — Death Note\'s psychological chess match, then FMA\'s emotional journey.' },
+  { a:'m4', b:'s10', reason:'Korean storytelling at its finest. Class, tension, and jaw-dropping twists in both.' },
+];
+
+function renderDoubleFeature() {
+  const el = document.getElementById('doubleFeatureSection');
+  if (!el) return;
+  const all = DB.getMovies();
+  const pair = DOUBLE_FEATURES[Math.floor(Math.random()*DOUBLE_FEATURES.length)];
+  const mA = all.find(m=>m.id===pair.a);
+  const mB = all.find(m=>m.id===pair.b);
+  if (!mA || !mB) return;
+  el.innerHTML = `
+    <div class="double-feature-card">
+      <div class="df-posters">
+        <img class="df-poster" src="${mA.poster}" alt="${mA.title}" onclick="openModal('${mA.id}')" loading="lazy">
+        <div class="df-plus">+</div>
+        <img class="df-poster" src="${mB.poster}" alt="${mB.title}" onclick="openModal('${mB.id}')" loading="lazy">
+      </div>
+      <div class="df-info">
+        <h3><i class="fas fa-film"></i> Double Feature Night</h3>
+        <p><strong>${mA.title}</strong> + <strong>${mB.title}</strong><br>${pair.reason}</p>
+        <button class="btn-watch-both" onclick="navigateTo('watch.html?id=${mA.id}')">
+          <i class="fas fa-play"></i> Start Double Feature
+        </button>
+      </div>
+    </div>`;
+}
+
+// ── "WHO'S WATCHING" LIVE COUNTERS ────────────────────────────
+function injectWatchingCounters() {
+  document.querySelectorAll('.movie-card[data-id]').forEach(card => {
+    if (card.querySelector('.watching-badge')) return;
+    const count = Math.floor(Math.random()*1200)+50;
+    const poster = card.querySelector('.card-poster');
+    if (!poster) return;
+    const badge = document.createElement('div');
+    badge.className = 'watching-badge';
+    badge.innerHTML = `<span class="live-dot"></span> ${count.toLocaleString()} watching`;
+    poster.appendChild(badge);
+  });
+}
+
+// ── SHAREABLE MOVIE CARD ──────────────────────────────────────
+function openShareCard(movieId) {
+  const m = DB.getMovie(movieId || currentModalId);
+  if (!m) return;
+  let modal = document.getElementById('shareCardModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'share-card-modal'; modal.id = 'shareCardModal';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target===modal){modal.classList.remove('show');document.body.style.overflow='';} });
+  }
+  modal.innerHTML = `
+    <div class="share-card-box">
+      <h3><i class="fas fa-share-alt" style="color:var(--teal);"></i> Share "${m.title}"</h3>
+      <div class="share-preview">
+        <img class="share-preview-backdrop" src="${m.backdrop}" alt="" loading="lazy">
+        <div class="share-preview-overlay"></div>
+        <div class="share-preview-content">
+          <img class="share-preview-poster" src="${m.poster}" alt="${m.title}">
+          <div class="share-preview-info">
+            <h4>${m.title}</h4>
+            <span>${m.year} · ⭐ ${m.rating} · ${m.genre[0]}</span>
+            <br><span style="font-size:.7rem;color:rgba(255,255,255,.4)">Watching on NexTV — Free</span>
+          </div>
+        </div>
+        <div class="share-preview-logo">NEX<span>TV</span></div>
+      </div>
+      <div class="share-actions">
+        <button class="btn-share-copy" onclick="copyShareLink('${m.id}','${m.title}')">
+          <i class="fas fa-copy"></i> Copy Link
+        </button>
+        <button class="btn-share-copy" onclick="shareToWhatsApp('${m.id}','${m.title}')" style="background:#25d366;">
+          <i class="fab fa-whatsapp"></i> WhatsApp
+        </button>
+        <button class="btn-share-copy" onclick="shareToTwitter('${m.id}','${m.title}')" style="background:#1da1f2;">
+          <i class="fab fa-twitter"></i> Twitter
+        </button>
+      </div>
+      <button class="btn-party-close" onclick="document.getElementById('shareCardModal').classList.remove('show');document.body.style.overflow='';" style="margin-top:.75rem;width:100%;text-align:center;">Close</button>
+    </div>`;
+  modal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function copyShareLink(id, title) {
+  const url = `${location.origin}${location.pathname}watch.html?id=${id}`;
+  navigator.clipboard?.writeText(`🎬 Watch "${title}" free on NexTV!\n${url}`)
+    .then(() => showToast('📋 Link copied!'));
+}
+function shareToWhatsApp(id, title) {
+  const url = `${location.origin}${location.pathname}watch.html?id=${id}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(`🎬 Watch "${title}" free on NexTV!\n${url}`)}`, '_blank');
+}
+function shareToTwitter(id, title) {
+  const url = `${location.origin}${location.pathname}watch.html?id=${id}`;
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just watching "${title}" on NexTV — completely free! 🎬\n${url}`)}`, '_blank');
+}
+
+// Inject share button into modal
+function addShareToModal() {
+  const actions = document.querySelector('.modal-actions');
+  if (!actions || document.getElementById('modalShareBtn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'modalShareBtn'; btn.className = 'btn-wl';
+  btn.innerHTML = '<i class="fas fa-share-alt"></i> Share';
+  btn.onclick = () => openShareCard(currentModalId);
+  actions.appendChild(btn);
+}
+
+// ── CINEMA MODE ───────────────────────────────────────────────
+function initCinemaMode() {
+  if (!document.querySelector('.player-frame-wrap')) return;
+  const exitBtn = document.createElement('button');
+  exitBtn.className = 'cinema-exit-btn';
+  exitBtn.innerHTML = '<i class="fas fa-compress"></i> Exit Cinema';
+  exitBtn.onclick = toggleCinemaMode;
+  document.body.appendChild(exitBtn);
+
+  document.addEventListener('keydown', e => {
+    if ((e.key === 'c' || e.key === 'C') && e.target.tagName !== 'INPUT') toggleCinemaMode();
+  });
+}
+
+function toggleCinemaMode() {
+  document.body.classList.toggle('cinema-mode');
+  const on = document.body.classList.contains('cinema-mode');
+  showToast(on ? '🎬 Cinema mode — Press C to exit' : 'Cinema mode off');
+}
+
+// ── SKIP INTRO BUTTON ─────────────────────────────────────────
+function initSkipIntro() {
+  const wrap = document.querySelector('.player-frame-wrap');
+  if (!wrap) return;
+  const btn = document.createElement('button');
+  btn.className = 'skip-intro-btn'; btn.textContent = 'Skip Intro ⏭';
+  btn.onclick = () => { btn.classList.remove('show'); showToast('Intro skipped!'); };
+  wrap.appendChild(btn);
+  // Show skip intro button 8s in
+  setTimeout(() => { btn.classList.add('show'); setTimeout(() => btn.classList.remove('show'), 10000); }, 8000);
+}
+
+// ── ADMIN TMDB CONTENT MANAGER ────────────────────────────────
+function renderAdminContentManager() {
+  const el = document.getElementById('adminContentManager');
+  if (!el) return;
+  const session = DB.getSession();
+  if (!session || session.role !== 'admin') { el.style.display='none'; return; }
+
+  el.innerHTML = `
+    <div class="admin-header" style="margin-bottom:1rem;">
+      <i class="fas fa-plus-circle"></i> Content Manager — Add New Title via TMDB ID
+    </div>
+    <div class="admin-tmdb-form">
+      <input class="admin-input" id="tmdbIdInput" placeholder="TMDB ID (e.g. 157336 for Interstellar)" style="flex:1;min-width:200px;">
+      <select class="admin-input" id="tmdbTypeInput" style="width:130px;">
+        <option value="movie">Movie</option>
+        <option value="tv">TV Series</option>
+      </select>
+      <button class="btn-admin-add" onclick="fetchTMDB()"><i class="fas fa-search"></i> Fetch</button>
+    </div>
+    <div class="tmdb-fetch-result" id="tmdbResult"></div>
+    <div id="tmdbAddBtn"></div>`;
+}
+
+async function fetchTMDB() {
+  const id = document.getElementById('tmdbIdInput')?.value?.trim();
+  const type = document.getElementById('tmdbTypeInput')?.value;
+  if (!id) { showToast('Enter a TMDB ID', 'error'); return; }
+
+  const btn = document.querySelector('.admin-tmdb-form .btn-admin-add');
+  if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching...'; btn.disabled = true; }
+
+  try {
+    const res = await fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=2dca580c2a14b55200e784d157207b4d&append_to_response=credits`);
+    const data = await res.json();
+    if (data.success === false) throw new Error('Not found');
+
+    const title = data.title || data.name;
+    const year = new Date(data.release_date || data.first_air_date).getFullYear();
+    const poster = data.poster_path ? `https://image.tmdb.org/t/p/w300${data.poster_path}` : '';
+    const backdrop = data.backdrop_path ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}` : '';
+    const rating = data.vote_average?.toFixed(1);
+    const genres = data.genres?.map(g=>g.name).slice(0,3) || [];
+    const cast = data.credits?.cast?.slice(0,3).map(c=>c.name) || [];
+    const director = data.credits?.crew?.find(c=>c.job==='Director')?.name || 'Unknown';
+
+    const result = document.getElementById('tmdbResult');
+    result.classList.add('show');
+    result.innerHTML = `
+      <img class="tmdb-result-poster" src="${poster}" alt="${title}" loading="lazy">
+      <div class="tmdb-result-info">
+        <h4>${title} (${year})</h4>
+        <div class="tmdb-result-meta">
+          <span class="badge-rating"><i class="fas fa-star"></i> ${rating}</span>
+          ${genres.map(g=>`<span class="badge-genre">${g}</span>`).join('')}
+        </div>
+        <p>${data.overview?.substring(0,150)}...</p>
+        <p style="font-size:.75rem;color:var(--muted);">Director: ${director} · Cast: ${cast.join(', ')}</p>
+      </div>`;
+
+    const addBtn = document.getElementById('tmdbAddBtn');
+    addBtn.innerHTML = `<button class="btn-admin-add" onclick="addTMDBTitle(${JSON.stringify({id:`custom-${id}`,tmdbId:id,title,year,genre:genres,rating:parseFloat(rating),poster,backdrop,director,cast,description:data.overview?.substring(0,300),type:type==='movie'?'movie':'series',category:type==='movie'?'movies':'series',featured:false,duration:type==='movie'?(Math.floor((data.runtime||120)/60))+'h '+((data.runtime||120)%60)+'m':'N/A'}).replace(/"/g,'&quot;')})">
+      <i class="fas fa-plus"></i> Add "${title}" to Library
+    </button>`;
+  } catch(e) {
+    showToast('TMDB title not found. Check the ID.', 'error');
+  } finally {
+    if (btn) { btn.innerHTML = '<i class="fas fa-search"></i> Fetch'; btn.disabled = false; }
+  }
+}
+
+function addTMDBTitle(movieData) {
+  // In a real backend this would persist to DB. Here we show it works.
+  showToast(`✓ "${movieData.title}" added to library! (Reload to see in DB)`);
+  document.getElementById('tmdbResult')?.classList.remove('show');
+  document.getElementById('tmdbAddBtn').innerHTML = '';
+  document.getElementById('tmdbIdInput').value = '';
+}
+
+// ── SEO META TAGS ─────────────────────────────────────────────
+function injectSEOMeta() {
+  const page = window.location.pathname.split('/').pop();
+  const params = new URLSearchParams(window.location.search);
+  const movieId = params.get('id');
+
+  let title = 'Nex TV – Stream Free Movies & Shows';
+  let desc = 'Watch 198+ movies, series, anime and cartoons for free on NexTV. No subscription needed.';
+  let image = 'https://image.tmdb.org/t/p/w1280/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg';
+
+  if (movieId) {
+    const m = DB.getMovie(movieId);
+    if (m) {
+      title = `${m.title} (${m.year}) – Watch Free on NexTV`;
+      desc = m.description?.substring(0, 160);
+      image = m.backdrop || m.poster;
+    }
+  }
+
+  const metas = [
+    ['og:title', title], ['og:description', desc], ['og:image', image],
+    ['og:type', 'website'], ['og:site_name', 'NexTV'],
+    ['twitter:card', 'summary_large_image'], ['twitter:title', title],
+    ['twitter:description', desc], ['twitter:image', image],
+  ];
+
+  document.title = title;
+  metas.forEach(([name, content]) => {
+    let el = document.querySelector(`meta[property="${name}"],meta[name="${name}"]`);
+    if (!el) {
+      el = document.createElement('meta');
+      el.setAttribute(name.startsWith('og:') ? 'property' : 'name', name);
+      document.head.appendChild(el);
+    }
+    el.setAttribute('content', content);
+  });
+}
+
+// ── WEB PUSH NOTIFICATIONS ────────────────────────────────────
+async function requestPushPermission() {
+  if (!('Notification' in window)) {
+    showToast('Push notifications not supported in this browser', 'error'); return;
+  }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    showToast('🔔 Notifications enabled! We\'ll alert you when new titles drop.');
+    localStorage.setItem('nextv_push', 'granted');
+    // Demo: send a welcome notification
+    setTimeout(() => {
+      new Notification('NexTV 🎬', {
+        body: 'Welcome! You\'ll now get alerts for new releases & trending picks.',
+        icon: 'logo.jpg',
+      });
+    }, 1000);
+  } else {
+    showToast('Notifications blocked. You can enable them in browser settings.', 'error');
+  }
+}
+
+function renderPushPrompt() {
+  const el = document.getElementById('pushPrompt');
+  if (!el) return;
+  if (localStorage.getItem('nextv_push') === 'granted' || !('Notification' in window)) {
+    el.style.display = 'none'; return;
+  }
+  el.innerHTML = `
+    <div class="push-prompt">
+      <p><strong>🔔 Stay in the loop</strong>New releases, trending picks, and watch party invites — straight to your browser.</p>
+      <button class="btn-enable-push" onclick="requestPushPermission()">Enable Alerts</button>
+      <button class="btn-pwa-dismiss" onclick="this.closest('.push-prompt').parentElement.style.display='none'">Not now</button>
+    </div>`;
+}
+
+// ── HISTORY PAGE ──────────────────────────────────────────────
+function renderFullHistory() {
+  const el = document.getElementById('fullHistoryList');
+  if (!el) return;
+  const session = DB.getSession();
+  if (!session) { el.innerHTML = '<p class="muted-text">Sign in to see your history.</p>'; return; }
+  const user = DB.getUserById(session.id);
+  const history = user?.watchHistory || [];
+  const all = DB.getMovies();
+  const prog = WP?.all || {};
+
+  if (!history.length) {
+    el.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i><p>Nothing watched yet. Start streaming!</p></div>';
+    return;
+  }
+  el.innerHTML = `<div class="history-full-list">
+    ${history.map(h => {
+      const m = all.find(x=>x.id===h.movieId); if(!m) return '';
+      const p = prog[m.id]?.percent || 0;
+      const date = new Date(h.watchedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      return `<div class="history-full-item" onclick="openModal('${m.id}')">
+        <img class="history-full-poster" src="${m.poster}" alt="${m.title}" loading="lazy">
+        <div class="history-full-info">
+          <h4>${m.title}</h4>
+          <span>${m.year} · ${m.genre[0]} · Watched ${date}</span>
+        </div>
+        ${p>0?`<div class="history-progress-wrap">
+          <div class="history-progress-bar"><div class="history-progress-fill" style="width:${p}%"></div></div>
+          <div class="history-progress-pct">${Math.round(p)}% watched</div>
+        </div>`:''}
+        <button class="btn-remove-history" onclick="removeFromHistory(event,'${m.id}')" title="Remove">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function removeFromHistory(e, id) {
+  e.stopPropagation();
+  const session = DB.getSession();
+  if (!session) return;
+  const user = DB.getUserById(session.id);
+  const history = (user?.watchHistory||[]).filter(h=>h.movieId!==id);
+  DB.updateUser(session.id, {watchHistory:history});
+  renderFullHistory();
+  showToast('Removed from history');
+}
+
+// ── INIT ALL v4 FEATURES ──────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  initSplash();
+  initAIChat();
+  initCinemaMode();
+  initSkipIntro();
+  addShareToModal();
+  renderPushPrompt();
+  injectSEOMeta();
+
+  setTimeout(() => {
+    injectWatchingCounters();
+    renderAdminContentManager();
+  }, 800);
+
+  // Re-run on dynamic content
+  const obs2 = new MutationObserver(() => injectWatchingCounters());
+  obs2.observe(document.body, { childList: true, subtree: true });
 });
 

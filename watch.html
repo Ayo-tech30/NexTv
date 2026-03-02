@@ -487,6 +487,9 @@ document.addEventListener('keydown', e => {
 
 // Inject mobile nav
 injectMobileNav();
+// Init progress tracking
+const urlPrm = new URLSearchParams(window.location.search);
+initWatchProgress(urlPrm.get('id'));
 </script>
 </body>
 </html>

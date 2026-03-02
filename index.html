@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nex TV – Stream Free Movies & Shows</title>
 <link rel="icon" type="image/jpeg" href="logo.jpg">
+<link rel="preconnect" href="https://image.tmdb.org" crossorigin>
+<link rel="dns-prefetch" href="https://image.tmdb.org">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -24,6 +26,8 @@
       <li><a href="anime.html">Anime</a></li>
       <li><a href="cartoons.html">Cartoons</a></li>
       <li><a href="watchlist.html">My List</a></li>
+      <li><a href="history.html">History</a></li>
+      <li><a href="filter.html">Filter</a></li>
     </ul>
   </div>
   <div class="nav-right">
@@ -52,16 +56,21 @@
 <!-- MAIN -->
 <main class="main-content">
 
-  <!-- CONTINUE WATCHING (only shown if history exists) -->
+  <!-- PUSH NOTIFICATION PROMPT -->
+  <div id="pushPrompt"></div>
+
+  <!-- NEW THIS WEEK BANNER -->
+  <div class="new-week-banner" id="newWeekBanner"></div>
+
+  <!-- ① PERSONAL ZONE -->
   <section class="row-section" id="continueSection" style="display:none;">
     <div class="row-header">
       <h2><i class="fas fa-history"></i> Continue Watching</h2>
-      <button class="see-all" onclick="clearHistory()" style="color:var(--muted);background:none;border:none;cursor:pointer;font-size:.8rem;font-family:inherit;">Clear History</button>
+      <button class="see-all" onclick="clearHistory()" style="color:var(--muted);background:none;border:none;cursor:pointer;font-size:.8rem;font-family:inherit;">Clear</button>
     </div>
     <div class="cards-row continue-row" id="continueRow"></div>
   </section>
 
-  <!-- PERSONALIZED ROW -->
   <section class="row-section" id="personalizedSection" style="display:none;">
     <div class="row-header">
       <h2><i class="fas fa-magic" style="color:var(--teal);"></i> <span id="personalizedTitle">Just For You</span></h2>
@@ -69,33 +78,18 @@
     <div class="cards-row" id="personalizedRow"></div>
   </section>
 
-  <!-- STATS BANNER -->
+  <!-- ② STATS -->
   <section class="stats-banner">
-    <div class="stat-item">
-      <span class="stat-num" data-target="198">0</span>
-      <span class="stat-label">Titles</span>
-    </div>
+    <div class="stat-item"><span class="stat-num" data-target="198">0</span><span class="stat-label">Titles</span></div>
     <div class="stat-divider"></div>
-    <div class="stat-item">
-      <span class="stat-num" data-target="4">0</span>
-      <span class="stat-label">Categories</span>
-    </div>
+    <div class="stat-item"><span class="stat-num" data-target="4">0</span><span class="stat-label">Categories</span></div>
     <div class="stat-divider"></div>
-    <div class="stat-item">
-      <span class="stat-num" data-target="5">0</span>
-      <span class="stat-label">Servers</span>
-    </div>
+    <div class="stat-item"><span class="stat-num" data-target="5">0</span><span class="stat-label">Servers</span></div>
     <div class="stat-divider"></div>
-    <div class="stat-item">
-      <span class="stat-num" data-target="100">0</span>
-      <span class="stat-label">% Free</span>
-    </div>
+    <div class="stat-item"><span class="stat-num" data-target="100">0</span><span class="stat-label">% Free</span></div>
   </section>
 
-  <!-- TRUST SECTION -->
-  <section class="trust-section" id="trustSection"></section>
-
-  <!-- TRENDING NOW -->
+  <!-- ③ WHAT'S HOT -->
   <section class="row-section">
     <div class="row-header">
       <h2><i class="fas fa-fire"></i> Trending Now</h2>
@@ -104,27 +98,6 @@
     <div class="cards-row" id="trendingRow"></div>
   </section>
 
-  <!-- FEATURED COLLECTIONS (big spotlight cards) -->
-  <section class="collections-section">
-    <div class="row-header">
-      <h2><i class="fas fa-layer-group"></i> Featured Collections</h2>
-    </div>
-    <div class="collections-grid" id="collectionsGrid"></div>
-  </section>
-
-  <!-- SHUFFLE -->
-  <section class="row-section" id="shuffleSection"></section>
-
-  <!-- TOP RATED -->
-  <section class="row-section">
-    <div class="row-header">
-      <h2><i class="fas fa-trophy"></i> Top Rated</h2>
-      <a href="movies.html?sort=rating" class="see-all">See All <i class="fas fa-chevron-right"></i></a>
-    </div>
-    <div class="cards-row top-rated-row" id="topRatedRow"></div>
-  </section>
-
-  <!-- TOP 10 IN YOUR REGION -->
   <section class="row-section">
     <div class="row-header">
       <h2><i class="fas fa-chart-line" style="color:var(--teal);"></i> Top 10 Today</h2>
@@ -133,7 +106,6 @@
     <div class="cards-row" id="top10Row" style="padding-left:.5rem;"></div>
   </section>
 
-  <!-- NEW RELEASES -->
   <section class="row-section">
     <div class="row-header">
       <h2><i class="fas fa-certificate"></i> New Releases</h2>
@@ -142,7 +114,32 @@
     <div class="cards-row" id="newReleasesRow"></div>
   </section>
 
-  <!-- MOOD BROWSER -->
+  <!-- HIDDEN GEMS -->
+  <section class="row-section">
+    <div class="row-header">
+      <h2><i class="fas fa-gem" style="color:#f5c518;"></i> Hidden Gems</h2>
+      <span class="see-all" style="color:var(--muted);font-size:.8rem;">Underrated masterpieces</span>
+    </div>
+    <div class="cards-row" id="hiddenGemsRow"></div>
+  </section>
+
+  <!-- ④ EDITORIAL SPOTLIGHT -->
+  <section class="staff-picks-section">
+    <div class="row-header">
+      <h2><i class="fas fa-hand-sparkles"></i> Staff Picks</h2>
+      <span class="see-all" style="color:var(--muted);font-size:.8rem;">Hand-curated for you</span>
+    </div>
+    <div class="staff-picks-grid" id="staffPicksGrid"></div>
+  </section>
+
+  <section class="collections-section">
+    <div class="row-header">
+      <h2><i class="fas fa-layer-group"></i> Featured Collections</h2>
+    </div>
+    <div class="collections-grid" id="collectionsGrid"></div>
+  </section>
+
+  <!-- ⑤ MOOD BROWSER -->
   <section class="mood-section">
     <div class="row-header">
       <h2><i class="fas fa-heart" style="color:var(--teal);"></i> Browse by Mood</h2>
@@ -158,7 +155,10 @@
     </div>
   </section>
 
-  <!-- MOVIES -->
+  <!-- "FREE TONIGHT?" QUIZ -->
+  <section class="quiz-section" id="quizSection"></section>
+
+  <!-- ⑥ MOVIES -->
   <section class="row-section">
     <div class="row-header">
       <h2><i class="fas fa-film"></i> Movies</h2>
@@ -167,16 +167,22 @@
     <div class="cards-row" id="moviesRow"></div>
   </section>
 
-  <!-- STAFF PICKS -->
-  <section class="staff-picks-section">
+  <section class="row-section">
     <div class="row-header">
-      <h2><i class="fas fa-hand-sparkles"></i> Staff Picks</h2>
-      <span class="see-all" style="color:var(--muted);font-size:.8rem;">Hand-curated for you</span>
+      <h2><i class="fas fa-trophy"></i> Top Rated Movies</h2>
+      <a href="movies.html?sort=rating" class="see-all">See All <i class="fas fa-chevron-right"></i></a>
     </div>
-    <div class="staff-picks-grid" id="staffPicksGrid"></div>
+    <div class="cards-row top-rated-row" id="topRatedRow"></div>
   </section>
 
-  <!-- TV SHOWS -->
+  <section class="row-section">
+    <div class="row-header">
+      <h2><i class="fas fa-bolt"></i> Quick Watch <span class="badge-tag">Under 2hrs</span></h2>
+    </div>
+    <div class="cards-row" id="quickWatchRow"></div>
+  </section>
+
+  <!-- ⑦ TV SHOWS -->
   <section class="row-section">
     <div class="row-header">
       <h2><i class="fas fa-tv"></i> TV Shows</h2>
@@ -185,12 +191,45 @@
     <div class="cards-row" id="seriesRow"></div>
   </section>
 
-  <!-- COMMUNITY & WATCH PARTIES -->
+  <!-- ⑧ ANIME -->
+  <section class="row-section">
+    <div class="row-header">
+      <h2><i class="fas fa-dragon"></i> Anime</h2>
+      <a href="anime.html" class="see-all">See All <i class="fas fa-chevron-right"></i></a>
+    </div>
+    <div class="cards-row" id="animeRow"></div>
+  </section>
+
+  <!-- ⑨ CARTOONS -->
+  <section class="row-section">
+    <div class="row-header">
+      <h2><i class="fas fa-star"></i> Cartoons &amp; Animation</h2>
+      <a href="cartoons.html" class="see-all">See All <i class="fas fa-chevron-right"></i></a>
+    </div>
+    <div class="cards-row" id="cartoonsRow"></div>
+  </section>
+
+  <!-- ⑩ TRAILERS -->
+  <section class="row-section">
+    <div class="row-header">
+      <h2><i class="fas fa-clapperboard"></i> Trailers &amp; Teasers</h2>
+      <span class="see-all" style="color:var(--muted);font-size:.85rem;">Click to watch</span>
+    </div>
+    <div class="trailers-row" id="trailersRow"></div>
+  </section>
+
+  <!-- ⑪ SHUFFLE -->
+  <section class="row-section" id="shuffleSection"></section>
+
+  <!-- DOUBLE FEATURE -->
+  <section class="double-feature-section" id="doubleFeatureSection"></section>
+
+  <!-- ⑫ COMMUNITY -->
   <section class="social-section">
     <div class="community-banner">
       <div class="community-text">
         <h3><i class="fas fa-users"></i> Watch Together — NexTV Watch Parties</h3>
-        <p>Create a private room and invite friends to watch the same movie at the same time. Synchronized playback, shared fun.</p>
+        <p>Create a private room and invite friends to watch the same movie at the same time.</p>
       </div>
       <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
         <div style="display:flex;align-items:center;">
@@ -209,53 +248,25 @@
     </div>
   </section>
 
-  <!-- ANIME -->
+  <!-- USER PLAYLISTS -->
   <section class="row-section">
     <div class="row-header">
-      <h2><i class="fas fa-dragon"></i> Anime</h2>
-      <a href="anime.html" class="see-all">See All <i class="fas fa-chevron-right"></i></a>
+      <h2><i class="fas fa-list" style="color:var(--teal);"></i> My Playlists</h2>
+      <span class="see-all" style="color:var(--muted);font-size:.8rem;">Organize your watchlist</span>
     </div>
-    <div class="cards-row" id="animeRow"></div>
+    <div id="playlistsSection"></div>
   </section>
 
-  <!-- QUICK WATCH (short movies under 2h) -->
-  <section class="row-section">
-    <div class="row-header">
-      <h2><i class="fas fa-bolt"></i> Quick Watch <span class="badge-tag">Under 2hrs</span></h2>
-    </div>
-    <div class="cards-row" id="quickWatchRow"></div>
-  </section>
-
-  <!-- USER REVIEWS -->
+  <!-- ⑬ REVIEWS -->
   <section class="reviews-section">
     <div class="row-header">
       <h2><i class="fas fa-star" style="color:var(--teal);"></i> Community Reviews</h2>
-      <div class="review-bar">
-        <button class="btn-write-review" onclick="openWriteReview()"><i class="fas fa-pen"></i> Write a Review</button>
-      </div>
+      <button class="btn-write-review" onclick="openWriteReview()"><i class="fas fa-pen"></i> Write a Review</button>
     </div>
     <div id="reviewsList"></div>
   </section>
 
-  <!-- CARTOONS -->
-  <section class="row-section">
-    <div class="row-header">
-      <h2><i class="fas fa-star"></i> Cartoons &amp; Animation</h2>
-      <a href="cartoons.html" class="see-all">See All <i class="fas fa-chevron-right"></i></a>
-    </div>
-    <div class="cards-row" id="cartoonsRow"></div>
-  </section>
-
-  <!-- TRAILERS -->
-  <section class="row-section">
-    <div class="row-header">
-      <h2><i class="fas fa-clapperboard"></i> Trailers &amp; Teasers</h2>
-      <span class="see-all" style="color:var(--muted);font-size:.85rem;">Click to watch trailer</span>
-    </div>
-    <div class="trailers-row" id="trailersRow"></div>
-  </section>
-
-  <!-- BROWSE BY ORIGIN -->
+  <!-- ⑭ DISCOVERY TOOLS -->
   <section class="origin-section">
     <div class="row-header">
       <h2><i class="fas fa-globe"></i> Browse by Origin</h2>
@@ -270,17 +281,21 @@
     <div class="cards-row" id="originRow"></div>
   </section>
 
-  <!-- ADMIN PANEL (admin only) -->
-  <section id="adminPanelSection"></section>
-
-  <!-- GENRES -->
   <section class="categories-section">
     <h2><i class="fas fa-th-large"></i> Browse by Genre</h2>
     <div class="genre-grid" id="genreGrid"></div>
   </section>
 
-</main>
+  <!-- TRUST SIGNALS -->
+  <section class="trust-section" id="trustSection" style="margin-top:1rem;"></section>
 
+  <!-- ADMIN CONTENT MANAGER -->
+  <section id="adminContentManager" style="margin-bottom:1.5rem;"></section>
+
+  <!-- ADMIN PANEL -->
+  <section id="adminPanelSection"></section>
+
+</main>
 <footer class="site-footer">
   <div class="footer-inner">
     <div class="footer-logo">NEX<span>TV</span></div>
@@ -458,7 +473,17 @@
   // Admin panel
   renderAdminPanel();
 
-  renderGenres();
+  renderGenresV2();
+  renderNewWeekBanner();
+  renderQuizSection();
+  renderPlaylistsSection();
+  renderHiddenGems('hiddenGemsRow');
+  renderDoubleFeature();
+  renderAdminContentManager();
+  renderAdminPanel();
+
+  // Watch progress bars
+  setTimeout(() => { injectProgressBars(); injectRatingButtons(); }, 700);
 
   function clearHistory() {
     if (!session) return;

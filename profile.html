@@ -3,11 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile – Nex TV</title>
 <link rel="icon" type="image/jpeg" href="logo.jpg">
-<title>Profile – Nex TV</title>
+<link rel="preconnect" href="https://image.tmdb.org" crossorigin>
+<link rel="dns-prefetch" href="https://image.tmdb.org">
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="style.css">
+<style>
+.profile-hero {
+  min-height:220px;margin-top:var(--nav-h);
+  background:linear-gradient(160deg,#1a0505 0%,#0c0c0c 50%,#050c1a 100%);
+  display:flex;align-items:flex-end;padding:0 2.5rem 2rem;position:relative;overflow:hidden;
+}
+.profile-hero::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse at 10% 100%,rgba(229,9,20,.18),transparent 60%),
+              radial-gradient(ellipse at 90% 0%,rgba(0,212,180,.08),transparent 50%);}
+.profile-hero-content{position:relative;z-index:1;display:flex;align-items:flex-end;gap:1.5rem;flex-wrap:wrap;width:100%;}
+.profile-avatar-xl{width:90px;height:90px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--red),#ff4d4d);
+  display:flex;align-items:center;justify-content:center;
+  font-size:2.2rem;font-weight:700;color:#fff;
+  border:3px solid rgba(255,255,255,.15);box-shadow:0 8px 25px rgba(229,9,20,.3);}
+.profile-hero-info h1{font-size:1.8rem;font-weight:700;margin-bottom:.3rem;}
+.role-pill-prof{display:inline-flex;align-items:center;gap:.35rem;
+  background:rgba(229,9,20,.12);border:1px solid rgba(229,9,20,.2);
+  color:var(--red);padding:.25rem .75rem;border-radius:20px;
+  font-size:.78rem;font-weight:700;margin-bottom:.5rem;}
+.profile-stat-bar{display:flex;gap:1rem;flex-wrap:wrap;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:2rem;}
+.pstat{flex:1;min-width:100px;text-align:center;}
+.pstat-num{font-family:"Bebas Neue",sans-serif;font-size:2rem;line-height:1;}
+.pstat-label{font-size:.73rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.2rem;}
+.ptabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.75rem;overflow-x:auto;}
+.ptab{padding:.7rem 1.2rem;font-size:.875rem;font-weight:600;color:var(--muted);
+  cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;
+  transition:.2s;background:none;border-top:none;border-left:none;border-right:none;
+  font-family:"Outfit",sans-serif;}
+.ptab.active{color:var(--text);border-bottom-color:var(--red);}
+.ptab:hover{color:var(--text);}
+.ptab-content{display:none;}
+.ptab-content.active{display:block;}
+.empty-msg{padding:3rem;text-align:center;color:var(--muted);}
+.empty-msg i{font-size:2.5rem;display:block;margin-bottom:1rem;}
+</style>
 </head>
 <body>
 <nav id="navbar">
@@ -23,91 +64,203 @@
       <li><a href="watchlist.html">My List</a></li>
     </ul>
   </div>
-  <div class="nav-right">
-    <a href="search.html" class="nav-icon"><i class="fas fa-search"></i></a>
-    <div id="authArea"></div>
-  </div>
+  <div class="nav-right"><div id="authArea"></div></div>
 </nav>
-<div class="page-hero">
-  <div class="page-hero-content">
-    <h1><i class="fas fa-user-circle"></i> My Profile</h1>
-  </div>
+
+<div id="notLoggedIn" style="display:none;min-height:80vh;align-items:center;justify-content:center;text-align:center;flex-direction:column;gap:1rem;padding:2rem;">
+  <i class="fas fa-user-circle" style="font-size:4rem;color:var(--muted);"></i>
+  <h2>Sign in to view your profile</h2>
+  <p style="color:var(--muted);">Track history, reviews, playlists and more.</p>
+  <a href="login.html" class="btn-play"><i class="fas fa-sign-in-alt"></i> Sign In</a>
 </div>
-<main class="main-content">
-  <div class="empty-state" id="notLoggedIn" style="display:none;">
-    <i class="fas fa-lock"></i>
-    <p>Please <a href="login.html" class="link-inline">sign in</a>.</p>
-  </div>
-  <div id="profileBody" style="display:none;">
-    <div class="profile-grid">
-      <div class="profile-card">
-        <div class="avatar-ring"><div class="avatar-big" id="avatarDisplay"></div></div>
-        <h2 id="profileName"></h2>
-        <p id="profileEmail" class="profile-email"></p>
-        <span class="role-badge" id="roleBadge"></span>
-        <button class="btn-danger" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+
+<div id="profileBody" style="display:none;">
+  <div class="profile-hero">
+    <div class="profile-hero-content">
+      <div class="profile-avatar-xl" id="profileAvatar">?</div>
+      <div class="profile-hero-info">
+        <div class="role-pill-prof" id="rolePill"><i class="fas fa-film"></i> Member</div>
+        <h1 id="profileName">Loading...</h1>
+        <div style="font-size:.82rem;color:var(--muted);" id="profileMeta"></div>
       </div>
-      <div class="profile-details">
-        <div class="stats-row">
-          <div class="stat-box"><i class="fas fa-bookmark"></i><span id="wlCount">0</span><small>Saved</small></div>
-          <div class="stat-box"><i class="fas fa-history"></i><span id="histCount">0</span><small>Watched</small></div>
-          <div class="stat-box"><i class="fas fa-calendar"></i><span id="joinDate">-</span><small>Joined</small></div>
-        </div>
-        <div id="adminPanel" style="display:none;">
-          <div class="admin-header"><i class="fas fa-shield-alt"></i> Admin Panel</div>
-          <div class="admin-stats" id="adminStats"></div>
-          <div class="admin-users" id="adminUsers"></div>
-        </div>
-        <h3 class="section-label"><i class="fas fa-history"></i> Continue Watching</h3>
-        <div class="history-list" id="historyList"></div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-left:auto;align-self:flex-end;">
+        <button class="btn-play" onclick="openWrapped()"><i class="fas fa-chart-bar"></i> My Wrapped</button>
+        <button class="btn-more" onclick="navigator.clipboard?.writeText(location.href).then(()=>showToast('Profile link copied!'))"><i class="fas fa-share"></i> Share</button>
       </div>
     </div>
   </div>
-</main>
+
+  <main class="main-content" style="padding-top:2rem;">
+    <div class="profile-stat-bar" id="profileStatBar"></div>
+
+    <div class="ptabs">
+      <button class="ptab active" onclick="switchPTab(this,'watchlist')"><i class="fas fa-bookmark"></i> Watchlist</button>
+      <button class="ptab" onclick="switchPTab(this,'history')"><i class="fas fa-history"></i> History</button>
+      <button class="ptab" onclick="switchPTab(this,'playlists')"><i class="fas fa-list"></i> Playlists</button>
+      <button class="ptab" onclick="switchPTab(this,'reviews')"><i class="fas fa-star"></i> Reviews</button>
+      <button class="ptab" onclick="switchPTab(this,'settings')"><i class="fas fa-cog"></i> Settings</button>
+      <button class="ptab" id="adminTabBtn" style="display:none;" onclick="switchPTab(this,'admin')"><i class="fas fa-shield-alt"></i> Admin</button>
+    </div>
+
+    <div class="ptab-content active" id="ptab-watchlist"><div id="wlGrid"></div></div>
+
+    <div class="ptab-content" id="ptab-history">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;">
+        <button class="btn-danger" style="width:auto;padding:.45rem 1rem;font-size:.82rem;" onclick="doHistoryClear()"><i class="fas fa-trash"></i> Clear All</button>
+      </div>
+      <div id="fullHistoryList"></div>
+    </div>
+
+    <div class="ptab-content" id="ptab-playlists"><div id="playlistsSection"></div></div>
+
+    <div class="ptab-content" id="ptab-reviews"><div id="userReviewsEl"></div></div>
+
+    <div class="ptab-content" id="ptab-settings">
+      <div style="max-width:520px;display:flex;flex-direction:column;gap:1.25rem;">
+        <div class="adv-filter-panel">
+          <h3 style="margin-bottom:1rem;"><i class="fas fa-palette" style="color:var(--teal);"></i> Appearance</h3>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-weight:600;font-size:.9rem;">Dark / Light Mode</div><div style="font-size:.78rem;color:var(--muted);">Toggle the site theme</div></div>
+            <button onclick="toggleTheme()" class="btn-more" style="width:auto;padding:.4rem 1rem;"><i class="fas fa-sun"></i> Toggle</button>
+          </div>
+        </div>
+        <div class="adv-filter-panel">
+          <h3 style="margin-bottom:1rem;"><i class="fas fa-bell" style="color:var(--teal);"></i> Notifications</h3>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-weight:600;font-size:.9rem;">Push Notifications</div><div style="font-size:.78rem;color:var(--muted);">Get alerts for new releases</div></div>
+            <button class="btn-enable-push" onclick="requestPushPermission()">Enable</button>
+          </div>
+        </div>
+        <div class="adv-filter-panel">
+          <h3 style="margin-bottom:1rem;"><i class="fas fa-exclamation-triangle" style="color:#f97316;"></i> Danger Zone</h3>
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+            <button class="btn-danger" style="width:auto;" onclick="if(confirm('Sign out?'))doLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+            <button class="btn-danger" style="width:auto;background:transparent;border-color:rgba(150,150,150,.25);color:var(--muted);" onclick="clearAllData()"><i class="fas fa-trash-alt"></i> Clear All Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ptab-content" id="ptab-admin">
+      <div id="adminPanelSection" style="margin-bottom:1.5rem;"></div>
+      <div id="adminContentManager"></div>
+    </div>
+
+  </main>
+</div>
+
+<div class="modal-overlay" id="movieModal">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-body">
+      <img class="modal-poster" id="modalPoster" src="" alt="">
+      <div class="modal-info">
+        <h2 id="modalTitle"></h2>
+        <div class="modal-meta" id="modalMeta"></div>
+        <p id="modalDesc"></p>
+        <div class="modal-cast" id="modalCast"></div>
+        <div class="modal-actions">
+          <button class="btn-play" id="modalPlay"><i class="fas fa-play"></i> Watch Now</button>
+          <button class="btn-wl" id="modalWL"><i class="far fa-bookmark"></i> My List</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
+
 <script src="db.js"></script>
 <script src="app.js"></script>
 <script>
-  DB.init(); renderNav(); injectMobileNav();
-  const session = DB.getSession();
-  if (!session) { document.getElementById('notLoggedIn').style.display='flex'; }
-  else {
-    document.getElementById('profileBody').style.display='block';
-    const user = DB.getUserById(session.id);
-    document.getElementById('profileName').textContent = user.name;
-    document.getElementById('profileEmail').textContent = user.email;
-    document.getElementById('avatarDisplay').textContent = user.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-    document.getElementById('roleBadge').textContent = user.role==='admin'?'👑 Admin':'🎬 Member';
-    document.getElementById('roleBadge').className='role-badge '+user.role;
-    document.getElementById('wlCount').textContent=(user.watchlist||[]).length;
-    document.getElementById('histCount').textContent=(user.watchHistory||[]).length;
-    document.getElementById('joinDate').textContent=new Date(user.createdAt).getFullYear();
-    const hist=(user.watchHistory||[]).slice(0,6);
-    const histEl=document.getElementById('historyList');
-    histEl.innerHTML=!hist.length?'<p class="muted-text">No watch history yet.</p>':
-      hist.map(h=>{const m=DB.getMovie(h.movieId);if(!m)return'';
-      return`<a href="watch.html?id=${m.id}" class="history-item">
-        <img src="${m.poster}" alt="" onerror="this.src='https://via.placeholder.com/60x90/1a1a1a/666?text=N'">
-        <div><strong>${m.title}</strong><span>${m.year} · ${m.duration}</span></div>
-        <i class="fas fa-play-circle"></i></a>`;}).join('');
-    if(user.role==='admin'){
-      document.getElementById('adminPanel').style.display='block';
-      const allUsers=DB.getUsers(),allMovies=DB.getMovies();
-      document.getElementById('adminStats').innerHTML=
-        `<div class="admin-stat"><i class="fas fa-users"></i><strong>${allUsers.length}</strong> Users</div>
-         <div class="admin-stat"><i class="fas fa-film"></i><strong>${allMovies.length}</strong> Titles</div>
-         <div class="admin-stat"><i class="fas fa-star"></i><strong>Free</strong> Plan</div>`;
-      document.getElementById('adminUsers').innerHTML=
-        `<h4><i class="fas fa-users-cog"></i> All Users</h4>
-         <div class="users-table-wrap"><table class="users-table">
-           <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
-           <tbody>${allUsers.map(u=>`<tr><td>${u.name}</td><td>${u.email}</td>
-             <td><span class="role-badge ${u.role}">${u.role}</span></td>
-             <td>${new Date(u.createdAt).toLocaleDateString()}</td></tr>`).join('')}</tbody>
-         </table></div>`;
-    }
+DB.init(); renderNav(); injectMobileNav();
+const session = DB.getSession();
+if (!session) {
+  document.getElementById("notLoggedIn").style.display = "flex";
+} else {
+  document.getElementById("profileBody").style.display = "block";
+  const user = DB.getUserById(session.id);
+  const all = DB.getMovies();
+  const initials = session.name.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2);
+
+  document.getElementById("profileAvatar").textContent = initials;
+  document.getElementById("profileName").textContent = session.name;
+  document.getElementById("profileMeta").textContent = session.email + " · Member since " + new Date(user.createdAt||Date.now()).getFullYear();
+
+  if (session.role === "admin") {
+    const rp = document.getElementById("rolePill");
+    rp.innerHTML = "<i class=\"fas fa-crown\"></i> Admin";
+    rp.style.cssText = "background:rgba(245,197,24,.1);border-color:rgba(245,197,24,.25);color:#f5c518;display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .75rem;border-radius:20px;font-size:.78rem;font-weight:700;margin-bottom:.5rem;";
+    document.getElementById("adminTabBtn").style.display = "block";
+    renderAdminPanel();
+    renderAdminContentManager();
   }
-  function doLogout(){ DB.logout(); window.location.href='index.html'; }
+
+  const history = user?.watchHistory || [];
+  const watchlist = user?.watchlist || [];
+  const reviews = JSON.parse(localStorage.getItem("nextv_reviews")||"[]");
+  const myReviews = reviews.filter(r=>r.user?.startsWith(session.name.split(" ")[0]));
+  const prog = JSON.parse(localStorage.getItem("nextv_progress")||"{}");
+  const genreCounts = {};
+  history.map(h=>all.find(m=>m.id===h.movieId)).filter(Boolean).forEach(m=>m.genre.forEach(g=>{genreCounts[g]=(genreCounts[g]||0)+1;}));
+  const topGenre = Object.entries(genreCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]||"—";
+  const totalMins = history.map(h=>all.find(m=>m.id===h.movieId)).filter(Boolean).reduce((s,m)=>{
+    const d=m.duration?.match(/(\d+)h\s*(\d+)?m?/); return s+(d?parseInt(d[1])*60+parseInt(d[2]||0):90);
+  },0);
+
+  document.getElementById("profileStatBar").innerHTML = [
+    {n:history.length,l:"Watched",c:"var(--red)"},
+    {n:watchlist.length,l:"Watchlist",c:"var(--teal)"},
+    {n:Math.round(totalMins/60)+"h",l:"Streamed",c:"var(--purple)"},
+    {n:myReviews.length,l:"Reviews",c:"#f5c518"},
+    {n:topGenre,l:"Top Genre",c:"#f97316"},
+  ].map(s=>`<div class="pstat"><div class="pstat-num" style="color:${s.c}">${s.n}</div><div class="pstat-label">${s.l}</div></div>`).join("");
+
+  // Watchlist
+  const wlMovies = watchlist.map(id=>all.find(m=>m.id===id)).filter(Boolean);
+  if (wlMovies.length) { document.getElementById("wlGrid").innerHTML=`<div class="grid-full" id="_wg"></div>`; renderGrid("_wg",wlMovies); }
+  else document.getElementById("wlGrid").innerHTML = `<div class="empty-msg"><i class="fas fa-bookmark"></i>Nothing saved yet. Bookmark titles to add them here.</div>`;
+
+  // History
+  renderFullHistory();
+
+  // Playlists
+  renderPlaylistsSection();
+
+  // Reviews
+  const revEl = document.getElementById("userReviewsEl");
+  if (myReviews.length) {
+    revEl.innerHTML = myReviews.map(r=>`<div class="review-card"><div class="review-header"><div class="reviewer"><div class="reviewer-avatar" style="background:var(--red)">${session.name[0]}</div><div><div class="reviewer-name">${r.movie||"Title"}</div><div class="reviewer-date">${r.date}</div></div></div><div class="review-stars" style="color:#f5c518">${"★".repeat(r.stars)}${"☆".repeat(5-r.stars)}</div></div><p class="review-text">${r.text}</p></div>`).join("");
+  } else {
+    revEl.innerHTML = `<div class="empty-msg"><i class="fas fa-star"></i>No reviews yet. Watch something and share your thoughts!<br><a href="index.html" class="btn-play" style="display:inline-flex;margin-top:1rem;">Start Watching</a></div>`;
+  }
+}
+
+function switchPTab(btn, name) {
+  document.querySelectorAll(".ptab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".ptab-content").forEach(t=>t.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("ptab-"+name)?.classList.add("active");
+}
+
+function doHistoryClear() {
+  if (!confirm("Clear all watch history?")) return;
+  const s = DB.getSession(); if(!s) return;
+  DB.updateUser(s.id, {watchHistory:[]});
+  renderFullHistory();
+  showToast("History cleared");
+}
+
+function clearAllData() {
+  if (!confirm("Clear ALL data? This cannot be undone.")) return;
+  const s = DB.getSession(); if(!s) return;
+  DB.updateUser(s.id, {watchHistory:[],watchlist:[]});
+  ["nextv_progress","nextv_ratings","nextv_reviews","nextv_playlists","nextv_notifs"].forEach(k=>localStorage.removeItem(k));
+  showToast("All data cleared");
+  setTimeout(()=>location.reload(),1200);
+}
+
+function doLogout() { DB.logout(); window.location.href="index.html"; }
 </script>
 </body>
 </html>
