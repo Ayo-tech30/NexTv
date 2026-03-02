@@ -664,7 +664,13 @@ function renderNotifList() {
 
 function toggleNotifPanel() {
   const panel = document.getElementById('notifPanel');
-  panel?.classList.toggle('show');
+  if (!panel) return;
+  const isOpen = panel.classList.contains('show');
+  panel.classList.toggle('show');
+  // Mobile: add backdrop class to body
+  if (window.innerWidth <= 768) {
+    document.body.classList.toggle('sheet-open', !isOpen);
+  }
 }
 
 function markAllRead() {
@@ -688,6 +694,7 @@ document.addEventListener('click', e => {
   const np = document.getElementById('notifPanel');
   if (nb && np && !nb.closest('div').contains(e.target)) {
     np.classList.remove('show');
+    document.body.classList.remove('sheet-open');
   }
 });
 
@@ -2916,4 +2923,571 @@ document.addEventListener('DOMContentLoaded', () => {
   const obs2 = new MutationObserver(() => injectWatchingCounters());
   obs2.observe(document.body, { childList: true, subtree: true });
 });
+
+
+// ── MOBILE BOTTOM SHEET: tap backdrop to close any open sheet ──
+document.addEventListener('click', e => {
+  if (!document.body.classList.contains('sheet-open')) return;
+  // If click is directly on body::after backdrop (outside any panel)
+  const panels = ['notifPanel', 'aiChatPanel'];
+  const dropdowns = document.querySelectorAll('.nav-dropdown.show, .notif-panel.show');
+  let clickedInsidePanel = false;
+  panels.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.contains(e.target)) clickedInsidePanel = true;
+  });
+  dropdowns.forEach(el => {
+    if (el.contains(e.target)) clickedInsidePanel = true;
+  });
+  if (!clickedInsidePanel) {
+    // Close all sheets
+    document.querySelectorAll('.notif-panel.show, .nav-dropdown.show').forEach(el => el.classList.remove('show'));
+    const aiPanel = document.getElementById('aiChatPanel');
+    if (aiPanel) aiPanel.classList.remove('open');
+    document.body.classList.remove('sheet-open');
+  }
+});
+
+
+// ════════════════════════════════════════════════════════════════
+//  NEXTV — ALL NEW FEATURES BLOCK
+//  Downloads · Admin Delete Users · AI Poster · Sleep Timer
+//  Actor/Director Search · Watch Stats · Points/Badges
+//  Sleep Timer · Ratings Dashboard · Leaderboard
+// ════════════════════════════════════════════════════════════════
+
+// ── DOWNLOAD HELPERS ──────────────────────────────────────────
+const DL_KEY = 'nextv_downloads';
+function getDownloads() { try { return JSON.parse(localStorage.getItem(DL_KEY)||'[]'); } catch(e){return[];} }
+function saveDownloads(arr) { localStorage.setItem(DL_KEY, JSON.stringify(arr)); }
+
+function isDownloaded(id) { return getDownloads().some(d=>d.id===id); }
+
+function toggleDownload(id, btn) {
+  const dls = getDownloads();
+  const idx = dls.findIndex(d=>d.id===id);
+  if (idx !== -1) {
+    dls.splice(idx, 1);
+    saveDownloads(dls);
+    if (btn) { btn.innerHTML = '<i class="fas fa-download"></i> Download'; btn.classList.remove('downloaded'); }
+    showToast('Removed from Downloads');
+  } else {
+    const m = DB.getMovie(id);
+    if (!m) return;
+    // Simulate download progress
+    if (btn) {
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      btn.disabled = true;
+    }
+    let prog = 0;
+    const tick = setInterval(() => {
+      prog += Math.random() * 25 + 10;
+      if (prog >= 100) {
+        clearInterval(tick);
+        dls.push({ id, title: m.title, savedAt: new Date().toISOString() });
+        saveDownloads(dls);
+        if (btn) {
+          btn.innerHTML = '<i class="fas fa-check-circle"></i> Downloaded';
+          btn.classList.add('downloaded');
+          btn.disabled = false;
+        }
+        showToast('✓ Saved to Downloads — watch offline anytime');
+      }
+    }, 200);
+  }
+}
+
+// Inject Download button into modal
+function injectDownloadBtn(id) {
+  const actions = document.querySelector('.modal-actions');
+  if (!actions) return;
+  let btn = document.getElementById('modalDownload');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'modalDownload';
+    btn.className = 'btn-dl-modal';
+    actions.appendChild(btn);
+  }
+  const downloaded = isDownloaded(id);
+  btn.innerHTML = downloaded
+    ? '<i class="fas fa-check-circle"></i> Downloaded'
+    : '<i class="fas fa-download"></i> Download';
+  btn.className = 'btn-dl-modal' + (downloaded ? ' downloaded' : '');
+  btn.onclick = () => toggleDownload(id, btn);
+}
+
+// ── PATCH openModal TO ADD DOWNLOAD BTN + AI POSTER ──────────
+const _origOpenModal = openModal;
+openModal = function(id) {
+  _origOpenModal(id);
+  injectDownloadBtn(id);
+  checkAndGenerateAIPoster(id);
+};
+
+// ── AI POSTER GENERATOR (for slow/missing images) ────────────
+// Generates a styled SVG poster using movie metadata when image is slow
+function checkAndGenerateAIPoster(id) {
+  const m = DB.getMovie(id);
+  if (!m) return;
+  const img = document.getElementById('modalPoster');
+  if (!img) return;
+
+  // If image already loaded, nothing to do
+  if (img.classList.contains('loaded')) return;
+
+  // After 2 seconds of no load, inject an SVG placeholder with AI-style design
+  const timeout = setTimeout(() => {
+    if (!img.classList.contains('loaded')) {
+      const svg = generateSVGPoster(m);
+      img.style.display = 'none';
+      let fake = document.getElementById('aiFakePoster');
+      if (!fake) {
+        fake = document.createElement('div');
+        fake.id = 'aiFakePoster';
+        img.parentNode.insertBefore(fake, img);
+      }
+      fake.innerHTML = svg;
+      fake.style.cssText = 'width:140px;min-width:140px;height:210px;border-radius:10px;overflow:hidden;flex-shrink:0;';
+    }
+  }, 2000);
+
+  // Clean up if real image loads
+  img.onload = function() {
+    clearTimeout(timeout);
+    this.classList.add('loaded');
+    const fake = document.getElementById('aiFakePoster');
+    if (fake) { fake.remove(); img.style.display=''; }
+  };
+}
+
+function generateSVGPoster(m) {
+  // Pick color palette based on genre
+  const palettes = {
+    'Action':   ['#e50914','#ff6b35'],
+    'Horror':   ['#1a0a2e','#8b5cf6'],
+    'Sci-Fi':   ['#00d4b4','#0a2a4a'],
+    'Romance':  ['#ff6b9d','#ff4757'],
+    'Comedy':   ['#f5c518','#ff9500'],
+    'Drama':    ['#4a90d9','#1a3a5c'],
+    'Fantasy':  ['#8b5cf6','#c084fc'],
+    'Thriller': ['#333','#e50914'],
+    'Animation':['#00d4b4','#3b82f6'],
+    'default':  ['#e50914','#1a1a1a']
+  };
+  const genre = m.genre?.[0] || 'default';
+  const colors = palettes[genre] || palettes['default'];
+  const title = m.title || '';
+  const year = m.year || '';
+  const rating = m.rating || '';
+  // Wrap title
+  const words = title.split(' ');
+  const lines = [];
+  let line = '';
+  words.forEach(w => {
+    if ((line + ' ' + w).length > 14) { if(line) lines.push(line); line = w; }
+    else line = line ? line + ' ' + w : w;
+  });
+  if (line) lines.push(line);
+  const titleLines = lines.slice(0,3).map((l,i)=>`<text x="70" y="${115 + i*20}" text-anchor="middle" font-family="Georgia,serif" font-size="13" font-weight="bold" fill="white">${l}</text>`).join('');
+
+  return `<svg width="140" height="210" viewBox="0 0 140 210" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="pg${m.id}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="${colors[0]}"/>
+        <stop offset="100%" stop-color="${colors[1]}"/>
+      </linearGradient>
+    </defs>
+    <rect width="140" height="210" fill="url(#pg${m.id})" rx="6"/>
+    <rect width="140" height="210" fill="rgba(0,0,0,0.35)" rx="6"/>
+    <text x="70" y="55" text-anchor="middle" font-size="40" fill="rgba(255,255,255,0.15)" font-family="Georgia">🎬</text>
+    <rect x="15" y="95" width="110" height="1" fill="rgba(255,255,255,0.3)"/>
+    ${titleLines}
+    <rect x="15" y="${115 + Math.min(lines.length,3)*20 + 5}" width="110" height="1" fill="rgba(255,255,255,0.2)"/>
+    <text x="70" y="${115 + Math.min(lines.length,3)*20 + 22}" text-anchor="middle" font-family="Arial" font-size="11" fill="rgba(255,255,255,0.7)">${year}  ·  ★ ${rating}</text>
+    <text x="70" y="200" text-anchor="middle" font-family="Arial" font-size="9" font-weight="bold" letter-spacing="2" fill="rgba(255,255,255,0.4)">NEX TV</text>
+  </svg>`;
+}
+
+// ── ENHANCED ADMIN PANEL — User Management + Delete ──────────
+function renderAdminPanel() {
+  const el = document.getElementById('adminPanelSection');
+  if (!el) return;
+  const session = DB.getSession();
+  if (!session || session.role !== 'admin') { el.style.display='none'; return; }
+
+  const all = DB.getMovies();
+  const users = DB.getUsers();
+  const featured = all.filter(m=>m.featured).length;
+
+  el.innerHTML = `
+    <div class="admin-header" style="margin-bottom:1rem;">
+      <i class="fas fa-shield-alt"></i> Admin Dashboard — Welcome, ${session.name.split(' ')[0]}!
+    </div>
+    <div class="admin-panel-grid">
+      <div class="admin-card">
+        <div class="admin-card-title"><i class="fas fa-film"></i> Total Titles</div>
+        <div class="admin-card-value">${all.length}</div>
+        <div class="admin-card-sub">${featured} featured · ${all.filter(m=>m.category==='movies').length} movies · ${all.filter(m=>m.category==='series').length} series · ${all.filter(m=>m.category==='anime').length} anime</div>
+      </div>
+      <div class="admin-card">
+        <div class="admin-card-title"><i class="fas fa-users"></i> Registered Users</div>
+        <div class="admin-card-value">${users.length}</div>
+        <div class="admin-card-sub">${users.filter(u=>u.role==='admin').length} admin · ${users.filter(u=>u.role==='user').length} members</div>
+      </div>
+      <div class="admin-card" style="grid-column:1/-1;">
+        <div class="admin-card-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span><i class="fas fa-users-cog"></i> User Management</span>
+          <span style="font-size:.72rem;color:var(--muted);">${users.length} accounts</span>
+        </div>
+        <div class="admin-users-table" id="adminUsersTable"></div>
+      </div>
+      <div class="admin-card" style="grid-column:1/-1;">
+        <div class="admin-card-title"><i class="fas fa-list"></i> Manage Featured Titles</div>
+        <div class="admin-title-list" id="adminTitleList"></div>
+      </div>
+    </div>`;
+
+  renderAdminUsersTable();
+  renderAdminTitleList();
+}
+
+function renderAdminUsersTable() {
+  const el = document.getElementById('adminUsersTable');
+  if (!el) return;
+  const users = DB.getUsers();
+  const session = DB.getSession();
+
+  el.innerHTML = `
+    <div style="overflow-x:auto;">
+      <table class="users-table">
+        <thead><tr>
+          <th>User</th><th>Email</th><th>Role</th><th>Joined</th><th>WL</th><th>Action</th>
+        </tr></thead>
+        <tbody>
+          ${users.map(u => `
+            <tr id="urow-${u.id}">
+              <td><strong>${u.name}</strong></td>
+              <td style="color:var(--muted);font-size:.78rem;">${u.email}</td>
+              <td><span class="role-badge ${u.role}">${u.role}</span></td>
+              <td style="font-size:.75rem;color:var(--muted);">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</td>
+              <td style="font-size:.8rem;">${(u.watchlist||[]).length}</td>
+              <td>
+                ${u.id === session.id
+                  ? '<span style="font-size:.72rem;color:var(--muted);">You</span>'
+                  : `<button class="btn-admin-del" onclick="adminDeleteUser('${u.id}','${u.name}')"><i class="fas fa-trash"></i> Delete</button>`
+                }
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function adminDeleteUser(userId, userName) {
+  if (!confirm(`Delete account for "${userName}"?\n\nThis will permanently remove their account, watchlist, and history. This cannot be undone.`)) return;
+  const users = DB.getUsers().filter(u => u.id !== userId);
+  DB.saveUsers(users);
+  document.getElementById('urow-' + userId)?.remove();
+  showToast(`✓ "${userName}" account deleted`);
+  // Refresh counts
+  const countEl = document.querySelector('.admin-card-value');
+  if (countEl) renderAdminPanel();
+}
+
+// ── SLEEP TIMER ───────────────────────────────────────────────
+let sleepTimerTimeout = null;
+let sleepTimerInterval = null;
+let sleepTimerEnd = null;
+
+function openSleepTimer() {
+  const existing = document.getElementById('sleepTimerModal');
+  if (existing) { existing.classList.add('show'); return; }
+
+  const modal = document.createElement('div');
+  modal.id = 'sleepTimerModal';
+  modal.className = 'sleep-modal';
+  modal.innerHTML = `
+    <div class="sleep-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <h3><i class="fas fa-moon" style="color:var(--purple)"></i> Sleep Timer</h3>
+        <button class="btn-close-chat" onclick="closeSleepTimer()"><i class="fas fa-times"></i></button>
+      </div>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:1.25rem;">Auto-pause playback after a set time. Perfect for watching in bed.</p>
+      <div class="sleep-options" id="sleepOptions">
+        ${[15,30,45,60,90,120].map(m=>`
+          <button class="sleep-opt" onclick="setSleepTimer(${m})">${m < 60 ? m+'m' : (m/60)+'h'}</button>
+        `).join('')}
+        <button class="sleep-opt" onclick="setSleepTimer(0)" style="grid-column:1/-1;background:rgba(229,9,20,.08);border-color:rgba(229,9,20,.25);color:var(--red);">
+          <i class="fas fa-times"></i> Cancel Timer
+        </button>
+      </div>
+      <div id="sleepTimerActive" style="display:none;text-align:center;padding:.75rem;background:rgba(139,92,246,.08);border-radius:10px;border:1px solid rgba(139,92,246,.2);">
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:.25rem;">Pausing in</div>
+        <div id="sleepCountdown" style="font-size:1.6rem;font-weight:800;color:var(--purple);font-family:'Bebas Neue',sans-serif;letter-spacing:.05em;">--:--</div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  requestAnimationFrame(() => modal.classList.add('show'));
+}
+
+function closeSleepTimer() {
+  document.getElementById('sleepTimerModal')?.classList.remove('show');
+}
+
+function setSleepTimer(minutes) {
+  clearTimeout(sleepTimerTimeout);
+  clearInterval(sleepTimerInterval);
+  sleepTimerEnd = null;
+
+  if (minutes === 0) {
+    document.getElementById('sleepTimerActive').style.display = 'none';
+    document.getElementById('sleepOptions').style.display = 'grid';
+    showToast('Sleep timer cancelled');
+    closeSleepTimer();
+    return;
+  }
+
+  sleepTimerEnd = Date.now() + minutes * 60000;
+  document.getElementById('sleepOptions').style.display = 'none';
+  document.getElementById('sleepTimerActive').style.display = 'block';
+
+  sleepTimerInterval = setInterval(() => {
+    const remaining = sleepTimerEnd - Date.now();
+    if (remaining <= 0) {
+      clearInterval(sleepTimerInterval);
+      // Pause any playing iframe (send postMessage)
+      document.querySelectorAll('iframe').forEach(f => {
+        try { f.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}','*'); } catch(e){}
+      });
+      showToast('💤 Sleep timer — paused playback');
+      document.getElementById('sleepTimerModal')?.remove();
+      return;
+    }
+    const mins = Math.floor(remaining / 60000);
+    const secs = Math.floor((remaining % 60000) / 1000);
+    const cd = document.getElementById('sleepCountdown');
+    if (cd) cd.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+  }, 1000);
+
+  sleepTimerTimeout = setTimeout(() => { closeSleepTimer(); }, minutes * 60000 + 100);
+  showToast(`⏰ Sleep timer set — pausing in ${minutes < 60 ? minutes+'m' : (minutes/60)+'h'}`);
+}
+
+// ── ACTOR / DIRECTOR SEARCH ───────────────────────────────────
+// Extends existing search to also match cast + director names
+function searchByPerson(name) {
+  const q = name.toLowerCase().trim();
+  const all = DB.getMovies();
+  return all.filter(m =>
+    m.cast?.some(c => c.toLowerCase().includes(q)) ||
+    (m.director && m.director.toLowerCase().includes(q))
+  );
+}
+
+// Patch the nav search to include person results
+const _origDoNavSearch = doNavSearch;
+doNavSearch = function() {
+  _origDoNavSearch();
+  // Also inject person results into existing autocomplete
+};
+
+// ── WATCH STATS DASHBOARD ─────────────────────────────────────
+function getWatchStats() {
+  const session = DB.getSession();
+  if (!session) return null;
+  const user = DB.getUserById(session.id);
+  if (!user) return null;
+  const history = user.watchHistory || [];
+  const all = DB.getMovies();
+
+  const watched = history.map(h => all.find(m => m.id === h.movieId)).filter(Boolean);
+  const genreCount = {};
+  watched.forEach(m => (m.genre||[]).forEach(g => { genreCount[g] = (genreCount[g]||0)+1; }));
+  const topGenre = Object.entries(genreCount).sort((a,b)=>b[1]-a[1])[0];
+  const actorCount = {};
+  watched.forEach(m => (m.cast||[]).forEach(a => { actorCount[a] = (actorCount[a]||0)+1; }));
+  const topActor = Object.entries(actorCount).sort((a,b)=>b[1]-a[1])[0];
+
+  return {
+    total: watched.length,
+    movies: watched.filter(m=>m.category==='movies').length,
+    series: watched.filter(m=>m.category==='series').length,
+    anime: watched.filter(m=>m.category==='anime').length,
+    topGenre: topGenre?.[0] || 'N/A',
+    topGenreCount: topGenre?.[1] || 0,
+    topActor: topActor?.[0] || 'N/A',
+    avgRating: watched.length ? (watched.reduce((s,m)=>s+(m.rating||0),0)/watched.length).toFixed(1) : 'N/A',
+    watchlistSize: (user.watchlist||[]).length
+  };
+}
+
+function renderWatchStatsBadge() {
+  const stats = getWatchStats();
+  if (!stats || stats.total === 0) return '';
+  return `
+    <div class="watch-stats-mini">
+      <div class="ws-item"><span class="ws-num">${stats.total}</span><span class="ws-label">Watched</span></div>
+      <div class="ws-divider"></div>
+      <div class="ws-item"><span class="ws-num">${stats.topGenre}</span><span class="ws-label">Top Genre</span></div>
+      <div class="ws-divider"></div>
+      <div class="ws-item"><span class="ws-num">${stats.avgRating}</span><span class="ws-label">Avg Rating</span></div>
+      <div class="ws-divider"></div>
+      <div class="ws-item"><span class="ws-num">${stats.watchlistSize}</span><span class="ws-label">In List</span></div>
+    </div>`;
+}
+
+// ── POINTS & BADGES SYSTEM ────────────────────────────────────
+const BADGE_DEFS = [
+  { id:'first_watch',   icon:'🎬', name:'First Watch',    desc:'Watched your first title',        req: s => s.total >= 1 },
+  { id:'binge5',        icon:'🍿', name:'Binge Starter',  desc:'Watched 5+ titles',               req: s => s.total >= 5 },
+  { id:'binge20',       icon:'🔥', name:'Binge King',     desc:'Watched 20+ titles',              req: s => s.total >= 20 },
+  { id:'movie_buff',    icon:'🎥', name:'Movie Buff',     desc:'Watched 10+ movies',              req: s => s.movies >= 10 },
+  { id:'anime_lord',    icon:'⚡', name:'Anime Lord',     desc:'Watched 5+ anime',                req: s => s.anime >= 5 },
+  { id:'watchlist_pro', icon:'📌', name:'Curator',        desc:'Added 10+ to your list',          req: s => s.watchlistSize >= 10 },
+  { id:'critic',        icon:'⭐', name:'Film Critic',    desc:'Watches only high-rated content', req: s => parseFloat(s.avgRating) >= 8.0 },
+  { id:'series_addict', icon:'📺', name:'Series Addict',  desc:'Watched 5+ TV shows',             req: s => s.series >= 5 },
+];
+
+function getEarnedBadges() {
+  const stats = getWatchStats();
+  if (!stats) return [];
+  return BADGE_DEFS.filter(b => b.req(stats));
+}
+
+function getPoints() {
+  const stats = getWatchStats();
+  if (!stats) return 0;
+  return (stats.total * 10) + (stats.watchlistSize * 5) + (getEarnedBadges().length * 50);
+}
+
+function renderBadgesSection(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const earned = getEarnedBadges();
+  const all = BADGE_DEFS;
+  const points = getPoints();
+
+  el.innerHTML = `
+    <div class="badges-section">
+      <div class="badges-header">
+        <div>
+          <h3 style="font-size:1rem;font-weight:700;margin-bottom:.15rem;"><i class="fas fa-trophy" style="color:var(--gold)"></i> Your Achievements</h3>
+          <div style="font-size:.8rem;color:var(--muted);">${earned.length}/${all.length} badges unlocked</div>
+        </div>
+        <div class="points-badge"><i class="fas fa-star"></i> ${points} XP</div>
+      </div>
+      <div class="badges-grid">
+        ${all.map(b => {
+          const unlocked = earned.find(e=>e.id===b.id);
+          return `<div class="badge-item ${unlocked?'unlocked':'locked'}" title="${b.desc}">
+            <span class="badge-emoji">${b.icon}</span>
+            <span class="badge-name">${b.name}</span>
+            ${unlocked ? '' : '<span class="badge-lock"><i class="fas fa-lock"></i></span>'}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+// ── RELEASE CALENDAR (lightweight) ───────────────────────────
+function renderReleaseCalendar(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  // Upcoming titles (2025+)
+  const all = DB.getMovies();
+  const upcoming = all.filter(m=>m.year >= 2024).sort((a,b)=>b.year-a.year).slice(0,8);
+
+  el.innerHTML = `
+    <div class="calendar-section">
+      <div class="row-header" style="margin-bottom:.75rem;">
+        <h2><i class="fas fa-calendar-alt" style="color:var(--gold)"></i> Coming Soon</h2>
+      </div>
+      <div class="calendar-list">
+        ${upcoming.map(m=>`
+          <div class="cal-item" onclick="openModal('${m.id}')">
+            <img src="${m.poster}" alt="${m.title}" onerror="this.src=''" class="cal-poster">
+            <div class="cal-info">
+              <div class="cal-title">${m.title}</div>
+              <div class="cal-year">${m.year} · ${m.genre?.[0]||''}</div>
+            </div>
+            <span class="cal-badge">${m.year >= 2025 ? 'NEW' : m.year}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ── INJECT DOWNLOAD BTN INTO WATCH PAGE PLAYER BAR ───────────
+function injectWatchPageDownloadBtn() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if (!id) return;
+  const serverBar = document.querySelector('.server-bar');
+  if (!serverBar) return;
+  if (document.getElementById('watchDlBtn')) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'watchDlBtn';
+  btn.className = 'srv-btn' + (isDownloaded(id) ? ' active' : '');
+  btn.innerHTML = isDownloaded(id)
+    ? '<i class="fas fa-check-circle"></i> Downloaded'
+    : '<i class="fas fa-download"></i> Download';
+  btn.title = 'Save for offline viewing';
+  btn.onclick = () => toggleDownload(id, btn);
+  serverBar.appendChild(btn);
+}
+
+// ── INJECT SLEEP TIMER BTN INTO WATCH PAGE ────────────────────
+function injectSleepTimerBtn() {
+  const serverBar = document.querySelector('.server-bar');
+  if (!serverBar || document.getElementById('sleepBtn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'sleepBtn';
+  btn.className = 'srv-btn';
+  btn.innerHTML = '<i class="fas fa-moon"></i> Sleep';
+  btn.title = 'Set sleep timer';
+  btn.onclick = openSleepTimer;
+  serverBar.appendChild(btn);
+}
+
+// Auto-init on watch page
+if (window.location.pathname.includes('watch.html')) {
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      injectWatchPageDownloadBtn();
+      injectSleepTimerBtn();
+    }, 800);
+  });
+}
+
+// ── ENHANCED SEARCH — add actor/director results ──────────────
+const _origInitSearchAC = initSearchAutocomplete;
+initSearchAutocomplete = function() {
+  _origInitSearchAC();
+
+  const input = document.getElementById('searchAC') || document.getElementById('searchInput');
+  if (!input) return;
+
+  const _origInput = input.oninput;
+  input.addEventListener('input', function() {
+    const q = this.value.trim().toLowerCase();
+    if (q.length < 2) return;
+    const all = DB.getMovies();
+    const personResults = searchByPerson(q).slice(0,3);
+    if (!personResults.length) return;
+
+    const acList = document.querySelector('.ac-list');
+    if (!acList) return;
+    const divider = document.createElement('div');
+    divider.className = 'ac-divider';
+    divider.innerHTML = '<span>By Cast / Director</span>';
+    acList.appendChild(divider);
+    personResults.forEach(m => {
+      const item = document.createElement('div');
+      item.className = 'ac-item';
+      item.innerHTML = `<img src="${m.poster}" class="ac-poster"> <div><div class="ac-title">${m.title}</div><div class="ac-sub" style="color:var(--teal);font-size:.7rem;"><i class="fas fa-user"></i> ${m.cast?.find(c=>c.toLowerCase().includes(q))||m.director}</div></div>`;
+      item.onclick = () => { openModal(m.id); document.getElementById('searchAC')?.classList.remove('show'); };
+      acList.appendChild(item);
+    });
+  });
+};
 

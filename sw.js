@@ -1,50 +1,523 @@
-// NexTV Service Worker v3.0
-const CACHE = 'nextv-v3';
-const SHELL = [
-  '/', '/index.html', '/style.css', '/app.js', '/db.js',
-  '/movies.html', '/series.html', '/anime.html', '/cartoons.html',
-  '/search.html', '/watchlist.html', '/profile.html', '/watch.html',
-  '/genre.html', '/404.html',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css',
+// NexTV Service Worker v4.0 — Instant Image Cache
+// Pre-downloads ALL 366 movie posters + backdrops on install.
+// After first visit, every image loads from device (0ms, no network needed).
+
+const CACHE_IMG    = 'nextv-images-v5';
+const CACHE_STATIC = 'nextv-static-v5';
+
+// Every poster + backdrop URL in the entire app
+const ALL_IMAGES = [
+  "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
+  "https://image.tmdb.org/t/p/w1280/xJHokMbljvjADYdit5fK5VQsXEG.jpg",
+  "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
+  "https://image.tmdb.org/t/p/w1280/hkBaDkMWbLaf8B1lsWsKX7Ew3Xq.jpg",
+  "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
+  "https://image.tmdb.org/t/p/w1280/s2bT29y0ngXxxu2IA8AOzzXTRhd.jpg",
+  "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
+  "https://image.tmdb.org/t/p/w1280/ApiBzeaa95TNYliSbQ8pJv4Nj6M.jpg",
+  "https://image.tmdb.org/t/p/w500/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
+  "https://image.tmdb.org/t/p/w1280/bOGkgRGdhrBYJSLpXaxhXVstddV.jpg",
+  "https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg",
+  "https://image.tmdb.org/t/p/w1280/7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg",
+  "https://image.tmdb.org/t/p/w500/d5NXSklpcvweasTZTdgw9J6tQj7.jpg",
+  "https://image.tmdb.org/t/p/w1280/jYEW5xZkZk2WTrdbMGAPFuBqbDc.jpg",
+  "https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg",
+  "https://image.tmdb.org/t/p/w1280/avedvodAZUcwqevBfm8p4G2NziQ.jpg",
+  "https://image.tmdb.org/t/p/w500/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg",
+  "https://image.tmdb.org/t/p/w1280/suaEOtk1N1sgg2MTM7oZd2cfVp3.jpg",
+  "https://image.tmdb.org/t/p/w500/fZPSd91abroad5JeYDp4hgaGhMx.jpg",
+  "https://image.tmdb.org/t/p/w1280/umC04Cozevu7nn86uBnMmn3T7oT.jpg",
+  "https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg",
+  "https://image.tmdb.org/t/p/w1280/iQFcwSGbZXMkeyKrxbPnwnRo5fl.jpg",
+  "https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsLYHufncOHgx.jpg",
+  "https://image.tmdb.org/t/p/w1280/tmU7GeKVEMrBleo5ycVBFurqvxJ.jpg",
+  "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
+  "https://image.tmdb.org/t/p/w1280/fm6KqXpk3M2HVveHwCrBSSBaO0V.jpg",
+  "https://image.tmdb.org/t/p/w500/62HCnUTziyWcpDaBO2i1DX17ljH.jpg",
+  "https://image.tmdb.org/t/p/w1280/AkB37EMGilAN21h0CAQRP2hKzDc.jpg",
+  "https://image.tmdb.org/t/p/w500/jRXYjXNq0Cs2TcJjLkki24MLp7u.jpg",
+  "https://image.tmdb.org/t/p/w1280/o0s4XsEDfDlvit5pDRKjzXR4pp2.jpg",
+  "https://image.tmdb.org/t/p/w500/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg",
+  "https://image.tmdb.org/t/p/w1280/6WBIzCgmDCYrqh2sKwcMdVbGgSD.jpg",
+  "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
+  "https://image.tmdb.org/t/p/w1280/ncEsesgOJDNrTUED89hYbA117gg.jpg",
+  "https://image.tmdb.org/t/p/w500/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg",
+  "https://image.tmdb.org/t/p/w1280/f5F4cRhQdUbyVbB5lTNC1F0FYzO.jpg",
+  "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+  "https://image.tmdb.org/t/p/w1280/87hTDiay2N2qWyX4Ds7ybXi9h8I.jpg",
+  "https://image.tmdb.org/t/p/w500/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg",
+  "https://image.tmdb.org/t/p/w1280/loRmRzQXZeqG78TqZuyvSlEQfZb.jpg",
+  "https://image.tmdb.org/t/p/w500/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg",
+  "https://image.tmdb.org/t/p/w1280/pIIskHRyB9SiNTpsx1Q0Ya2TUDU.jpg",
+  "https://image.tmdb.org/t/p/w500/iuFNMS8vlzsOne7rlNsdNYWzWWT.jpg",
+  "https://image.tmdb.org/t/p/w1280/nHf61UzkfFno5X1ofIHQ4lnxITX.jpg",
+  "https://image.tmdb.org/t/p/w500/k7eYdWvhYQyRQoU2TB2A2Xu2grZ.jpg",
+  "https://image.tmdb.org/t/p/w1280/4NxCDWJ7FXfVkldHnNsQaVqk7VE.jpg",
+  "https://image.tmdb.org/t/p/w500/6FfCtAuVAW8XJjZ7eWeLibRLWTw.jpg",
+  "https://image.tmdb.org/t/p/w1280/zqkmTXzjkAgXmEWLRsY4UpTWCeo.jpg",
+  "https://image.tmdb.org/t/p/w500/uxzzxijgPIY7slzFvMotPv8wjKA.jpg",
+  "https://image.tmdb.org/t/p/w1280/b6ZJZHUdMEFECvGiDpJjlfUWela.jpg",
+  "https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg",
+  "https://image.tmdb.org/t/p/w1280/tsRy63Mu5cu8etL1X7ZLyf7UP1M.jpg",
+  "https://image.tmdb.org/t/p/w500/x2LSRK2Cm7MZhjluni1msVJ3wDj.jpg",
+  "https://image.tmdb.org/t/p/w1280/rcA37ys54PssDn9rHALMzOtChbW.jpg",
+  "https://image.tmdb.org/t/p/w500/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg",
+  "https://image.tmdb.org/t/p/w1280/suopoADq0k8YZr4dQXcU6aLJ3a.jpg",
+  "https://image.tmdb.org/t/p/w500/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg",
+  "https://image.tmdb.org/t/p/w1280/6Wdl9N6dL0Hi5T4thkizCvrkTkM.jpg",
+  "https://image.tmdb.org/t/p/w500/dDlEmu3EZ0Pgg93K2SVNLCjCSvE.jpg",
+  "https://image.tmdb.org/t/p/w1280/qw3J9cNeLioOLoR68WX7z79aCdK.jpg",
+  "https://image.tmdb.org/t/p/w500/vUUqzWa2LnHIVqkaKVlVGkPaQca.jpg",
+  "https://image.tmdb.org/t/p/w1280/wiE9doxiLwq3WguhPef0bT4fLc.jpg",
+  "https://image.tmdb.org/t/p/w500/apbrbWs2BerzUCMBQl7JFHv00If.jpg",
+  "https://image.tmdb.org/t/p/w1280/nMcayvRnSGcvtOxCAC7ELvDHBHC.jpg",
+  "https://image.tmdb.org/t/p/w500/reEMJA1uzscCbkpeRJeTT2bjqUp.jpg",
+  "https://image.tmdb.org/t/p/w1280/xGexTKCJDkl61ljM3dB0CxLyGKm.jpg",
+  "https://image.tmdb.org/t/p/w500/hlLXt2tOPT6RRnjiUmoxyG1LTFi.jpg",
+  "https://image.tmdb.org/t/p/w1280/6S8XKQD5k17cSmpFMSJT5MnGJJy.jpg",
+  "https://image.tmdb.org/t/p/w500/z2yahl2uefxDCl0nogcRBstwruJ.jpg",
+  "https://image.tmdb.org/t/p/w1280/etj8E2o0Bud0HkONVQPjyCkIvpv.jpg",
+  "https://image.tmdb.org/t/p/w500/7vjaCdMw15FEbXyLQTVa04URsPm.jpg",
+  "https://image.tmdb.org/t/p/w1280/jBJWaqoSCiARWtfV0GlqHrcdidd.jpg",
+  "https://image.tmdb.org/t/p/w500/n7PgcnYRqRNBSKwP4UkuCirr4Ly.jpg",
+  "https://image.tmdb.org/t/p/w1280/x4OJAjXFNJ6GfFRZXU9tLrr0HKo.jpg",
+  "https://image.tmdb.org/t/p/w500/iigTWBRGk3QxAnRCEsNVXpSJWPs.jpg",
+  "https://image.tmdb.org/t/p/w1280/aDLMHI9oBPdRiF8aSgTHSVgM4Sk.jpg",
+  "https://image.tmdb.org/t/p/w500/hTP1DtLGFamjfu8WqjnuQdP1n4i.jpg",
+  "https://image.tmdb.org/t/p/w1280/iy5EKOlVleRHZwTaEjYgQH7JurC.jpg",
+  "https://image.tmdb.org/t/p/w500/xUfRZu2mi8jH6SzQEJGP6tjBuYj.jpg",
+  "https://image.tmdb.org/t/p/w1280/qEcg0kbMdPtqPBGVdQQGCRtBRGf.jpg",
+  "https://image.tmdb.org/t/p/w500/5ZFUEOULaVml7pQuXxhpR2SmVUw.jpg",
+  "https://image.tmdb.org/t/p/w1280/ypbHt24SjoMidFfCX3Lk8aDEgK0.jpg",
+  "https://image.tmdb.org/t/p/w500/xppeysfvDKVx775MFuH8Z9BlpMk.jpg",
+  "https://image.tmdb.org/t/p/w1280/BtOe6Jvzp50bCk96Mf1WBKI3s5.jpg",
+  "https://image.tmdb.org/t/p/w500/e3NBGiAifW9Xt8xD5tpARskjccO.jpg",
+  "https://image.tmdb.org/t/p/w1280/2rmK7mnchw9Xr3XdiTFSxTTLXqv.jpg",
+  "https://image.tmdb.org/t/p/w500/B7N7IOAFY3l8bFI0OwSxKyXBkDU.jpg",
+  "https://image.tmdb.org/t/p/w1280/geGm4zkFCJi1SoFJnhCUrUZ02mO.jpg",
+  "https://image.tmdb.org/t/p/w500/1ZdED4PBsFF1dtHJDfmTYbGrpMZ.jpg",
+  "https://image.tmdb.org/t/p/w1280/pebZ1ZKRX2XYJzRU4YIAFxDELIn.jpg",
+  "https://image.tmdb.org/t/p/w500/oiPTEJfJExILFdEVhJg36NiYRaD.jpg",
+  "https://image.tmdb.org/t/p/w1280/bO3s5IOJFZq6V9P4E9vfR5HyOFP.jpg",
+  "https://image.tmdb.org/t/p/w500/3AS8MLKXJ7vOTlvCJiXjmePuLq4.jpg",
+  "https://image.tmdb.org/t/p/w1280/o5i88FtLSdnYUDnJGiXlEEiRFMF.jpg",
+  "https://image.tmdb.org/t/p/w500/2EewmxXe72ogD0EaWM8gqa0ccIw.jpg",
+  "https://image.tmdb.org/t/p/w1280/hW5FHE6NBZSE4u5HcMaW3GeHerD.jpg",
+  "https://image.tmdb.org/t/p/w500/1enwEQVgBKy9lekSXSmXPCODJ6z.jpg",
+  "https://image.tmdb.org/t/p/w1280/mCPW4QgCeNJE4MELSUVUNxPaEhL.jpg",
+  "https://image.tmdb.org/t/p/w500/cKhSgBzKQ0gPRQJXIBnrwQg77cF.jpg",
+  "https://image.tmdb.org/t/p/w1280/orIt9gFdJaRuXNnrZBsBRMEr4y9.jpg",
+  "https://image.tmdb.org/t/p/w500/gdIrmf2DdY5mgN6ycVP0XlzKzbE.jpg",
+  "https://image.tmdb.org/t/p/w1280/vBHgEMfCiAJ6lGkJMlUe5DTzklQ.jpg",
+  "https://image.tmdb.org/t/p/w500/2IWouZK4gkgHhJa4PPBn6VqAGRD.jpg",
+  "https://image.tmdb.org/t/p/w1280/xmrRrQ9LjnCeaEkFyKXGaGwGBGF.jpg",
+  "https://image.tmdb.org/t/p/w500/sCx7FEFEanHxT4pSLSJjTNRJEQu.jpg",
+  "https://image.tmdb.org/t/p/w1280/axKqalBXTnrKUF3R0jL7DnvRMPN.jpg",
+  "https://image.tmdb.org/t/p/w500/qXthUuaFGmQQJMXXhMMBBumQU65.jpg",
+  "https://image.tmdb.org/t/p/w1280/rNFSmYXHdEMHJjrGzBRgvsKbUNk.jpg",
+  "https://image.tmdb.org/t/p/w500/qcOBTMOBBJSjWGKoXJ3dtABH8mb.jpg",
+  "https://image.tmdb.org/t/p/w1280/8NsHFBNJi7GNFNlumMFvqFZ1s3d.jpg",
+  "https://image.tmdb.org/t/p/w500/q6Fh3VE62RXGC2FhRJ94q2FZXoR.jpg",
+  "https://image.tmdb.org/t/p/w1280/aOOYCpqBYtWWTBa9JN7KGPiMXp7.jpg",
+  "https://image.tmdb.org/t/p/w500/iiZZdoQBEYBv6id8su7ImL0oCbD.jpg",
+  "https://image.tmdb.org/t/p/w1280/7du3sLBjbCUTRoGnLfAHLrBsJb4.jpg",
+  "https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg",
+  "https://image.tmdb.org/t/p/w1280/4HodYYKEIsGOdinkGi2Ucz6X9i0.jpg",
+  "https://image.tmdb.org/t/p/w500/AbbXspMOwdvwWZgVN0nabSe1T0.jpg",
+  "https://image.tmdb.org/t/p/w1280/nxxGhGVGzOhLIdTOxIHrqikLKsU.jpg",
+  "https://image.tmdb.org/t/p/w500/wge0gxGmXHmxrxFc4GYWi4ZFhKj.jpg",
+  "https://image.tmdb.org/t/p/w1280/js9e6CKEUbVFVFyAMWOViqDfuEW.jpg",
+  "https://image.tmdb.org/t/p/w500/sgheSKxZkttIe8ONaJSoLRbBMbS.jpg",
+  "https://image.tmdb.org/t/p/w1280/mBBMBOvqdyX7ckSoaLHnRhb6C4y.jpg",
+  "https://image.tmdb.org/t/p/w500/2zh9YBPdGVHXGQ1JC1Rlnc2TDYZ.jpg",
+  "https://image.tmdb.org/t/p/w1280/r6gpH4VMRmhb4PkLdREiCTfCMqC.jpg",
+  "https://image.tmdb.org/t/p/w500/w9kR8qbmQ01HwnvK4alvnQ2ca0L.jpg",
+  "https://image.tmdb.org/t/p/w1280/zGLHX92Gk96O1DJvLil7ObJTbaL.jpg",
+  "https://image.tmdb.org/t/p/w500/pSgXKPU8gFHlbDNp8zLnbxWMBqp.jpg",
+  "https://image.tmdb.org/t/p/w1280/2Pjx6fMpZJFb6eVMlgQ9ydnvtCj.jpg",
+  "https://image.tmdb.org/t/p/w500/casOvHEJ8mkEZRR0U0oScaEhNKv.jpg",
+  "https://image.tmdb.org/t/p/w1280/nD7vNDEjhlmcN0TDPpCMRmOTkMg.jpg",
+  "https://image.tmdb.org/t/p/w500/RYMX2wcKCBAr24UyPD7KE3wYQly.jpg",
+  "https://image.tmdb.org/t/p/w1280/o0iwhT2YERWHQHuaKNpnEYNAGPP.jpg",
+  "https://image.tmdb.org/t/p/w500/f4J9W0UvGJJ7bPBXnBWxHNvDuOj.jpg",
+  "https://image.tmdb.org/t/p/w1280/sg7Dp5mjz2qbXJMsyYEA3V8sTGv.jpg",
+  "https://image.tmdb.org/t/p/w500/9TBD4QJKGJO7YMGBBTM0YSDBF7N.jpg",
+  "https://image.tmdb.org/t/p/w1280/wFqVLtBFhpQM3ys2XOSD3EOIJTW.jpg",
+  "https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg",
+  "https://image.tmdb.org/t/p/w1280/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg",
+  "https://image.tmdb.org/t/p/w500/yrpPYKijwdMHyTGIOd1iK1h0Gu8.jpg",
+  "https://image.tmdb.org/t/p/w1280/rOmUuQEZJHGGkFAqNQoZbKHOSHG.jpg",
+  "https://image.tmdb.org/t/p/w500/wWba3TaojhK7NdycyUDVhg0bjnc.jpg",
+  "https://image.tmdb.org/t/p/w1280/lgkgWvKKXHo2OXcC53tGGNzDZPe.jpg",
+  "https://image.tmdb.org/t/p/w500/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg",
+  "https://image.tmdb.org/t/p/w500/b33nnKl1GSFbao4l3fZDDqsMx0F.jpg",
+  "https://image.tmdb.org/t/p/w1280/9SSEUrSqhljBMzRe4aBTh17LP9Q.jpg",
+  "https://image.tmdb.org/t/p/w500/hA2ple9q4qnwxp3hKVNhroipsir.jpg",
+  "https://image.tmdb.org/t/p/w1280/phszHPFBOef6PCOoMkiKSmwBVRx.jpg",
+  "https://image.tmdb.org/t/p/w500/xRWht48C2V2jDSxqfAbKQkiCGaJ.jpg",
+  "https://image.tmdb.org/t/p/w1280/aQXTKkYJNFgCfHfqnUwBBdmHaEX.jpg",
+  "https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg",
+  "https://image.tmdb.org/t/p/w1280/s16H6tpK2utvwpaS2fnSLGqFnEI.jpg",
+  "https://image.tmdb.org/t/p/w500/kuf6dutpsT0vSVehic3EZIqkOBt.jpg",
+  "https://image.tmdb.org/t/p/w1280/AmR3JfKAMJJ74JGnunERQQzd2jA.jpg",
+  "https://image.tmdb.org/t/p/w500/sv1xJUazXoQuIDfyMqkfM5uXUUN.jpg",
+  "https://image.tmdb.org/t/p/w1280/xDMIl84Qo5Tsu62c9DGWhmPI67A.jpg",
+  "https://image.tmdb.org/t/p/w500/rjkmN1dniUHVYAtwuV3Tji7FsDO.jpg",
+  "https://image.tmdb.org/t/p/w1280/70nxSw3mFBsGmtkvcs91PbjerwD.jpg",
+  "https://image.tmdb.org/t/p/w500/oBgWY00bEFeZ9N25wWVyuQddbAo.jpg",
+  "https://image.tmdb.org/t/p/w1280/vXHDFKNWZ4Tlxs1e16WQvnzANfT.jpg",
+  "https://image.tmdb.org/t/p/w500/zAYRe2bJxpnMlSlAGCfMjSbnEbO.jpg",
+  "https://image.tmdb.org/t/p/w1280/dE2DPBvJMzXJNkIiXBifnTMHVIp.jpg",
+  "https://image.tmdb.org/t/p/w500/4xgl3yw5eFMCBSXKE8KyrHxBSmA.jpg",
+  "https://image.tmdb.org/t/p/w1280/laTbFqjOWLdqMZNhH3eFqN0mwrI.jpg",
+  "https://image.tmdb.org/t/p/w500/bE4MyDNjUUSLmSbZSmFOjLDFqTu.jpg",
+  "https://image.tmdb.org/t/p/w1280/9hvhGtcsGhQY58pukw8w55UEUbL.jpg",
+  "https://image.tmdb.org/t/p/w500/wMLSMHYOXlgFGt0sH3QlQfBCoaH.jpg",
+  "https://image.tmdb.org/t/p/w1280/lfRkUr7DYdHldAqi3PwdQGBRBPM.jpg",
+  "https://image.tmdb.org/t/p/w500/vW0rFCUQRYsMEkTaqUjPBMVr6k3.jpg",
+  "https://image.tmdb.org/t/p/w1280/ySSgoMVALAipyOIr0JVHHXiQKuT.jpg",
+  "https://image.tmdb.org/t/p/w500/npdB6eFzizki0WaZ1OvKcJrxmd.jpg",
+  "https://image.tmdb.org/t/p/w1280/jM6IPsYhHkRgJwxlqZyRCXqMVIK.jpg",
+  "https://image.tmdb.org/t/p/w500/gQkCPfn6GGMuHfzGQUHI5GKUMOH.jpg",
+  "https://image.tmdb.org/t/p/w1280/odzc3Xpxgw3EjJC1XVovDHzFcqw.jpg",
+  "https://image.tmdb.org/t/p/w500/vXuapjMVqFEXHM3HcTJpfakdmf5.jpg",
+  "https://image.tmdb.org/t/p/w1280/n1aAsHnFQRSHPHPLPm0oVzQYJrl.jpg",
+  "https://image.tmdb.org/t/p/w500/lVg7IFgCoaCqOj2BbBpUhTsXFE5.jpg",
+  "https://image.tmdb.org/t/p/w1280/9P3GmKIhVnSJfDM4cGVApJBQ9mK.jpg",
+  "https://image.tmdb.org/t/p/w500/qbFc04EKKx33VoqxRqsEW98c5IG.jpg",
+  "https://image.tmdb.org/t/p/w1280/kHb7hzVH7G1RJLY3BTF1l3sDAbo.jpg",
+  "https://image.tmdb.org/t/p/w500/7wp1nyJ5GxmZBFqXd3GCVDB1DuG.jpg",
+  "https://image.tmdb.org/t/p/w1280/rrAMByTJwLDjNl9rRFmjhMbCsNN.jpg",
+  "https://image.tmdb.org/t/p/w500/sKVSBptUfE0sRIYzJ2DWHFcfmwl.jpg",
+  "https://image.tmdb.org/t/p/w1280/lXBSeZkqRoNpCK5q9CcCPvTLfKD.jpg",
+  "https://image.tmdb.org/t/p/w500/miqvB1YPqaFkWHlJpvoRYHgHBBO.jpg",
+  "https://image.tmdb.org/t/p/w1280/8Rl7lSnPqMY5GKdQPALcJy7SNCJ.jpg",
+  "https://image.tmdb.org/t/p/w500/9SgDSFhFGELNi6A5HmaxVBN7DtT.jpg",
+  "https://image.tmdb.org/t/p/w1280/uRuFh34KiEPBRKcBdVXVTEkuasM.jpg",
+  "https://image.tmdb.org/t/p/w500/h8Rb9gBr48ODIwYUttZNYeMWeUU.jpg",
+  "https://image.tmdb.org/t/p/w1280/9BNLBBQpKKjRTqWzRVzJH3JJyBY.jpg",
+  "https://image.tmdb.org/t/p/w500/nzoRMYDC8RFqRj3OLiqDn4yJaFo.jpg",
+  "https://image.tmdb.org/t/p/w1280/zJoB3RZFJQsFhLuDHsOhh4UKSsX.jpg",
+  "https://image.tmdb.org/t/p/w500/sT7KmGAz71D6dX0jKBgCRKpjH5I.jpg",
+  "https://image.tmdb.org/t/p/w1280/axXSBq9U6AZyCMFHnDhKqQJ6nMB.jpg",
+  "https://image.tmdb.org/t/p/w500/gAoXVB08qh4AkMKGtlXj8nuiX6n.jpg",
+  "https://image.tmdb.org/t/p/w1280/sFTFVSS7d5bkGJfLgBvZKUc5Crt.jpg",
+  "https://image.tmdb.org/t/p/w500/4Uqn1osT8RiuCXFIBhBkzLrb1Fq.jpg",
+  "https://image.tmdb.org/t/p/w1280/mkhBh9WKgRp8dHu09V5MkOoNvYk.jpg",
+  "https://image.tmdb.org/t/p/w500/4m5MiZVuVnIaS7GUQEYnBnRJeLP.jpg",
+  "https://image.tmdb.org/t/p/w1280/bS4DB5HLXKR7pbN2MOXN0cBW1KR.jpg",
+  "https://image.tmdb.org/t/p/w500/aLVkiINlIeCkcZIzb7XHzPYgO6L.jpg",
+  "https://image.tmdb.org/t/p/w1280/tElnmtQ6yz1PjN1kePNl8yMSb59.jpg",
+  "https://image.tmdb.org/t/p/w500/2cxhvwyE0RtbS6MLjCWCJBsDOij.jpg",
+  "https://image.tmdb.org/t/p/w1280/euYIwmwkmz95mnXvufEmbL6ovhZ.jpg",
+  "https://image.tmdb.org/t/p/w500/wTnV3PCVW5O92JMrFvvrRcV39RU.jpg",
+  "https://image.tmdb.org/t/p/w1280/417X5AeZPMDaHgTGeSSSmOHpGhX.jpg",
+  "https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg",
+  "https://image.tmdb.org/t/p/w1280/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg",
+  "https://image.tmdb.org/t/p/w500/k6RlxBiMqEQpxXSMfELgHa6Fmhb.jpg",
+  "https://image.tmdb.org/t/p/w1280/llQSa4pJhKHUG9Z4qfGOF0RGQLY.jpg",
+  "https://image.tmdb.org/t/p/w500/fiVW06jE7z9YnO4trhaMEdclSiC.jpg",
+  "https://image.tmdb.org/t/p/w1280/4XM8DUTQb3lhLemJC51Jx4a2EuA.jpg",
+  "https://image.tmdb.org/t/p/w500/ym1dxyOk4jFcSl4Q2zmRrA5BEEN.jpg",
+  "https://image.tmdb.org/t/p/w1280/8YFL5QQVPy3AgrEQxNYVSgiPEbe.jpg",
+  "https://image.tmdb.org/t/p/w500/51tqzRtKMMZEKesPMqyx3MZtBBV.jpg",
+  "https://image.tmdb.org/t/p/w1280/74QLIJkBGTQ8JW9CItQ8iiOLXnL.jpg",
+  "https://image.tmdb.org/t/p/w500/bkpPTZUdq31UGDovmszsg2CchiI.jpg",
+  "https://image.tmdb.org/t/p/w1280/cVhMgSAEzM5LhrwGXqe0a1cDPnb.jpg",
+  "https://image.tmdb.org/t/p/w500/Af4bXE63pVsb2FtbW8uYUyIxoKr.jpg",
+  "https://image.tmdb.org/t/p/w1280/4fEFc7IpJBGsLWkfmm0e8UXSB4R.jpg",
+  "https://image.tmdb.org/t/p/w500/A4j8S6moJS2zNtRR8T9oKkzODRO.jpg",
+  "https://image.tmdb.org/t/p/w1280/5S1QfC8JjO6fJvHBucCbIa4pxsH.jpg",
+  "https://image.tmdb.org/t/p/w500/vBZ0qvaRxqEfnuDdBLQPFgBRGmm.jpg",
+  "https://image.tmdb.org/t/p/w1280/uS3G2lSMwlPgfOdKnXBQnvXNqkO.jpg",
+  "https://image.tmdb.org/t/p/w500/bcM2Tl5HlsvPBnL8DKP9Ie6vU4r.jpg",
+  "https://image.tmdb.org/t/p/w1280/b4SFzIqzKh5KWyV2jCPSU0oyCLf.jpg",
+  "https://image.tmdb.org/t/p/w500/cMBflAbpFpFNFCHYFAkEUoEUaQ4.jpg",
+  "https://image.tmdb.org/t/p/w1280/mDeWuRPBUaH7RanrI6JKc0QjlB5.jpg",
+  "https://image.tmdb.org/t/p/w500/lurEK87kukWNaHd0zYnsi3yzJrs.jpg",
+  "https://image.tmdb.org/t/p/w1280/2NN0n7yTETEslbgW5h6HhJDLrSY.jpg",
+  "https://image.tmdb.org/t/p/w500/A7EByudX0eqqArGmgIncgCphTcd.jpg",
+  "https://image.tmdb.org/t/p/w1280/xTHltMrZPAJFLQ6qyCBjAnXSmZu.jpg",
+  "https://image.tmdb.org/t/p/w500/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg",
+  "https://image.tmdb.org/t/p/w1280/xg27NrXi7VXCGUr7MG75UqLl6Vg.jpg",
+  "https://image.tmdb.org/t/p/w500/gPbM0MK8CP8A174rmUwGsADNYKD.jpg",
+  "https://image.tmdb.org/t/p/w1280/bz66a19bR6BKsbY8gSZCM4etJiK.jpg",
+  "https://image.tmdb.org/t/p/w500/kdPMUgzOmjOhNjkS2qkJLjmJvnB.jpg",
+  "https://image.tmdb.org/t/p/w1280/nQt0RFRlkNTJeqYm2CqD9oQ2v4H.jpg",
+  "https://image.tmdb.org/t/p/w500/NhvMBrCVXfkmFtxmCeL6Jfkztb.jpg",
+  "https://image.tmdb.org/t/p/w500/couKeU8Lak5ztB7unP6hXWnCtCR.jpg",
+  "https://image.tmdb.org/t/p/w1280/bUbUzQJo0e0kXfVzLsqVWzqE2Jg.jpg",
+  "https://image.tmdb.org/t/p/w500/xlbFYMBiRBFbFsghsJB2LNJhXAD.jpg",
+  "https://image.tmdb.org/t/p/w1280/llGFnzY32sHnMAlpMxTuJORFMla.jpg",
+  "https://image.tmdb.org/t/p/w500/l9cCQBCHE6hbAyJZfxRIx9LoRSQ.jpg",
+  "https://image.tmdb.org/t/p/w1280/8LxFo5pXNWrBFKYMRnBjmHxX9Qb.jpg",
+  "https://image.tmdb.org/t/p/w500/cuAMRObhJnEXXBgMbxpiFKqVMVa.jpg",
+  "https://image.tmdb.org/t/p/w1280/dOk20BptRuiMGqbBwQVFvY30dT4.jpg",
+  "https://image.tmdb.org/t/p/w1280/heqL10ctf8lR0uqlZmBVmwT2M3G.jpg",
+  "https://image.tmdb.org/t/p/w500/sOQHHSSjlVSGK4sMqBB49sBmOAH.jpg",
+  "https://image.tmdb.org/t/p/w1280/lmBGFfmHTqRHBYRVrZ5LzDx7gSb.jpg",
+  "https://image.tmdb.org/t/p/w500/lJA2RCMfsWoskqlQhXPSLFQGXEJ.jpg",
+  "https://image.tmdb.org/t/p/w1280/jC1KqsFx8ZyqJyQa2Ohi7xgL7XC.jpg",
+  "https://image.tmdb.org/t/p/w500/a1VRXlaQMuPY8DgubnHLMpQmJWV.jpg",
+  "https://image.tmdb.org/t/p/w1280/jb8fMQjxnJuLRD9n5jSQVCbKSU6.jpg",
+  "https://image.tmdb.org/t/p/w500/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg",
+  "https://image.tmdb.org/t/p/w1280/xtgP8oSfNAYFdnHRpBvbSSvFCcj.jpg",
+  "https://image.tmdb.org/t/p/w500/6POBOQMBBpXpIBmynOGGJuYYbrj.jpg",
+  "https://image.tmdb.org/t/p/w1280/gK8cqlGLpJEcTnP5ZGHorhkHdaS.jpg",
+  "https://image.tmdb.org/t/p/w500/4ueALR19dSxBxrKLi3vPAXXdGkZ.jpg",
+  "https://image.tmdb.org/t/p/w1280/3VVMOObwHQtQxPpuFJGqNJa0T6V.jpg",
+  "https://image.tmdb.org/t/p/w500/e4aqizYCues4kUBEouUsixrFwC8.jpg",
+  "https://image.tmdb.org/t/p/w1280/vNCn2X0HxnWPL2li8ANuQjU11uQ.jpg",
+  "https://image.tmdb.org/t/p/w500/lMBGBVJNhVkJ1VJHKw09y6qqGP0.jpg",
+  "https://image.tmdb.org/t/p/w1280/jvYqcOFtCLN3DCZB6cFg2UBUePP.jpg",
+  "https://image.tmdb.org/t/p/w500/8InPf9MjYZEU1FrLNlUl9qzDmn7.jpg",
+  "https://image.tmdb.org/t/p/w1280/xEKhRDEJFnkMYfpAQOJjX4AHvnj.jpg",
+  "https://image.tmdb.org/t/p/w500/cEFGCBTXOQHbDwnVLfxhPjAbBkH.jpg",
+  "https://image.tmdb.org/t/p/w1280/6xyJnfkEJJ44sJGSmNPBW8iV6lA.jpg",
+  "https://image.tmdb.org/t/p/w500/wOOm0PAB8fMIH40QSX15n0ixRqQ.jpg",
+  "https://image.tmdb.org/t/p/w500/6MKHPzIkGBsA68zF4CjyGBXYH4Z.jpg",
+  "https://image.tmdb.org/t/p/w1280/jq8eRKK7tEz8iFkMpHGjGJ3HaVN.jpg",
+  "https://image.tmdb.org/t/p/w500/59OSp0YRNpM7dL8SriYS2I8e3aW.jpg",
+  "https://image.tmdb.org/t/p/w1280/vxbXJqOEOzx6Wb7JJ39tYjIPTCL.jpg",
+  "https://image.tmdb.org/t/p/w500/gxBgdGz0RuWNJhkmf5c4MzECFmO.jpg",
+  "https://image.tmdb.org/t/p/w1280/1wSGMaGtfkeSMmEOnDXjVkKuWwb.jpg",
+  "https://image.tmdb.org/t/p/w500/hr0L2aueyklP2BYQ5nMSuf2CTKSM.jpg",
+  "https://image.tmdb.org/t/p/w1280/kEtQFBMcFOuIFLRqSF0eKdJqkGI.jpg",
+  "https://image.tmdb.org/t/p/w500/34m2tygAYBGqA9MXKhRDtzYd4MR.jpg",
+  "https://image.tmdb.org/t/p/w1280/bMFMgJORHgFSFOpivW8oedsqMDg.jpg",
+  "https://image.tmdb.org/t/p/w500/vZloFAK7NmvMGKE7VkF5UHaz0I.jpg",
+  "https://image.tmdb.org/t/p/w1280/kSf9svfL2WrKeuK8W08nb9RKge4.jpg",
+  "https://image.tmdb.org/t/p/w500/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg",
+  "https://image.tmdb.org/t/p/w1280/ilRyazdMJwN05exqhwK4tMKBYZs.jpg",
+  "https://image.tmdb.org/t/p/w500/btgCArMFNTzZbOGlJ2ekFz8gBfG.jpg",
+  "https://image.tmdb.org/t/p/w1280/2O0jJBKBMCVFhWRHRXAYmpLF4C4.jpg",
+  "https://image.tmdb.org/t/p/w500/6zUiTjXxMj1cIUr9bU9YxGrqpBH.jpg",
+  "https://image.tmdb.org/t/p/w1280/sZmcGPeODXnECXeVIjXvBz0CJXJ.jpg",
+  "https://image.tmdb.org/t/p/w500/r7vmZjiyZw9rpJMQJdXpjgiCOk9.jpg",
+  "https://image.tmdb.org/t/p/w1280/bHarw8xrmQeqf3t8HpgEJSFSs9I.jpg",
+  "https://image.tmdb.org/t/p/w500/n0ybibhJtQ5icDqTp8eRytcIHso.jpg",
+  "https://image.tmdb.org/t/p/w1280/lktCmDzTKIlMgZcnrjNDN57XMRo.jpg",
+  "https://image.tmdb.org/t/p/w500/tMefBSflR6PGQLv7WvFPpTKpYm8.jpg",
+  "https://image.tmdb.org/t/p/w1280/9vNrr0NS8WLlVkHXKXFD2bBVQ5h.jpg",
+  "https://image.tmdb.org/t/p/w500/6nhCs8K29HVUQPozNBBFXtNFAmf.jpg",
+  "https://image.tmdb.org/t/p/w1280/4TKUDkxHmtQj72bOZe5tdhUhBSS.jpg",
+  "https://image.tmdb.org/t/p/w500/kAVRgw7GgK1CfYEJq8ME6EvRIgU.jpg",
+  "https://image.tmdb.org/t/p/w1280/gg3ztnpNRuHnmLQ0MZbFn5JhMgQ.jpg",
+  "https://image.tmdb.org/t/p/w500/6DrHO1jr3qVrViUO6s6kFiAGM7.jpg",
+  "https://image.tmdb.org/t/p/w1280/vJAgzMEHr6IhJ0fKgFJvnAF3BsF.jpg",
+  "https://image.tmdb.org/t/p/w1280/uo4pKRBWKHBJb1IkLbKxsNVFoGe.jpg",
+  "https://image.tmdb.org/t/p/w500/yDWJYRAwMNKa9MBdPJOoFgMX3vg.jpg",
+  "https://image.tmdb.org/t/p/w1280/6UH9YKsHKtjXnCflq1jfhMKIhFd.jpg",
+  "https://image.tmdb.org/t/p/w500/tP3GAFGxMSuNBGJRpJDwFzRyTxS.jpg",
+  "https://image.tmdb.org/t/p/w1280/7QNFGj3gBzLERQOtBD6VGvXHLRo.jpg",
+  "https://image.tmdb.org/t/p/w500/vd9VJPmL82JhXfKU7Xu8kfxwEiR.jpg",
+  "https://image.tmdb.org/t/p/w1280/7QPQLC2ZPEUzLbVcJf5nLGPOjPE.jpg",
+  "https://image.tmdb.org/t/p/w500/3LqFfFAFqovl0l0mBRLFGKOgRZK.jpg",
+  "https://image.tmdb.org/t/p/w1280/3LqFfFAFqovl0l0mBRLFGKOgRZK.jpg",
+  "https://image.tmdb.org/t/p/w500/jgE3GlPVQDdp20o7kwGMEqBBSBT.jpg",
+  "https://image.tmdb.org/t/p/w1280/1LE6Mk0qSW1OWVdRHgVS0wMMUvl.jpg",
+  "https://image.tmdb.org/t/p/w500/7DnXiVCXFxnJKDCpMa4xFkSrMXU.jpg",
+  "https://image.tmdb.org/t/p/w1280/hKt4FOzEVVDN4O3BGPfFJxWiLgd.jpg",
+  "https://image.tmdb.org/t/p/w500/c1n3JtOAPNJhMGCYgaV6HbIl5N5.jpg",
+  "https://image.tmdb.org/t/p/w1280/qnGMnGeomKP9ADRa18H0q0RBh0e.jpg",
+  "https://image.tmdb.org/t/p/w500/4fLolCzEhFuJklKr0a26DziqsVj.jpg",
+  "https://image.tmdb.org/t/p/w1280/5mHPNGGPExKxcuKsA29C7Ys3O0R.jpg",
+  "https://image.tmdb.org/t/p/w500/RYMX2wcKCBAr24UyPD7KE3wGBnX.jpg",
+  "https://image.tmdb.org/t/p/w1280/kwJOZCbr5T4hJTDGPpzBHFSuNOM.jpg",
+  "https://image.tmdb.org/t/p/w500/78lPtwv72eTNqFW9COBYI0dWDJa.jpg",
+  "https://image.tmdb.org/t/p/w1280/cyecB7godJ6kNHGONFjUyVN9OX5.jpg",
+  "https://image.tmdb.org/t/p/w500/xmbU4JTUm8rsdtn7Y3Fcm30GpeT.jpg",
+  "https://image.tmdb.org/t/p/w1280/8Y43POKjjqZptVdMTiuSBT0CIhJ.jpg",
+  "https://image.tmdb.org/t/p/w500/iUgygt3fscRoKWCV1d0C7FbM9TP.jpg",
+  "https://image.tmdb.org/t/p/w1280/1953j0QEbtN17WFFTnJEKWQiOtq.jpg",
+  "https://image.tmdb.org/t/p/w500/r2J02Z2OpNTctfOSN1Ydgroma84.jpg",
+  "https://image.tmdb.org/t/p/w1280/5YZbUmjbMa3ClvSW1Wj3D6XGkVA.jpg",
+  "https://image.tmdb.org/t/p/w500/ckMfVAoIiRdPRsz2t8xHYoAp2YC.jpg",
+  "https://image.tmdb.org/t/p/w1280/f8dAnpmyjGAVbLm4VdmN0IKI2VD.jpg",
+  "https://image.tmdb.org/t/p/w500/3rBBSIf7QBMV7iVVRYBrzXFDFZ.jpg",
+  "https://image.tmdb.org/t/p/w1280/9mFPFb2hD1jXAMbbBjfqWpxRTAT.jpg",
+  "https://image.tmdb.org/t/p/w500/88BFJpL4SbxeLjg3LoAHv5Xp9pX.jpg",
+  "https://image.tmdb.org/t/p/w1280/hRuWLUyiOHEpkxvhHuOCO8LoT4z.jpg",
+  "https://image.tmdb.org/t/p/w500/e3LlPOGMoJ5gC3TtNGWj5i1BxA8.jpg",
+  "https://image.tmdb.org/t/p/w1280/9c3T7PZCR6mGD3vvKxKYlvhQ2qM.jpg",
+  "https://image.tmdb.org/t/p/w500/4PCHRzfaaTh7AcPBXxMtJaO8wr1.jpg",
+  "https://image.tmdb.org/t/p/w1280/9QVkfwSvC67Gca1eG2nTNcLxLJ0.jpg",
+  "https://image.tmdb.org/t/p/w500/iCiSqhMoFgNnDFcmGZa0LCqFl0B.jpg",
+  "https://image.tmdb.org/t/p/w1280/n3MCBCEf6qm7qjWX1IXyWWVpijI.jpg",
+  "https://image.tmdb.org/t/p/w500/kSXLQeHLIlX3o9fIPNEQhgRjnnH.jpg",
+  "https://image.tmdb.org/t/p/w1280/6HECaYOOQUfS3NJbN3R9z7oF2iX.jpg",
+  "https://image.tmdb.org/t/p/w500/9VwFQbRuBHBfFvk0aXAJKYL2KIK.jpg",
+  "https://image.tmdb.org/t/p/w1280/tPB5y3uXJLb8RLQP1Yw3HcJBVqR.jpg",
+  "https://image.tmdb.org/t/p/w500/mLyW3UTgi5BjwBBqAkLJlqm5w3s.jpg",
+  "https://image.tmdb.org/t/p/w1280/7MBPDGtJkNzNXBBqGDsxEeNTJWp.jpg",
+  "https://image.tmdb.org/t/p/w500/2SqJGxuNF4KbLiXHBv4fSZGBmNn.jpg",
+  "https://image.tmdb.org/t/p/w1280/l8ORFLWXsm6abyxHhbqJwTkDIxR.jpg",
+  "https://image.tmdb.org/t/p/w500/jChkIQtNWvGv4FHJeJDBFbezHBW.jpg",
+  "https://image.tmdb.org/t/p/w1280/tvfnLIFTVCfCEdBipuSoWe8b5Vn.jpg",
+  "https://image.tmdb.org/t/p/w500/2IWouZK4gkgHhJa3oyYuSCnGqSB.jpg",
+  "https://image.tmdb.org/t/p/w1280/yMrOmRcmQJPxrJU2HcqrvqDgHEf.jpg",
+  "https://image.tmdb.org/t/p/w500/w4uYVfPP0fTBQKJSqBKhIqSVH5.jpg",
+  "https://image.tmdb.org/t/p/w1280/cFJpFSoiJxQUGWGCjblqZmhzqLM.jpg",
+  "https://image.tmdb.org/t/p/w500/3FtAfGRMrAw2hNz8hY8ADNjQsJX.jpg",
+  "https://image.tmdb.org/t/p/w1280/bkAuEGMEq3ikMaenFzSNO1Rmxdb.jpg",
+  "https://image.tmdb.org/t/p/w500/cRaGFzYuoU6p6LBdxjgFCXDG4dM.jpg",
+  "https://image.tmdb.org/t/p/w1280/vhk3LTv6kQ2eMHVPMJhNKKhQJVS.jpg",
+  "https://image.tmdb.org/t/p/w500/ylgBDIxJTgxhv60OQ8XrUHpxkZP.jpg",
+  "https://image.tmdb.org/t/p/w1280/8MCzHJDYJuNVHqkXdTW79y9hbTf.jpg",
+  "https://image.tmdb.org/t/p/w500/qkhkpBFrPb8ZA6MVAIGMsqT9Dld.jpg",
+  "https://image.tmdb.org/t/p/w1280/m8dB1F1U8g95bz3tBUqmilCxPvF.jpg",
+  "https://image.tmdb.org/t/p/w500/7IjM5r4PqIh0gJDTLZkCIGTcOnZ.jpg",
+  "https://image.tmdb.org/t/p/w500/d0kxRa9Q1RPuCDKZ5vNJfk5Q5nG.jpg",
+  "https://image.tmdb.org/t/p/w1280/4g5MbMmYbr4Vb7vELMksTzJhv5i.jpg",
+  "https://image.tmdb.org/t/p/w500/u1M1RSq7VQtJERGvb5n0YJuvGTh.jpg",
+  "https://image.tmdb.org/t/p/w1280/kBT0KJiqEkAoD5TS3a3lOkGFrHA.jpg",
+  "https://image.tmdb.org/t/p/w500/rP6gsPEdDGanpjSXgwzuHQCRmXl.jpg",
+  "https://image.tmdb.org/t/p/w1280/cUnvY3rRCkFDnkNQoxTSHDUBE.jpg",
+  "https://image.tmdb.org/t/p/w1280/s16H6tpK2utvwpaozGhAlp6VYd1.jpg",
+  "https://image.tmdb.org/t/p/w500/Ag3D9qXjhJ2FUkrlJ0Cv1pgxqYQ.jpg",
+  "https://image.tmdb.org/t/p/w1280/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
+  "https://image.tmdb.org/t/p/w500/rktDFPbfHfUbArZ6OOOKsXcv0Bm.jpg",
+  "https://image.tmdb.org/t/p/w1280/yF1eOkaYvwiORauRCPWznV9xVvi.jpg",
+  "https://image.tmdb.org/t/p/w500/8xV47NDrjdZDpkVcCFqkdHa3T0C.jpg",
+  "https://image.tmdb.org/t/p/w1280/4Y1WNkd88JXmGfhtWR7dmDAo1T2.jpg",
+  "https://image.tmdb.org/t/p/w500/stOhMIFKHHPpHGe2grFl1AAtPNJ.jpg",
+  "https://image.tmdb.org/t/p/w1280/8rpDcsfLJypbO6vREc0547VKqEv.jpg",
+  "https://image.tmdb.org/t/p/w500/e2MSmsOSAA6k0pWdmMoEBXqMlMV.jpg",
+  "https://image.tmdb.org/t/p/w1280/d4fECd7E3T8E7NnMJJkO2wfNqUv.jpg",
+  "https://image.tmdb.org/t/p/w1280/4A5HIOmMhvT0AeVD4EOBhkJ3oVl.jpg",
+  "https://image.tmdb.org/t/p/w500/hkxxMIGaiCTmrEArK7J56JTKUlB.jpg",
+  "https://image.tmdb.org/t/p/w1280/pA3vdhadJPxF5GA1uo8OAiZSqvW.jpg",
+  "https://image.tmdb.org/t/p/w500/Af4bXE63pVsb2FtbW8uYuxU67KF.jpg",
+  "https://image.tmdb.org/t/p/w1280/4K7gQjD19CDEPd7A9KZwr2D9GMS.jpg",
+  "https://image.tmdb.org/t/p/w500/NNxYkU70HPurnNCSiCjYAmacwm.jpg",
+  "https://image.tmdb.org/t/p/w1280/1E5baAaEse26fej7uHcjOgEE2t2.jpg",
+  "https://image.tmdb.org/t/p/w500/dB6jOvZsHSIsaGKLtCFB43AQHSW.jpg",
+  "https://image.tmdb.org/t/p/w1280/1X7vow16X7CnCoexXh4H4F2yDJv.jpg",
+  "https://image.tmdb.org/t/p/w500/kdPMUlCOHrob14eTxvCUHxzGpZZ.jpg",
+  "https://image.tmdb.org/t/p/w1280/gMJngTNfaqCSCqGD4y8lVMZXyfI.jpg",
+  "https://image.tmdb.org/t/p/w500/qhb1qOilapbapxWQn9jtRCMwXJF.jpg",
+  "https://image.tmdb.org/t/p/w1280/jtAI6OJIWLWiRItqi19wBiFK9wC.jpg",
+  "https://image.tmdb.org/t/p/w500/7GpZqAQfVtMjMYAbJHHtEGMFvkU.jpg",
+  "https://image.tmdb.org/t/p/w1280/Aph9Qb37y2XAMHhSiC3DGeQYFJk.jpg",
+  "https://image.tmdb.org/t/p/w500/51tqzRtKMMZEYUpSYkqpy7gBr0O.jpg",
+  "https://image.tmdb.org/t/p/w1280/4m26ZDIzUzBEWHmGnfFgLpQaRwK.jpg",
+  "https://image.tmdb.org/t/p/w500/kEl2t3OhXc3Zb9FBh1AuYzRTgZp.jpg",
+  "https://image.tmdb.org/t/p/w1280/rrGFZJ6UKuDmFi3ZMGbHGaFUijP.jpg",
+  "https://image.tmdb.org/t/p/w500/3Q0hd3heuWwDWpwcDkhQOA6TYWI.jpg",
+  "https://image.tmdb.org/t/p/w1280/1LRLLWGvs5sZTMSMgHAMkxNJgCt.jpg",
+  "https://image.tmdb.org/t/p/w500/stTEycfG9928HYGEISBFaG1ngjM.jpg",
+  "https://image.tmdb.org/t/p/w1280/mGVrXeIjyYPWGDmU0qzfjBFzklM.jpg",
+  "https://image.tmdb.org/t/p/w500/1Ociiqn8jgwBE7mOQlAjOuBl6Kx.jpg",
+  "https://image.tmdb.org/t/p/w1280/f8JaHvDjzW2KQLVN2DwMVuIwwxh.jpg",
+  "https://image.tmdb.org/t/p/w500/9PFonBhy4cQy7hjTLtQ64FhogCl.jpg",
+  "https://image.tmdb.org/t/p/w1280/iHSwvRVsRyxpX7FE7GbviaDvgGZ.jpg",
+  "https://image.tmdb.org/t/p/w500/pCGyPVrI9Fzc6mMEnCLBmCGpnXF.jpg",
+  "https://image.tmdb.org/t/p/w1280/87k6O0qlurLnHOm9Ltc3Xa7MTJR.jpg",
+  "https://image.tmdb.org/t/p/w500/9vuFPTNYkuWwRLzAMiKi2LxVSI6.jpg",
+  "https://image.tmdb.org/t/p/w1280/lOHxDr1F1jXAq2GshJLLWrOxnDH.jpg",
+  "https://image.tmdb.org/t/p/w500/59SVNwLfoMnZPPB6ukW6dlPxAdI.jpg",
+  "https://image.tmdb.org/t/p/w1280/56v2KjBlU4XaOv9rVYEQypROD7P.jpg",
+  "https://image.tmdb.org/t/p/w1280/llGQxOv9Tqf8sepoFN1dyxFTSaw.jpg",
+  "https://image.tmdb.org/t/p/w1280/8D3oujCiKo7WVTB4VBnUMEtZmFZ.jpg",
+  "https://image.tmdb.org/t/p/w500/iDb7DuBzPkdB3QsuFcLJDdLFQT1.jpg",
+  "https://image.tmdb.org/t/p/w1280/lX7sXNPcF1ydQAqUe1pJfQZNwxn.jpg",
+  "https://image.tmdb.org/t/p/w500/zAY1N1SBXc1pHPGQMBZdU6VtpHm.jpg",
+  "https://image.tmdb.org/t/p/w1280/2ACtTqPDwSIMHg73xGhL3UBf7t2.jpg",
+  "https://image.tmdb.org/t/p/w500/fcXdJlbSqiIku76fkCiHh2QHmZx.jpg",
+  "https://image.tmdb.org/t/p/w500/npdB6eFzizki0WaZ1OvKcJrWe97.jpg",
+  "https://image.tmdb.org/t/p/w1280/xWIlBMnO3L3ot4JTr38hbGt0NAp.jpg",
+  "https://image.tmdb.org/t/p/w500/vSQIpPEYbBQ49cBqnAel3ILTDOT.jpg",
+  "https://image.tmdb.org/t/p/w1280/5fhEJ5DlWUCQTHPdVHbkQNfPmGE.jpg",
+  "https://image.tmdb.org/t/p/w500/msSweZnNQTBQLJMtqftQrojBNJW.jpg",
+  "https://image.tmdb.org/t/p/w1280/8MhKNKDmWGlrRMkAovJMxkONzB5.jpg",
+  "https://image.tmdb.org/t/p/w500/3Yb3cCkq9EcgzLxIAFTM5mVGWEQ.jpg",
+  "https://image.tmdb.org/t/p/w1280/fHgdVHQNgAnZC9ZXOQ3LnIXCCdS.jpg",
+  "https://image.tmdb.org/t/p/w500/l4IEBrMxVMFoMLVFzYJqSLKMHlq.jpg",
+  "https://image.tmdb.org/t/p/w1280/xfIVBHilGGWz7Q0nmMFKRg4aVBG.jpg",
+  "https://image.tmdb.org/t/p/w1280/nQJJMzG7Rq9AkUvTqYXkJzVxMHl.jpg",
+  "https://image.tmdb.org/t/p/w500/cHBCPgmBbcHkrVhW4JIo2PG3Eq0.jpg",
+  "https://image.tmdb.org/t/p/w1280/3FZnCJVzZUNVj7FXPJSuXNrHVEp.jpg",
+  "https://image.tmdb.org/t/p/w500/dJKmkh6DVbgVDLpJbfCDkiZPXoM.jpg",
+  "https://image.tmdb.org/t/p/w1280/8VqDH9RJpBnLGS4yEjbWbkCnOa7.jpg"
 ];
 
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, {cache:'reload'})))).catch(()=>{})
-  );
+const STATIC_SHELL = [
+  '/index.html', '/style.css', '/app.js', '/db.js',
+  '/movies.html', '/series.html', '/anime.html', '/cartoons.html',
+  '/search.html', '/watchlist.html', '/profile.html', '/watch.html',
+  '/history.html', '/genre.html', '/filter.html', '/404.html',
+];
+
+// ── INSTALL: pre-cache everything ───────────────────────────────
+self.addEventListener('install', event => {
   self.skipWaiting();
+  event.waitUntil((async () => {
+    // 1. Cache static shell
+    const sc = await caches.open(CACHE_STATIC);
+    await sc.addAll(STATIC_SHELL.map(u => new Request(u, {cache:'reload'}))).catch(() => {});
+
+    // 2. Download ALL images in batches of 15 (gentle on network)
+    const ic = await caches.open(CACHE_IMG);
+    const BATCH = 15;
+    for (let i = 0; i < ALL_IMAGES.length; i += BATCH) {
+      await Promise.allSettled(
+        ALL_IMAGES.slice(i, i + BATCH).map(async url => {
+          try {
+            const already = await ic.match(url);
+            if (already) return; // already cached, skip
+            const res = await fetch(url, {mode:'cors', cache:'force-cache'});
+            if (res.ok) await ic.put(url, res);
+          } catch(e) {}
+        })
+      );
+    }
+  })());
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
-  self.clients.claim();
+// ── ACTIVATE: delete old caches ──────────────────────────────────
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(k => k !== CACHE_IMG && k !== CACHE_STATIC)
+            .map(k => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
+  );
 });
 
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  // Cache-first for TMDB images
-  if (url.hostname === 'image.tmdb.org') {
-    e.respondWith(
-      caches.match(e.request).then(cached => {
-        if (cached) return cached;
-        return fetch(e.request).then(res => {
-          const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
+// ── FETCH: cache-first for images, network-first for pages ───────
+self.addEventListener('fetch', event => {
+  const url = event.request.url;
+
+  // IMAGES — serve from cache instantly, fetch+cache if missing
+  if (url.includes('image.tmdb.org') || /\.(jpg|jpeg|png|webp)$/i.test(url)) {
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        if (cached) return cached; // ⚡ instant!
+        return fetch(event.request, {mode:'cors'}).then(res => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_IMG).then(c => c.put(event.request, clone));
+          }
           return res;
-        }).catch(() => new Response('', { status: 404 }));
+        }).catch(() => new Response('', {status: 404}));
       })
     );
     return;
   }
-  // Network-first for HTML pages
-  if (e.request.mode === 'navigate') {
-    e.respondWith(
-      fetch(e.request).catch(() => caches.match('/404.html'))
+
+  // HTML PAGES — network first, cache fallback
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/404.html'))
     );
     return;
   }
-  // Cache-first for static assets
-  e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => {}))
+
+  // STATIC ASSETS (CSS/JS) — cache first
+  event.respondWith(
+    caches.match(event.request)
+      .then(cached => cached || fetch(event.request).catch(() => {}))
   );
 });

@@ -141,6 +141,9 @@
     <button class="srv-btn"        id="srv3" onclick="setServer(3)"><span class="srv-dot"></span>VidSrc CC</button>
     <button class="srv-btn"        id="srv4" onclick="setServer(4)"><span class="srv-dot"></span>SuperEmbed</button>
     <button class="srv-btn"        id="srv5" onclick="setServer(5)"><span class="srv-dot"></span>2Embed</button>
+    <div style="flex:1"></div>
+    <button class="srv-btn" id="watchDlBtn" onclick="initWatchDlBtn()"><i class="fas fa-download"></i> Download</button>
+    <button class="srv-btn" id="sleepBtn" onclick="openSleepTimer()"><i class="fas fa-moon"></i> Sleep</button>
   </div>
 
   <!-- EPISODE PANEL (series only) -->
@@ -488,6 +491,24 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') history.back();
   if (e.key === 'r') shufflePlay();
 });
+
+// Download button init
+function initWatchDlBtn() {
+  const dlBtn = document.getElementById('watchDlBtn');
+  if (!id || !dlBtn) return;
+  toggleDownload(id, dlBtn);
+}
+// Set initial download state
+setTimeout(() => {
+  const dlBtn = document.getElementById('watchDlBtn');
+  if (dlBtn && id) {
+    if (isDownloaded(id)) {
+      dlBtn.innerHTML = '<i class="fas fa-check-circle"></i> Downloaded';
+      dlBtn.classList.add('active');
+    }
+    dlBtn.onclick = () => toggleDownload(id, dlBtn);
+  }
+}, 300);
 
 // Inject mobile nav
 injectMobileNav();

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
+<title>Downloads – Nex TV</title>
+<link rel="icon" type="image/jpeg" href="logo.jpg">
+<link rel="preconnect" href="https://image.tmdb.org" crossorigin>
+<link rel="dns-prefetch" href="https://image.tmdb.org">
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.dl-hero { margin-top:var(--nav-h); background:linear-gradient(135deg,#0a0a0a,#1a0505); padding:2rem 2.5rem 1.5rem; border-bottom:1px solid var(--border); }
+.dl-hero h1 { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:.04em; display:flex; align-items:center; gap:.6rem; }
+.dl-hero h1 i { color:var(--teal); }
+.dl-hero p { color:var(--muted); font-size:.875rem; margin-top:.3rem; }
+.dl-stats { display:flex; gap:1.5rem; margin-top:1rem; flex-wrap:wrap; }
+.dl-stat { font-size:.8rem; color:var(--muted); display:flex; align-items:center; gap:.4rem; }
+.dl-stat span { color:var(--text); font-weight:700; }
+
+.dl-content { padding:1.5rem 2.5rem 5rem; max-width:900px; }
+
+.dl-empty { text-align:center; padding:4rem 2rem; }
+.dl-empty i { font-size:3rem; color:var(--muted); opacity:.4; margin-bottom:1rem; display:block; }
+.dl-empty h3 { font-size:1.2rem; font-weight:700; margin-bottom:.5rem; }
+.dl-empty p { color:var(--muted); font-size:.875rem; max-width:320px; margin:0 auto 1.5rem; line-height:1.6; }
+.dl-empty .btn-play { display:inline-flex; align-items:center; gap:.5rem; text-decoration:none; }
+
+.dl-list { display:flex; flex-direction:column; gap:.75rem; }
+.dl-item {
+  background:var(--bg2); border:1px solid var(--border); border-radius:14px;
+  padding:1rem; display:flex; gap:1rem; align-items:center;
+  transition:.2s;
+}
+.dl-item:hover { border-color:rgba(255,255,255,.15); background:var(--bg3); }
+.dl-poster { width:60px; height:88px; object-fit:cover; border-radius:8px; flex-shrink:0; }
+.dl-poster-placeholder {
+  width:60px; height:88px; border-radius:8px; flex-shrink:0;
+  background:var(--bg3); display:flex; align-items:center; justify-content:center;
+  font-size:1.5rem; color:var(--muted); border:1px solid var(--border);
+}
+.dl-info { flex:1; min-width:0; }
+.dl-title { font-size:.95rem; font-weight:700; margin-bottom:.25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dl-meta { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:.5rem; }
+.dl-size { font-size:.75rem; color:var(--muted); display:flex; align-items:center; gap:.3rem; }
+.dl-date { font-size:.72rem; color:var(--muted); }
+.dl-progress-wrap { width:100%; height:4px; background:rgba(255,255,255,.08); border-radius:2px; margin-bottom:.4rem; }
+.dl-progress-fill { height:100%; background:var(--teal); border-radius:2px; transition:width .3s; }
+.dl-status { font-size:.72rem; font-weight:600; display:flex; align-items:center; gap:.3rem; }
+.dl-status.done { color:var(--teal); }
+.dl-status.pending { color:var(--gold); }
+.dl-status.failed { color:var(--red); }
+
+.dl-actions { display:flex; flex-direction:column; gap:.4rem; align-items:flex-end; flex-shrink:0; }
+.dl-btn {
+  background:none; border:1px solid var(--border); color:var(--muted);
+  width:34px; height:34px; border-radius:8px; cursor:pointer;
+  font-size:.85rem; transition:.15s; display:flex; align-items:center; justify-content:center;
+}
+.dl-btn:hover { border-color:var(--red); color:var(--red); }
+.dl-btn.play { border-color:rgba(0,212,180,.3); color:var(--teal); }
+.dl-btn.play:hover { background:rgba(0,212,180,.1); border-color:var(--teal); }
+
+.dl-notice {
+  background:rgba(0,212,180,.06); border:1px solid rgba(0,212,180,.15);
+  border-radius:12px; padding:1rem 1.25rem; margin-bottom:1.5rem;
+  display:flex; gap:.75rem; align-items:flex-start;
+}
+.dl-notice i { color:var(--teal); flex-shrink:0; margin-top:.1rem; }
+.dl-notice p { font-size:.82rem; color:var(--muted); line-height:1.6; }
+.dl-notice p strong { color:var(--text); }
+
+.dl-clear-btn {
+  background:none; border:1px solid rgba(229,9,20,.25); color:var(--red);
+  padding:.4rem 1rem; border-radius:8px; font-size:.78rem; font-weight:600;
+  cursor:pointer; font-family:'Outfit',sans-serif; transition:.15s;
+}
+.dl-clear-btn:hover { background:rgba(229,9,20,.1); }
+
+@media (max-width:600px) {
+  .dl-hero { padding:1.5rem 1rem 1rem; }
+  .dl-content { padding:1rem 1rem 5rem; }
+  .dl-actions { flex-direction:row; }
+}
+</style>
+</head>
+<body class="player-body">
+
+<nav id="navbar" class="nav-player">
+  <div class="nav-left">
+    <a href="javascript:history.back()" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+    <a href="index.html" class="logo">NEX<span>TV</span></a>
+  </div>
+  <div class="nav-right"><div id="authArea"></div></div>
+</nav>
+
+<div class="dl-hero">
+  <h1><i class="fas fa-download"></i> Downloads</h1>
+  <p>Movies and shows saved to your device for offline viewing</p>
+  <div class="dl-stats" id="dlStats"></div>
+</div>
+
+<div class="dl-content">
+  <div class="dl-notice">
+    <i class="fas fa-info-circle"></i>
+    <p><strong>How downloads work:</strong> When you click "Download" on any movie or show, it gets saved to your browser's local storage so you can access it anytime — even offline. Downloads stay until you remove them or clear browser data.</p>
+  </div>
+  <div id="dlContainer"></div>
+</div>
+
+<script src="db.js"></script>
+<script src="app.js"></script>
+<script>
+DB.init();
+renderNav();
+renderDownloadsPage();
+
+function renderDownloadsPage() {
+  const downloads = getDownloads();
+  const container = document.getElementById('dlContainer');
+  const statsEl = document.getElementById('dlStats');
+
+  statsEl.innerHTML = `
+    <div class="dl-stat"><i class="fas fa-film"></i> <span>${downloads.length}</span> saved</div>
+    <div class="dl-stat"><i class="fas fa-hdd"></i> <span>~${(downloads.length * 2.4).toFixed(1)} MB</span> used</div>
+  `;
+
+  if (!downloads.length) {
+    container.innerHTML = `
+      <div class="dl-empty">
+        <i class="fas fa-cloud-download-alt"></i>
+        <h3>No Downloads Yet</h3>
+        <p>Click the <strong>Download</strong> button on any movie or show to save it here for offline viewing.</p>
+        <a href="index.html" class="btn-play"><i class="fas fa-play"></i> Browse Content</a>
+      </div>`;
+    return;
+  }
+
+  const allMovies = DB.getMovies();
+
+  container.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <div style="font-size:.82rem;color:var(--muted);">${downloads.length} item${downloads.length!==1?'s':''} saved</div>
+      <button class="dl-clear-btn" onclick="clearAllDownloads()"><i class="fas fa-trash"></i> Clear All</button>
+    </div>
+    <div class="dl-list" id="dlList"></div>`;
+
+  const list = document.getElementById('dlList');
+  list.innerHTML = downloads.map(dl => {
+    const movie = allMovies.find(m => m.id === dl.id);
+    if (!movie) return '';
+    return `
+      <div class="dl-item" id="dl-${movie.id}">
+        ${movie.poster
+          ? `<img class="dl-poster" src="${movie.poster}" alt="${movie.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          : ''}
+        <div class="dl-poster-placeholder" ${movie.poster ? 'style="display:none"' : ''}>🎬</div>
+        <div class="dl-info">
+          <div class="dl-title">${movie.title}</div>
+          <div class="dl-meta">
+            <span class="badge-year">${movie.year}</span>
+            <span class="badge-rating"><i class="fas fa-star"></i> ${movie.rating}</span>
+            <span class="badge-genre">${movie.genre[0]}</span>
+          </div>
+          <div class="dl-progress-wrap"><div class="dl-progress-fill" style="width:100%"></div></div>
+          <div class="dl-status done"><i class="fas fa-check-circle"></i> Ready to watch offline · Saved ${formatDlDate(dl.savedAt)}</div>
+        </div>
+        <div class="dl-actions">
+          <button class="dl-btn play" onclick="window.location.href='watch.html?id=${movie.id}'" title="Watch now"><i class="fas fa-play"></i></button>
+          <button class="dl-btn" onclick="removeDownload('${movie.id}')" title="Remove download"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function formatDlDate(iso) {
+  if (!iso) return 'recently';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 86400000);
+  if (diff === 0) return 'today';
+  if (diff === 1) return 'yesterday';
+  return diff + ' days ago';
+}
+
+function removeDownload(id) {
+  let dls = getDownloads().filter(d => d.id !== id);
+  saveDownloads(dls);
+  document.getElementById('dl-' + id)?.remove();
+  renderDownloadsPage();
+  showToast('Removed from downloads');
+}
+
+function clearAllDownloads() {
+  if (!confirm('Remove all downloads?')) return;
+  saveDownloads([]);
+  renderDownloadsPage();
+  showToast('All downloads cleared');
+}
+</script>
+</body>
+</html>

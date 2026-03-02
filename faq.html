@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
+<title>FAQ – Nex TV</title>
+<link rel="icon" type="image/jpeg" href="logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.faq-hero {
+  margin-top:var(--nav-h); padding:3rem 2.5rem 2rem;
+  background:radial-gradient(ellipse at 50% 0%,rgba(0,212,180,.1),transparent 60%), linear-gradient(180deg,#0d0d0d,var(--bg));
+  text-align:center; position:relative; overflow:hidden;
+}
+.faq-hero::before {
+  content:'FAQ'; font-family:'Bebas Neue',sans-serif; font-size:12rem;
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  color:white; opacity:.02; letter-spacing:.1em; pointer-events:none;
+  white-space:nowrap;
+}
+.faq-hero h1 { font-family:'Bebas Neue',sans-serif; font-size:3rem; letter-spacing:.04em; margin-bottom:.5rem; }
+.faq-hero h1 span { color:var(--teal); }
+.faq-hero p { color:var(--muted); font-size:.925rem; max-width:480px; margin:0 auto; line-height:1.6; }
+
+.faq-search-wrap { max-width:480px; margin:1.5rem auto 0; position:relative; }
+.faq-search { width:100%; background:var(--bg2); border:1.5px solid var(--border); color:var(--text); padding:.75rem 1rem .75rem 2.8rem; border-radius:12px; font-size:.9rem; font-family:'Outfit',sans-serif; outline:none; transition:.2s; }
+.faq-search:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(0,212,180,.1); }
+.faq-search-icon { position:absolute; left:.9rem; top:50%; transform:translateY(-50%); color:var(--muted); font-size:.85rem; }
+
+.faq-content { max-width:720px; margin:2.5rem auto; padding:0 1.5rem 5rem; }
+
+.faq-category { margin-bottom:2.5rem; }
+.faq-category-label {
+  display:flex; align-items:center; gap:.65rem;
+  font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.12em;
+  color:var(--muted); margin-bottom:1rem; padding-bottom:.6rem;
+  border-bottom:1px solid var(--border);
+}
+.faq-category-label i { font-size:.9rem; }
+
+.faq-item {
+  background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+  margin-bottom:.6rem; overflow:hidden; transition:border-color .2s;
+}
+.faq-item:hover { border-color:rgba(255,255,255,.15); }
+.faq-item.open { border-color:rgba(0,212,180,.3); }
+
+.faq-q {
+  width:100%; background:none; border:none; color:var(--text); text-align:left;
+  padding:1rem 1.1rem; cursor:pointer; font-family:'Outfit',sans-serif;
+  font-size:.9rem; font-weight:600; display:flex; justify-content:space-between; align-items:center; gap:.75rem;
+  transition:.15s;
+}
+.faq-q:hover { color:#fff; }
+.faq-q .faq-icon { color:var(--teal); font-size:.8rem; transition:transform .25s; flex-shrink:0; }
+.faq-item.open .faq-icon { transform:rotate(180deg); }
+
+.faq-a {
+  max-height:0; overflow:hidden; transition:max-height .35s ease, padding .25s;
+  padding:0 1.1rem;
+}
+.faq-item.open .faq-a { max-height:500px; padding:0 1.1rem 1rem; }
+.faq-a p { color:rgba(240,240,240,.75); font-size:.875rem; line-height:1.7; }
+.faq-a p + p { margin-top:.75rem; }
+.faq-a a { color:var(--teal); }
+.faq-a ul { padding-left:1.25rem; margin-top:.5rem; }
+.faq-a ul li { color:rgba(240,240,240,.75); font-size:.875rem; line-height:1.7; }
+
+.faq-cta {
+  background:var(--bg2); border:1px solid var(--border); border-radius:16px;
+  padding:2rem; text-align:center; margin-top:2rem;
+}
+.faq-cta h3 { font-size:1.1rem; font-weight:700; margin-bottom:.4rem; }
+.faq-cta p { color:var(--muted); font-size:.85rem; margin-bottom:1.25rem; }
+.faq-cta-btns { display:flex; justify-content:center; gap:.75rem; flex-wrap:wrap; }
+.btn-faq-cta {
+  display:inline-flex; align-items:center; gap:.5rem;
+  background:var(--bg3); border:1px solid var(--border); color:var(--text);
+  padding:.6rem 1.25rem; border-radius:10px; font-size:.85rem; font-weight:600;
+  font-family:'Outfit',sans-serif; cursor:pointer; transition:.2s; text-decoration:none;
+}
+.btn-faq-cta:hover { border-color:var(--teal); color:var(--teal); }
+.btn-faq-cta.primary { background:var(--teal); color:#000; border-color:var(--teal); }
+.btn-faq-cta.primary:hover { background:var(--teal-dark); }
+
+.no-results { text-align:center; padding:3rem 1rem; color:var(--muted); font-size:.9rem; display:none; }
+.no-results i { font-size:2rem; display:block; margin-bottom:.75rem; opacity:.4; }
+
+@media (max-width:600px) {
+  .faq-hero { padding:2rem 1rem 1.5rem; }
+  .faq-hero h1 { font-size:2rem; }
+  .faq-content { padding:0 1rem 5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav id="navbar">
+  <div class="nav-left">
+    <button class="hamburger" id="menuToggle"><i class="fas fa-bars"></i></button>
+    <a href="index.html" class="logo">NEX<span>TV</span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="movies.html">Movies</a></li>
+      <li><a href="series.html">TV Shows</a></li>
+      <li><a href="anime.html">Anime</a></li>
+      <li><a href="cartoons.html">Cartoons</a></li>
+      <li><a href="downloads.html">Downloads</a></li>
+      <li><a href="faq.html" class="active">FAQ</a></li>
+    </ul>
+  </div>
+  <div class="nav-right"><div id="authArea"></div></div>
+</nav>
+
+<div class="faq-hero">
+  <h1>Frequently Asked <span>Questions</span></h1>
+  <p>Everything you need to know about streaming on NexTV. Can't find what you're looking for? We're here to help.</p>
+  <div class="faq-search-wrap">
+    <i class="fas fa-search faq-search-icon"></i>
+    <input class="faq-search" id="faqSearch" placeholder="Search questions..." oninput="filterFAQ(this.value)">
+  </div>
+</div>
+
+<div class="faq-content">
+  <div id="noResults" class="no-results"><i class="fas fa-search"></i> No questions found matching your search.</div>
+
+  <!-- GETTING STARTED -->
+  <div class="faq-category" data-cat="getting started">
+    <div class="faq-category-label"><i class="fas fa-rocket" style="color:var(--red)"></i> Getting Started</div>
+
+    <div class="faq-item" data-text="is nextv free cost money">
+      <button class="faq-q" onclick="toggleFAQ(this)">Is NexTV completely free? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>Yes — 100% free, forever. No credit card, no subscription, no hidden fees. Every movie, show, anime and cartoon on the platform is completely free to watch.</p></div>
+    </div>
+
+    <div class="faq-item" data-text="account register sign up need">
+      <button class="faq-q" onclick="toggleFAQ(this)">Do I need to create an account? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>You can browse and watch without an account. However, creating a free account gives you access to your personal Watchlist, Watch History, Reviews, Playlists, Downloads, and personalized recommendations. It takes under 30 seconds to sign up.</p></div>
+    </div>
+
+    <div class="faq-item" data-text="devices phone mobile tablet tv computer">
+      <button class="faq-q" onclick="toggleFAQ(this)">What devices can I watch on? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a">
+        <p>NexTV works on any device with a web browser:</p>
+        <ul>
+          <li><strong>📱 Mobile</strong> — iPhone, Android (Chrome, Safari, Firefox)</li>
+          <li><strong>💻 Desktop</strong> — Windows, Mac, Linux</li>
+          <li><strong>📱 Tablet</strong> — iPad, Android tablets</li>
+          <li><strong>📺 Smart TV</strong> — Samsung, LG, Android TV browsers</li>
+        </ul>
+        <p>You can also install NexTV on your phone like a real app — look for the "Add to Home Screen" prompt.</p>
+      </div>
+    </div>
+
+    <div class="faq-item" data-text="install app home screen pwa">
+      <button class="faq-q" onclick="toggleFAQ(this)">How do I install NexTV on my phone? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a">
+        <p>NexTV is a Progressive Web App (PWA) — you can install it just like a real app:</p>
+        <ul>
+          <li><strong>Android (Chrome):</strong> Tap the three dots menu → "Add to Home Screen"</li>
+          <li><strong>iPhone (Safari):</strong> Tap the Share button → "Add to Home Screen"</li>
+        </ul>
+        <p>Once installed, it appears on your home screen and works like a native app with no browser bars.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- STREAMING -->
+  <div class="faq-category" data-cat="streaming watching">
+    <div class="faq-category-label"><i class="fas fa-play-circle" style="color:var(--teal)"></i> Streaming & Watching</div>
+
+    <div class="faq-item" data-text="video not loading black screen error server">
+      <button class="faq-q" onclick="toggleFAQ(this)">The video won't load / I see a black screen. What do I do? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a">
+        <p>Try switching to a different server. Under the player, tap <strong>EmbedSu</strong>, <strong>VidSrc CC</strong>, or <strong>2Embed</strong>. Different servers work better depending on your location and internet connection.</p>
+        <p>Also try: refreshing the page, disabling VPN, clearing browser cache, or trying a different browser.</p>
+      </div>
+    </div>
+
+    <div class="faq-item" data-text="quality hd 1080p 4k resolution bad blurry">
+      <button class="faq-q" onclick="toggleFAQ(this)">Can I watch in HD or 4K? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>Yes. Most titles stream in up to 1080p HD. Some servers support 4K. VidLink (the default server) auto-selects the best quality for your connection. If quality looks bad, switch servers — VidSrc CC and SuperEmbed often provide the sharpest streams.</p></div>
+    </div>
+
+    <div class="faq-item" data-text="subtitles captions cc language">
+      <button class="faq-q" onclick="toggleFAQ(this)">Are subtitles available? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>Yes! Tap the <strong>CC</strong> button in the player controls. Subtitle availability depends on the server — VidLink and VidSrc CC have the best subtitle support, often offering multiple languages including English, Arabic, French, Spanish and more.</p></div>
+    </div>
+
+    <div class="faq-item" data-text="ads popup annoying advertisement">
+      <button class="faq-q" onclick="toggleFAQ(this)">Why do I see popups or ads? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a">
+        <p>NexTV itself is completely ad-free. However, the streaming servers (VidLink, EmbedSu, etc.) are third-party and may occasionally show one popup.</p>
+        <p><strong>Tips to avoid ads:</strong> Use VidLink ✦ (fewest ads), install a free ad blocker like uBlock Origin, or simply close any popup that appears — they're harmless.</p>
+      </div>
+    </div>
+
+    <div class="faq-item" data-text="chromecast airplay cast tv screen">
+      <button class="faq-q" onclick="toggleFAQ(this)">Can I cast to my TV? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>Yes! On Chrome browser, click the three-dot menu → "Cast". On iPhone/iPad, use AirPlay mirror. You can also use the <strong>PiP</strong> (Picture-in-Picture) button in the player for a floating window. Chromecast-native support is coming soon.</p></div>
+    </div>
+
+    <div class="faq-item" data-text="watch party friends together sync room code">
+      <button class="faq-q" onclick="toggleFAQ(this)">How does Watch Party work? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>Click <strong>"Start Watch Party"</strong> on the homepage. You'll get a Room Code. Share it with friends — everyone opens NexTV, enters the same code, and your playback syncs automatically. Watch with people anywhere in the world.</p></div>
+    </div>
+  </div>
+
+  <!-- DOWNLOADS -->
+  <div class="faq-category" data-cat="downloads offline">
+    <div class="faq-category-label"><i class="fas fa-download" style="color:var(--gold)"></i> Downloads & Offline</div>
+
+    <div class="faq-item" data-text="download offline save watch without internet">
+      <button class="faq-q" onclick="toggleFAQ(this)">How do I download a movie to watch offline? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a">
+        <p>Open any movie or show and click the <strong><i class="fas fa-download"></i> Download</strong> button. It saves to your Downloads page (accessible from the nav). Once saved, you can watch it anytime — even without internet.</p>
+        <p>Note: Downloads are stored in your browser's local storage, so they stay on that device/browser only.</p>
+      </div>
+    </div>
+
+    <div class="faq-item" data-text="download storage space size limit">
+      <button class="faq-q" onclick="toggleFAQ(this)">How much space do downloads take? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>Downloaded titles are cached using your browser's built-in storage — each title takes very little space (just the metadata and poster). The service worker caches all 366+ posters automatically on first visit so they always load instantly.</p></div>
+    </div>
+
+    <div class="faq-item" data-text="delete remove download how">
+      <button class="faq-q" onclick="toggleFAQ(this)">How do I delete a download? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>Go to <strong>Downloads</strong> in the navigation, find the title, and click the trash icon. You can also clear all downloads at once with the "Clear All" button.</p></div>
+    </div>
+  </div>
+
+  <!-- ACCOUNT -->
+  <div class="faq-category" data-cat="account profile password">
+    <div class="faq-category-label"><i class="fas fa-user" style="color:var(--purple)"></i> Account & Profile</div>
+
+    <div class="faq-item" data-text="forgot password reset login cant access">
+      <button class="faq-q" onclick="toggleFAQ(this)">I forgot my password. How do I reset it? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>On the login page, click <strong>"Forgot Password"</strong> and enter your email. If password reset isn't available yet, you can create a new account with the same email. User data (watchlist, history) is stored locally on your device.</p></div>
+    </div>
+
+    <div class="faq-item" data-text="delete account data privacy remove">
+      <button class="faq-q" onclick="toggleFAQ(this)">How do I delete my account? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>Go to your Profile page and scroll to the bottom. Click <strong>"Delete Account"</strong>. This removes all your data permanently including watchlist, history, reviews, and playlists. This action cannot be undone.</p></div>
+    </div>
+
+    <div class="faq-item" data-text="watchlist save bookmark movies shows">
+      <button class="faq-q" onclick="toggleFAQ(this)">How does My List (Watchlist) work? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>Click the <strong><i class="far fa-bookmark"></i> My List</strong> button on any movie or show card or detail page. It saves to your personal Watchlist, accessible from the nav. Sign in to keep your list synced across sessions.</p></div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="faq-category" data-cat="content movies shows requests">
+    <div class="faq-category-label"><i class="fas fa-film" style="color:var(--red)"></i> Content & Requests</div>
+
+    <div class="faq-item" data-text="how many movies titles available library">
+      <button class="faq-q" onclick="toggleFAQ(this)">How many titles are available? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>NexTV has 250+ titles across Movies, TV Shows, Anime, and Cartoons — with new titles added regularly. The library spans from classic films of the 1970s all the way to 2024 releases. Use the Filter page to browse by genre, year, or rating.</p></div>
+    </div>
+
+    <div class="faq-item" data-text="request movie add title missing not found">
+      <button class="faq-q" onclick="toggleFAQ(this)">Can I request a movie or show to be added? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>Yes! If a title you want isn't on the platform, let us know. Admins can add any title using its TMDB ID through the Admin Content Manager. Community requests are always considered for the next update.</p></div>
+    </div>
+
+    <div class="faq-item" data-text="new releases when updated how often content added">
+      <button class="faq-q" onclick="toggleFAQ(this)">How often is new content added? <i class="fas fa-chevron-down faq-icon"></i></button>
+      <div class="faq-a"><p>New titles are added regularly. Keep an eye on the <strong>"New This Week"</strong> banner on the homepage and the <strong>"New Releases"</strong> row. You can also turn on push notifications to get alerted when new content drops.</p></div>
+    </div>
+  </div>
+
+  <div class="faq-cta">
+    <h3>Still have questions?</h3>
+    <p>Can't find what you're looking for? Browse the platform or start watching — most things are self-explanatory!</p>
+    <div class="faq-cta-btns">
+      <a href="index.html" class="btn-faq-cta primary"><i class="fas fa-play"></i> Start Watching</a>
+      <a href="filter.html" class="btn-faq-cta"><i class="fas fa-filter"></i> Browse Titles</a>
+    </div>
+  </div>
+</div>
+
+<script src="db.js"></script>
+<script src="app.js"></script>
+<script>
+DB.init();
+renderNav();
+
+function toggleFAQ(btn) {
+  const item = btn.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+function filterFAQ(query) {
+  const q = query.toLowerCase().trim();
+  let visible = 0;
+  document.querySelectorAll('.faq-item').forEach(item => {
+    const text = (item.dataset.text || '') + ' ' + (item.querySelector('.faq-q')?.textContent || '') + ' ' + (item.querySelector('.faq-a')?.textContent || '');
+    const match = !q || text.toLowerCase().includes(q);
+    item.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  document.querySelectorAll('.faq-category').forEach(cat => {
+    const anyVisible = [...cat.querySelectorAll('.faq-item')].some(i => i.style.display !== 'none');
+    cat.style.display = anyVisible ? '' : 'none';
+  });
+  document.getElementById('noResults').style.display = visible === 0 ? 'block' : 'none';
+}
+
+// Open first FAQ by default
+document.querySelector('.faq-item')?.classList.add('open');
+</script>
+</body>
+</html>

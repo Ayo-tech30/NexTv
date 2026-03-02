@@ -97,6 +97,7 @@
       <button class="ptab active" onclick="switchPTab(this,'watchlist')"><i class="fas fa-bookmark"></i> Watchlist</button>
       <button class="ptab" onclick="switchPTab(this,'history')"><i class="fas fa-history"></i> History</button>
       <button class="ptab" onclick="switchPTab(this,'playlists')"><i class="fas fa-list"></i> Playlists</button>
+      <button class="ptab" onclick="switchPTab(this,'achievements')"><i class="fas fa-trophy"></i> Achievements</button>
       <button class="ptab" onclick="switchPTab(this,'reviews')"><i class="fas fa-star"></i> Reviews</button>
       <button class="ptab" onclick="switchPTab(this,'settings')"><i class="fas fa-cog"></i> Settings</button>
       <button class="ptab" id="adminTabBtn" style="display:none;" onclick="switchPTab(this,'admin')"><i class="fas fa-shield-alt"></i> Admin</button>
@@ -112,6 +113,11 @@
     </div>
 
     <div class="ptab-content" id="ptab-playlists"><div id="playlistsSection"></div></div>
+
+    <div class="ptab-content" id="ptab-achievements">
+      <div id="profileWatchStats" style="margin-bottom:1.25rem;"></div>
+      <div id="profileBadges"></div>
+    </div>
 
     <div class="ptab-content" id="ptab-reviews"><div id="userReviewsEl"></div></div>
 
@@ -226,6 +232,10 @@ if (!session) {
 
   // Playlists
   renderPlaylistsSection();
+
+  // Achievements tab
+  document.getElementById('profileWatchStats').innerHTML = renderWatchStatsBadge();
+  renderBadgesSection('profileBadges');
 
   // Reviews
   const revEl = document.getElementById("userReviewsEl");
