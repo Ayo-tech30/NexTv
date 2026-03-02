@@ -122,21 +122,21 @@
       <div class="spinner"></div>
       <p class="load-label" id="loadLabel">Connecting to stream...</p>
     </div>
+    <div id="iframeBlocker" style="position:absolute;inset:0;z-index:5;cursor:default;background:transparent;"></div>
     <iframe id="mainFrame" src=""
       allowfullscreen
-      allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-      sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox"
-      referrerpolicy="no-referrer"></iframe>
+      allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write"
+      referrerpolicy="no-referrer-when-downgrade"></iframe>
   </div>
 
   <!-- SERVER SELECTOR -->
   <div class="server-bar">
     <span class="server-label"><i class="fas fa-server"></i> Server:</span>
-    <button class="srv-btn active" id="srv1" onclick="setServer(1)"><span class="srv-dot"></span>VidSrc 1</button>
-    <button class="srv-btn"        id="srv2" onclick="setServer(2)"><span class="srv-dot"></span>VidSrc 2</button>
-    <button class="srv-btn"        id="srv3" onclick="setServer(3)"><span class="srv-dot"></span>2Embed</button>
-    <button class="srv-btn"        id="srv4" onclick="setServer(4)"><span class="srv-dot"></span>VidSrc 3</button>
-    <button class="srv-btn"        id="srv5" onclick="setServer(5)"><span class="srv-dot"></span>MoviesAPI</button>
+    <button class="srv-btn active" id="srv1" onclick="setServer(1)"><span class="srv-dot"></span>VidLink ✦</button>
+    <button class="srv-btn"        id="srv2" onclick="setServer(2)"><span class="srv-dot"></span>EmbedSu</button>
+    <button class="srv-btn"        id="srv3" onclick="setServer(3)"><span class="srv-dot"></span>VidSrc CC</button>
+    <button class="srv-btn"        id="srv4" onclick="setServer(4)"><span class="srv-dot"></span>SuperEmbed</button>
+    <button class="srv-btn"        id="srv5" onclick="setServer(5)"><span class="srv-dot"></span>2Embed</button>
   </div>
 
   <!-- EPISODE PANEL (series only) -->
@@ -152,7 +152,7 @@
   <div class="player-info">
     <div class="tip-bar">
       <i class="fas fa-info-circle"></i>
-      If the video doesn't load, try a different server button above. Each server has different content availability.
+      <strong>VidLink ✦</strong> is the cleanest server with almost no ads — try it first. If a video doesn't load, switch servers. One popup may appear on SuperEmbed — just close it.
     </div>
     <div class="now-badge"><i class="fas fa-circle pulse"></i> Now Playing</div>
     <div class="player-meta">
@@ -163,6 +163,9 @@
       <div class="player-actions-side">
         <button class="btn-wl" id="playerWL" onclick="toggleWL()">
           <i class="far fa-bookmark"></i> My List
+        </button>
+        <button class="watch-trailer-btn" id="playerTrailerBtn" onclick="openTrailer(id)" style="display:none;">
+          <i class="fas fa-film"></i> Watch Trailer
         </button>
       </div>
     </div>
@@ -182,20 +185,33 @@
 <script src="app.js"></script>
 <script>
 // ── Popup / Ad blocker ─────────────────────────────────────────
-// Override window.open to silently kill ad popups
-const _origOpen = window.open.bind(window);
-window.open = function(url, name, features) {
-  // Allow fullscreen requests, block everything else opened without user gesture
-  if (name === '_blank' && features && features.includes('fullscreen')) {
-    return _origOpen(url, name, features);
-  }
-  return null; // kill popup
-};
+// ── Aggressive popup / ad blocker ──────────────────────────────
+// Block ALL window.open calls from the iframe
+window.open = () => null;
 
-// Kill any new tabs/windows opened by iframe via postMessage tricks
+// Re-focus window when an iframe tries to open a popup (causes blur)
+let lastClick = 0;
+document.addEventListener('click', () => { lastClick = Date.now(); });
 window.addEventListener('blur', () => {
-  // When focus leaves (popup opened), re-focus immediately
-  setTimeout(() => window.focus(), 100);
+  // If blur happens without a recent real click, it's an iframe popup — close it
+  if (Date.now() - lastClick > 300) {
+    setTimeout(() => {
+      window.focus();
+      // Try to close any new window that snuck through
+      try { window.open('','_self'); window.close(); } catch(e) {}
+    }, 50);
+  }
+});
+
+// Remove the blocker overlay after 3s (let user interact with player normally after it loads)
+setTimeout(() => {
+  const b = document.getElementById('iframeBlocker');
+  if (b) b.remove();
+}, 3000);
+
+// Block postMessage redirect attempts
+window.addEventListener('message', e => {
+  if (typeof e.data === 'string' && (e.data.includes('redirect') || e.data.includes('open'))) return;
 });
 
 DB.init();
@@ -215,55 +231,86 @@ function buildUrl(srv, m, season, ep) {
   const isSeries = (m.type === 'series');
 
   if (srv === 1) {
-    // vidsrc.to  (most reliable)
+    // vidlink.pro — cleanest player, fewest ads, themed to site colors
     return isSeries
-      ? `https://vidsrc.to/embed/tv/${tmdb}/${season}/${ep}`
-      : `https://vidsrc.to/embed/movie/${tmdb}`;
+      ? `https://vidlink.pro/tv/${tmdb}/${season}/${ep}?primaryColor=e50914&secondaryColor=141414&iconColor=e50914&autoplay=true`
+      : `https://vidlink.pro/movie/${tmdb}?primaryColor=e50914&secondaryColor=141414&iconColor=e50914&autoplay=true`;
   }
   if (srv === 2) {
-    // vidsrc.xyz
+    // embed.su — very reliable, minimal popups
     return isSeries
-      ? `https://vidsrc.xyz/embed/tv?tmdb=${tmdb}&season=${season}&episode=${ep}`
-      : `https://vidsrc.xyz/embed/movie?tmdb=${tmdb}`;
+      ? `https://embed.su/embed/tv/${tmdb}/${season}/${ep}`
+      : `https://embed.su/embed/movie/${tmdb}`;
   }
   if (srv === 3) {
-    // 2embed.cc
+    // vidsrc.cc — proper streaming API, supports all titles
     return isSeries
-      ? `https://www.2embed.cc/embedtv/${tmdb}&s=${season}&e=${ep}`
-      : `https://www.2embed.cc/embed/${tmdb}`;
+      ? `https://vidsrc.cc/v2/embed/tv/${tmdb}/${season}/${ep}`
+      : `https://vidsrc.cc/v2/embed/movie/${tmdb}`;
   }
   if (srv === 4) {
-    // vidsrc.me  (vidsrc v3)
+    // superembed (multiembed VIP player) — 1 popup max per session, HLS 1080p
     return isSeries
-      ? `https://vidsrc.me/embed/tv?tmdb=${tmdb}&season=${season}&episode=${ep}`
-      : `https://vidsrc.me/embed/movie?tmdb=${tmdb}`;
+      ? `https://multiembed.mov/?video_id=${tmdb}&tmdb=1&s=${season}&e=${ep}`
+      : `https://multiembed.mov/?video_id=${tmdb}&tmdb=1`;
   }
   if (srv === 5) {
-    // moviesapi.club
+    // 2embed.stream — clean alternative, good for older titles
     return isSeries
-      ? `https://moviesapi.club/tv/${tmdb}-${season}-${ep}`
-      : `https://moviesapi.club/movie/${tmdb}`;
+      ? `https://www.2embed.stream/embed/tv/${tmdb}/${season}/${ep}`
+      : `https://www.2embed.stream/embed/movie/${tmdb}`;
   }
   return '';
 }
 
-// ── Load stream ────────────────────────────────────────────────
-function loadStream() {
+// ── Auto-failover stream loader ────────────────────────────────
+// Tries each server in order. If a server doesn't load within 12s, auto-switches.
+let failoverTimer = null;
+let failoverAttempt = 0;
+const SERVER_ORDER = [1, 2, 3, 4, 5];
+
+function loadStream(skipFailover = false) {
   if (!movie) return;
+  clearTimeout(failoverTimer);
+  if (!skipFailover) failoverAttempt = 0;
+
   const frame   = document.getElementById('mainFrame');
   const loading = document.getElementById('playerLoading');
-
   const isSeries = (movie.type === 'series');
-  document.getElementById('loadLabel').textContent = isSeries
+
+  const label = isSeries
     ? `Loading S${String(currentSeason).padStart(2,'0')} · EP ${String(currentEpisode).padStart(2,'0')}…`
-    : `Loading full movie · ${movie.duration}…`;
+    : `Loading stream…`;
+  document.getElementById('loadLabel').textContent = label;
 
   loading.classList.remove('hidden');
   frame.src = '';
 
   setTimeout(() => {
-    frame.src = buildUrl(currentServer, movie, currentSeason, currentEpisode);
-    setTimeout(() => loading.classList.add('hidden'), 4000);
+    const url = buildUrl(currentServer, movie, currentSeason, currentEpisode);
+    frame.src = url;
+
+    // Hide loading spinner after 3s regardless
+    setTimeout(() => loading.classList.add('hidden'), 3500);
+
+    // Auto-failover: if iframe fires error or stays blank, try next server
+    frame.onerror = () => tryNextServer('Error loading stream');
+    frame.onload  = () => {
+      // Clear failover timer on successful load
+      clearTimeout(failoverTimer);
+      loading.classList.add('hidden');
+    };
+
+    // Safety net: if nothing loads in 14s, auto-try next server
+    failoverTimer = setTimeout(() => {
+      // Only auto-switch if we haven't already tried all servers
+      if (failoverAttempt < SERVER_ORDER.length - 1) {
+        tryNextServer('Server timed out — trying next…');
+      } else {
+        loading.classList.add('hidden');
+        showToast('All servers tried. Try manually switching above.', 'error');
+      }
+    }, 14000);
   }, 300);
 
   // Highlight active ep btn
@@ -274,14 +321,39 @@ function loadStream() {
   window.scrollTo({ top: document.getElementById('navbar').offsetHeight, behavior: 'smooth' });
 }
 
+function tryNextServer(reason) {
+  clearTimeout(failoverTimer);
+  failoverAttempt++;
+  if (failoverAttempt >= SERVER_ORDER.length) {
+    showToast('All servers tried. Check your connection.', 'error');
+    document.getElementById('playerLoading').classList.add('hidden');
+    return;
+  }
+  // Pick next server in the order
+  const nextSrv = SERVER_ORDER[failoverAttempt];
+  currentServer = nextSrv;
+
+  // Update active button visually
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('srv' + i)?.classList.toggle('active', i === nextSrv);
+  }
+
+  const names = {1:'VidLink',2:'EmbedSu',3:'VidSrc CC',4:'SuperEmbed',5:'2Embed'};
+  document.getElementById('loadLabel').textContent = `${reason ? reason + ' ' : ''}Trying ${names[nextSrv]}…`;
+  showToast(`⚡ Auto-switching to ${names[nextSrv]}…`);
+  loadStream(true); // skipFailover=true so we don't reset attempt counter
+}
+
 // ── Server switching ───────────────────────────────────────────
 function setServer(n) {
+  clearTimeout(failoverTimer);
+  failoverAttempt = 0; // reset failover when user manually picks
   currentServer = n;
   for (let i = 1; i <= 5; i++) {
     document.getElementById('srv' + i).classList.toggle('active', i === n);
   }
   loadStream();
-  const names = {1:'VidSrc 1',2:'VidSrc 2',3:'2Embed',4:'VidSrc 3',5:'MoviesAPI'};
+  const names = {1:'VidLink',2:'EmbedSu',3:'VidSrc CC',4:'SuperEmbed',5:'2Embed'};
   showToast('Switched to ' + names[n]);
 }
 
@@ -344,6 +416,12 @@ if (!movie) {
 
   buildEpPanel(movie);
   loadStream();
+
+  const trailerBtn = document.getElementById('playerTrailerBtn');
+  if (trailerBtn) {
+    trailerBtn.style.display = 'inline-flex';
+    trailerBtn.onclick = () => openTrailer(id);
+  }
 
   const session = DB.getSession();
   if (session) { DB.addToHistory(session.id, movie.id); updateWLBtn(); }

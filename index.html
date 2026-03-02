@@ -51,6 +51,40 @@
 
 <!-- MAIN -->
 <main class="main-content">
+
+  <!-- CONTINUE WATCHING (only shown if history exists) -->
+  <section class="row-section" id="continueSection" style="display:none;">
+    <div class="row-header">
+      <h2><i class="fas fa-history"></i> Continue Watching</h2>
+      <button class="see-all" onclick="clearHistory()" style="color:var(--muted);background:none;border:none;cursor:pointer;font-size:.8rem;font-family:inherit;">Clear History</button>
+    </div>
+    <div class="cards-row continue-row" id="continueRow"></div>
+  </section>
+
+  <!-- STATS BANNER -->
+  <section class="stats-banner">
+    <div class="stat-item">
+      <span class="stat-num" data-target="198">0</span>
+      <span class="stat-label">Titles</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="stat-num" data-target="4">0</span>
+      <span class="stat-label">Categories</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="stat-num" data-target="5">0</span>
+      <span class="stat-label">Servers</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="stat-num" data-target="100">0</span>
+      <span class="stat-label">% Free</span>
+    </div>
+  </section>
+
+  <!-- TRENDING NOW -->
   <section class="row-section">
     <div class="row-header">
       <h2><i class="fas fa-fire"></i> Trending Now</h2>
@@ -59,6 +93,33 @@
     <div class="cards-row" id="trendingRow"></div>
   </section>
 
+  <!-- FEATURED COLLECTIONS (big spotlight cards) -->
+  <section class="collections-section">
+    <div class="row-header">
+      <h2><i class="fas fa-layer-group"></i> Featured Collections</h2>
+    </div>
+    <div class="collections-grid" id="collectionsGrid"></div>
+  </section>
+
+  <!-- TOP RATED -->
+  <section class="row-section">
+    <div class="row-header">
+      <h2><i class="fas fa-trophy"></i> Top Rated</h2>
+      <a href="movies.html?sort=rating" class="see-all">See All <i class="fas fa-chevron-right"></i></a>
+    </div>
+    <div class="cards-row top-rated-row" id="topRatedRow"></div>
+  </section>
+
+  <!-- NEW RELEASES -->
+  <section class="row-section">
+    <div class="row-header">
+      <h2><i class="fas fa-certificate"></i> New Releases</h2>
+      <a href="movies.html" class="see-all">See All <i class="fas fa-chevron-right"></i></a>
+    </div>
+    <div class="cards-row" id="newReleasesRow"></div>
+  </section>
+
+  <!-- MOVIES -->
   <section class="row-section">
     <div class="row-header">
       <h2><i class="fas fa-film"></i> Movies</h2>
@@ -66,6 +127,17 @@
     </div>
     <div class="cards-row" id="moviesRow"></div>
   </section>
+
+  <!-- STAFF PICKS -->
+  <section class="staff-picks-section">
+    <div class="row-header">
+      <h2><i class="fas fa-hand-sparkles"></i> Staff Picks</h2>
+      <span class="see-all" style="color:var(--muted);font-size:.8rem;">Hand-curated for you</span>
+    </div>
+    <div class="staff-picks-grid" id="staffPicksGrid"></div>
+  </section>
+
+  <!-- TV SHOWS -->
   <section class="row-section">
     <div class="row-header">
       <h2><i class="fas fa-tv"></i> TV Shows</h2>
@@ -73,6 +145,8 @@
     </div>
     <div class="cards-row" id="seriesRow"></div>
   </section>
+
+  <!-- ANIME -->
   <section class="row-section">
     <div class="row-header">
       <h2><i class="fas fa-dragon"></i> Anime</h2>
@@ -80,17 +154,54 @@
     </div>
     <div class="cards-row" id="animeRow"></div>
   </section>
+
+  <!-- QUICK WATCH (short movies under 2h) -->
   <section class="row-section">
     <div class="row-header">
-      <h2><i class="fas fa-star"></i> Cartoons</h2>
+      <h2><i class="fas fa-bolt"></i> Quick Watch <span class="badge-tag">Under 2hrs</span></h2>
+    </div>
+    <div class="cards-row" id="quickWatchRow"></div>
+  </section>
+
+  <!-- CARTOONS -->
+  <section class="row-section">
+    <div class="row-header">
+      <h2><i class="fas fa-star"></i> Cartoons &amp; Animation</h2>
       <a href="cartoons.html" class="see-all">See All <i class="fas fa-chevron-right"></i></a>
     </div>
     <div class="cards-row" id="cartoonsRow"></div>
   </section>
+
+  <!-- TRAILERS -->
+  <section class="row-section">
+    <div class="row-header">
+      <h2><i class="fas fa-clapperboard"></i> Trailers &amp; Teasers</h2>
+      <span class="see-all" style="color:var(--muted);font-size:.85rem;">Click to watch trailer</span>
+    </div>
+    <div class="trailers-row" id="trailersRow"></div>
+  </section>
+
+  <!-- BROWSE BY ORIGIN -->
+  <section class="origin-section">
+    <div class="row-header">
+      <h2><i class="fas fa-globe"></i> Browse by Origin</h2>
+    </div>
+    <div class="origin-tabs" id="originTabs">
+      <button class="origin-tab active" data-origin="all" onclick="filterOrigin(this,'all')">🌍 All</button>
+      <button class="origin-tab" data-origin="us" onclick="filterOrigin(this,'us')">🇺🇸 Hollywood</button>
+      <button class="origin-tab" data-origin="jp" onclick="filterOrigin(this,'jp')">🇯🇵 Japan</button>
+      <button class="origin-tab" data-origin="kr" onclick="filterOrigin(this,'kr')">🇰🇷 Korean</button>
+      <button class="origin-tab" data-origin="uk" onclick="filterOrigin(this,'uk')">🇬🇧 British</button>
+    </div>
+    <div class="cards-row" id="originRow"></div>
+  </section>
+
+  <!-- GENRES -->
   <section class="categories-section">
     <h2><i class="fas fa-th-large"></i> Browse by Genre</h2>
     <div class="genre-grid" id="genreGrid"></div>
   </section>
+
 </main>
 
 <footer class="site-footer">
@@ -133,13 +244,88 @@
   renderNav();
   renderHero();
   const all = DB.getMovies();
-  renderRow('trendingRow', [...all].sort((a,b)=>b.rating-a.rating).slice(0,10));
 
+  // Continue Watching
+  const session = DB.getSession();
+  if (session) {
+    const user = DB.getUserById(session.id);
+    const history = (user?.watchHistory || []).slice(0, 10);
+    if (history.length) {
+      const histMovies = history.map(h => all.find(m => m.id === h.movieId)).filter(Boolean);
+      renderRow('continueRow', histMovies);
+      document.getElementById('continueSection').style.display = 'block';
+    }
+  }
+
+  // Stats counter animation
+  const statNums = document.querySelectorAll('.stat-num');
+  const animateCount = (el) => {
+    const target = +el.dataset.target;
+    let count = 0;
+    const step = Math.ceil(target / 60);
+    const timer = setInterval(() => {
+      count = Math.min(count + step, target);
+      el.textContent = count + (el.dataset.target === '100' ? '' : '');
+      if (count >= target) clearInterval(timer);
+    }, 20);
+  };
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { animateCount(e.target); observer.unobserve(e.target); } });
+  }, { threshold: 0.5 });
+  statNums.forEach(el => observer.observe(el));
+
+  // Trending
+  renderRow('trendingRow', [...all].sort((a,b)=>b.rating-a.rating).slice(0,5));
+
+  // Featured Collections
+  renderCollections();
+
+  // Top Rated (with rank badge)
+  renderTopRated('topRatedRow', [...all].sort((a,b)=>b.rating-a.rating).slice(0,15));
+
+  // New Releases (2022+)
+  renderRow('newReleasesRow', [...all].filter(m=>m.year>=2022).sort((a,b)=>b.year-a.year).slice(0,12));
+
+  // Movies
   renderRow('moviesRow', all.filter(m=>m.category==='movies'));
+
+  // Staff Picks
+  renderStaffPicks();
+
+  // Series
   renderRow('seriesRow', all.filter(m=>m.category==='series'));
+
+  // Anime
   renderRow('animeRow', all.filter(m=>m.category==='anime'));
+
+  // Quick Watch - movies under 2h (duration contains 1h or starts with a number < 120)
+  const quickMovies = all.filter(m => {
+    const d = m.duration || '';
+    const match = d.match(/(\d+)h\s*(\d+)?m?/);
+    if (!match) return false;
+    const mins = parseInt(match[1]) * 60 + parseInt(match[2] || 0);
+    return mins < 120;
+  }).slice(0, 12);
+  renderRow('quickWatchRow', quickMovies);
+
+  // Cartoons
   renderRow('cartoonsRow', all.filter(m=>m.category==='cartoons'));
+
+  // Trailers
+  const trailerIds = ['m86','m88','m96','m72','m81','m13','a59','a60','c41','c54'];
+  const trailerMovies = trailerIds.map(id=>all.find(m=>m.id===id)).filter(Boolean);
+  renderTrailersRow('trailersRow', trailerMovies);
+
+  // Origin - default show all
+  renderRow('originRow', [...all].sort(()=>Math.random()-0.5).slice(0,12));
+
   renderGenres();
+
+  function clearHistory() {
+    if (!session) return;
+    DB.updateUser(session.id, {watchHistory:[]});
+    document.getElementById('continueSection').style.display = 'none';
+  }
 </script>
 </body>
 </html>

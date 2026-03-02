@@ -39,13 +39,14 @@
     <button class="search-clear" id="searchClear" onclick="clearSearch()"><i class="fas fa-times"></i></button>
   </div>
 
-  <!-- MOST SEARCHED — shown when idle -->
+  <!-- IDLE SECTION — shown when idle -->
   <div id="idleSection">
-    <section class="row-section most-searched-section" style="margin-bottom:2.5rem;">
+    <section class="row-section" style="margin-bottom:2.5rem;">
       <div class="row-header">
-        <h2><i class="fas fa-chart-line"></i> Most Searched <span class="hot-badge">HOT</span></h2>
+        <h2><i class="fas fa-film"></i> Trailers &amp; Teasers</h2>
+        <span class="see-all" style="color:var(--muted);font-size:.85rem;">Click to watch trailer</span>
       </div>
-      <div class="most-searched-grid" id="mostSearchedGrid"></div>
+      <div class="trailers-row" id="searchTrailersRow"></div>
     </section>
     <section class="row-section" style="margin-bottom:2.5rem;">
       <div class="row-header">
@@ -92,7 +93,10 @@
 
   // Populate idle section
   const all = DB.getMovies();
-  renderMostSearched('mostSearchedGrid', all);
+  // Trailers section on search page
+  const trailerIds = ['m1','m2','m3','m13','m6','m11'];
+  const trailerMovies = trailerIds.map(id=>all.find(m=>m.id===id)).filter(Boolean);
+  renderTrailersRow('searchTrailersRow', trailerMovies);
   renderRow('trendingRow', [...all].sort((a,b) => b.rating - a.rating).slice(0, 12));
 
   function doSearch() {
