@@ -1194,7 +1194,7 @@ function injectMobileNav() {
   const navItems = [
     { href:'index.html', icon:'fa-home', label:'Home' },
     { href:'search.html', icon:'fa-search', label:'Search' },
-    { href:'filter.html', icon:'fa-filter', label:'Filter' },
+    { href:'downloads.html', icon:'fa-download', label:'Downloads' },
     { href:'history.html', icon:'fa-history', label:'History' },
     { href:'profile.html', icon:'fa-user', label:'Profile' },
   ];

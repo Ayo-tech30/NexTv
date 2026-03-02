@@ -17,7 +17,7 @@
 <div class="auth-bg"></div>
 <div class="auth-wrap">
   <a href="index.html" class="logo auth-logo">NEX<span>TV</span></a>
-  <div class="auth-card">
+  <div class="auth-card" style="position:relative;"><button onclick="history.length>1?history.back():window.location.href='index.html'" style="position:absolute;top:.75rem;right:.75rem;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:var(--muted);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;z-index:10;" title="Go back"><i class="fas fa-times"></i></button>
     <h2>Create Account</h2>
     <p class="auth-sub">Join Nex TV – it's free forever.</p>
     <form id="regForm" onsubmit="doRegister(event)">
