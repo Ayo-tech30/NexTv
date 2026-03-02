@@ -1751,12 +1751,15 @@ kbd {
   100% { background-position: -200% 0; }
 }
 /* Stop shimmer once image loads */
+.card-poster {
+  background: var(--bg3);
+}
 .card-poster.loaded {
   background: var(--bg3);
   animation: none;
 }
 .card-poster img {
-  opacity: 0;
+  opacity: 1;
   transition: opacity .35s ease;
 }
 .card-poster img.loaded {
@@ -1783,7 +1786,7 @@ kbd {
 
 /* Modal poster fade */
 .modal-poster {
-  opacity: 0;
+  opacity: 1;
   transition: opacity .3s ease;
 }
 .modal-poster.loaded { opacity: 1; }
@@ -2760,5 +2763,198 @@ body.cinema-mode .cinema-exit-btn { display:flex; }
   background:rgba(245,197,24,.12); color:#f5c518;
   padding:.15rem .5rem; border-radius:4px; font-size:.7rem; font-weight:700;
   display:inline-flex; align-items:center; gap:.2rem;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE FIXES - Complete Overhaul
+   ══════════════════════════════════════════════════════════════ */
+
+/* === BASE MOBILE (≤768px) === */
+@media (max-width: 768px) {
+
+  /* Prevent any horizontal overflow */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* Nav */
+  .nav-search-wrap { max-width: 160px; }
+
+  /* Hero - proper mobile height */
+  .hero { height: 60vw; min-height: 300px; max-height: 420px; }
+  .hero-title { font-size: 1.6rem; line-height: 1.2; }
+  .hero-desc { display: none; }
+  .hero-actions { gap: .5rem; }
+  .btn-play, .btn-more {
+    padding: .5rem 1.1rem; font-size: .82rem;
+  }
+
+  /* Cards row - smaller cards on mobile */
+  .movie-card { width: 130px; }
+
+  /* Row headers */
+  .row-header { margin-bottom: .6rem; }
+  .row-header h2 { font-size: 1rem; }
+
+  /* Main content padding */
+  .main-content { padding: 1rem .875rem 5rem; }
+
+  /* Modal - full screen on mobile */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal-box {
+    border-radius: 16px 16px 0 0;
+    max-height: 92vh;
+    width: 100%;
+    margin: 0;
+  }
+  .modal-body { flex-direction: column; gap: 0; }
+  .modal-poster {
+    width: 100%; height: 180px;
+    object-fit: cover;
+    border-radius: 12px 12px 0 0;
+    margin: 0;
+  }
+  .modal-info { padding: 1rem; }
+
+  /* Search page */
+  .search-input-lg { font-size: .9rem; padding: .85rem 1rem .85rem 3rem; }
+
+  /* Filter page */
+  .filter-row { flex-direction: column; gap: .5rem; }
+  .filter-group { width: 100%; }
+  .filter-group select { width: 100%; }
+
+  /* Auth pages */
+  .auth-card { padding: 1.5rem 1.25rem; margin: 1rem; }
+
+  /* Profile */
+  .profile-hero { padding: 1.5rem 1rem 1rem; }
+  .stats-row { gap: .5rem; }
+  .stat-box { padding: .75rem .5rem; flex: 1; }
+
+  /* Player watch page */
+  .player-frame-wrap {
+    max-height: 56vw; /* proper 16:9 on mobile */
+  }
+  .server-bar { padding: .5rem 1rem; gap: .4rem; flex-wrap: wrap; }
+  .srv-btn { font-size: .72rem; padding: .28rem .7rem; }
+  .server-label { font-size: .7rem; }
+  .player-info { padding: .875rem 1rem; }
+  .player-meta { flex-direction: column; gap: .75rem; }
+  .player-meta h1 { font-size: 1.15rem; }
+  .player-actions-side {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: .4rem !important;
+  }
+  .player-actions-side .btn-wl,
+  .player-actions-side .watch-trailer-btn,
+  .player-actions-side .btn-pip,
+  .player-actions-side .btn-cc {
+    font-size: .75rem;
+    padding: .4rem .75rem;
+  }
+
+  /* Episode panel */
+  .ep-panel { padding: .65rem 1rem .8rem; }
+  .ep-grid { max-height: 120px; }
+  .ep-btn { font-size: .72rem; padding: .25rem .55rem; min-width: 42px; }
+  .s-tab { font-size: .72rem; padding: .22rem .65rem; }
+
+  /* Related section */
+  .related-section { padding: 1rem 1rem 4rem; }
+
+  /* Bottom nav safe area */
+  body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+
+  /* History */
+  .history-item { padding: .65rem .75rem; }
+
+  /* Genre chips */
+  .genre-chip { padding: .4rem .8rem; font-size: .8rem; }
+
+  /* Cards grid full */
+  .grid-full { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: .6rem; }
+}
+
+/* === SMALL MOBILE (≤480px) === */
+@media (max-width: 480px) {
+
+  /* Nav logo smaller */
+  .logo { font-size: 1.3rem; }
+
+  /* Hero even more compact */
+  .hero { height: 70vw; min-height: 260px; }
+  .hero-title { font-size: 1.35rem; }
+  .hero-content { padding: 1.5rem .875rem; padding-top: 3rem; }
+  .hero-dots { display: none; }
+
+  /* Cards even smaller */
+  .movie-card { width: 110px; }
+  .card-title { font-size: .78rem; }
+
+  /* Grid */
+  .grid-full { grid-template-columns: repeat(2, 1fr); gap: .5rem; }
+
+  /* Main content */
+  .main-content { padding: .75rem .75rem 5rem; }
+
+  /* Player */
+  .player-frame-wrap { max-height: 55vw; }
+
+  /* Server bar wrap */
+  .server-bar { padding: .4rem .75rem; }
+
+  /* Tip bar hide on tiny screens */
+  .tip-bar { display: none; }
+
+  /* Modal */
+  .modal-box { max-height: 95vh; }
+
+  /* Auth */
+  .auth-card { padding: 1.25rem 1rem; }
+
+  /* Page hero */
+  .page-hero { height: 130px; }
+  .page-hero-content h1 { font-size: 1.6rem; }
+
+  /* Collections */
+  .collections-grid { grid-template-columns: 1fr 1fr; gap: .5rem; }
+
+  /* Search */
+  .search-results-header { font-size: .85rem; }
+}
+
+/* === LANDSCAPE MOBILE === */
+@media (max-width: 768px) and (orientation: landscape) {
+  .hero { height: 55vw; min-height: 220px; }
+  .player-frame-wrap { max-height: 85vh; }
+  body { padding-bottom: 0; }
+  .mobile-bottom-nav { display: none !important; }
+}
+
+/* === TOUCH IMPROVEMENTS === */
+@media (hover: none) and (pointer: coarse) {
+  /* Bigger tap targets */
+  .srv-btn { min-height: 36px; }
+  .ep-btn { min-height: 34px; min-width: 44px; }
+  .s-tab { min-height: 32px; }
+  .btn-wl, .btn-pip, .btn-cc { min-height: 38px; }
+  .mob-nav-item { min-height: 44px; justify-content: center; }
+
+  /* Remove hover effects that don't work on touch */
+  .movie-card:hover { transform: none; }
+  .movie-card:active { transform: scale(.97); }
+
+  /* Cards row - touch scroll */
+  .cards-row {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
 }
 
