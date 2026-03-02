@@ -69,7 +69,7 @@
 <script src="db.js"></script>
 <script src="app.js"></script>
 <script>
-  DB.init(); renderNav();
+  DB.init(); renderNav(); injectMobileNav();
   const session = DB.getSession();
   if (!session) {
     document.getElementById('notLoggedIn').style.display = 'flex';

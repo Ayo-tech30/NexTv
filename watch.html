@@ -160,12 +160,21 @@
         <h1 id="playerTitle">Loading...</h1>
         <div class="player-details" id="playerDetails"></div>
       </div>
-      <div class="player-actions-side">
+      <div class="player-actions-side" style="display:flex;flex-direction:column;gap:.5rem;align-items:flex-start;">
         <button class="btn-wl" id="playerWL" onclick="toggleWL()">
           <i class="far fa-bookmark"></i> My List
         </button>
         <button class="watch-trailer-btn" id="playerTrailerBtn" onclick="openTrailer(id)" style="display:none;">
           <i class="fas fa-film"></i> Watch Trailer
+        </button>
+        <button class="btn-pip" id="btnPiP" onclick="enterPiP()" title="Picture in Picture">
+          <i class="fas fa-external-link-alt"></i> PiP
+        </button>
+        <button class="btn-cc" id="btnCC" onclick="toggleCC()" title="Subtitles / Closed Captions">
+          <i class="fas fa-closed-captioning"></i> CC
+        </button>
+        <button class="btn-pip" onclick="shufflePlay()" title="Watch something random" style="white-space:nowrap;">
+          <i class="fas fa-shuffle"></i> Random
         </button>
       </div>
     </div>
@@ -449,6 +458,35 @@ function toggleWL() {
   updateWLBtn();
   showToast('Watchlist updated!');
 }
+
+// PiP
+function enterPiP() {
+  const iframe = document.querySelector('.player-frame-wrap iframe');
+  if (!iframe) { showToast('PiP requires a playing video'); return; }
+  showToast('💡 PiP works best with direct video — right-click the video for PiP option');
+}
+
+// CC Toggle
+let ccEnabled = false;
+function toggleCC() {
+  ccEnabled = !ccEnabled;
+  const btn = document.getElementById('btnCC');
+  if (btn) {
+    btn.classList.toggle('active', ccEnabled);
+    btn.innerHTML = `<i class="fas fa-closed-captioning"></i> CC ${ccEnabled?'On':''}`;
+  }
+  showToast(ccEnabled ? '✓ Subtitles on (when available)' : 'Subtitles off');
+}
+
+// Keyboard shortcuts on watch page
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'Escape') history.back();
+  if (e.key === 'r') shufflePlay();
+});
+
+// Inject mobile nav
+injectMobileNav();
 </script>
 </body>
 </html>

@@ -91,7 +91,7 @@
 <script src="db.js"></script>
 <script src="app.js"></script>
 <script>
-  DB.init(); renderNav();
+  DB.init(); renderNav(); injectMobileNav();
   function applyFilters() {
     let movies = DB.getMovies().filter(m => m.category === 'cartoons');
     const genre = document.getElementById('genreFilter').value;

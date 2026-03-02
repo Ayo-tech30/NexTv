@@ -61,6 +61,14 @@
     <div class="cards-row continue-row" id="continueRow"></div>
   </section>
 
+  <!-- PERSONALIZED ROW -->
+  <section class="row-section" id="personalizedSection" style="display:none;">
+    <div class="row-header">
+      <h2><i class="fas fa-magic" style="color:var(--teal);"></i> <span id="personalizedTitle">Just For You</span></h2>
+    </div>
+    <div class="cards-row" id="personalizedRow"></div>
+  </section>
+
   <!-- STATS BANNER -->
   <section class="stats-banner">
     <div class="stat-item">
@@ -84,6 +92,9 @@
     </div>
   </section>
 
+  <!-- TRUST SECTION -->
+  <section class="trust-section" id="trustSection"></section>
+
   <!-- TRENDING NOW -->
   <section class="row-section">
     <div class="row-header">
@@ -101,6 +112,9 @@
     <div class="collections-grid" id="collectionsGrid"></div>
   </section>
 
+  <!-- SHUFFLE -->
+  <section class="row-section" id="shuffleSection"></section>
+
   <!-- TOP RATED -->
   <section class="row-section">
     <div class="row-header">
@@ -110,6 +124,15 @@
     <div class="cards-row top-rated-row" id="topRatedRow"></div>
   </section>
 
+  <!-- TOP 10 IN YOUR REGION -->
+  <section class="row-section">
+    <div class="row-header">
+      <h2><i class="fas fa-chart-line" style="color:var(--teal);"></i> Top 10 Today</h2>
+      <span class="see-all" style="color:var(--muted);font-size:.8rem;">Updated daily</span>
+    </div>
+    <div class="cards-row" id="top10Row" style="padding-left:.5rem;"></div>
+  </section>
+
   <!-- NEW RELEASES -->
   <section class="row-section">
     <div class="row-header">
@@ -117,6 +140,22 @@
       <a href="movies.html" class="see-all">See All <i class="fas fa-chevron-right"></i></a>
     </div>
     <div class="cards-row" id="newReleasesRow"></div>
+  </section>
+
+  <!-- MOOD BROWSER -->
+  <section class="mood-section">
+    <div class="row-header">
+      <h2><i class="fas fa-heart" style="color:var(--teal);"></i> Browse by Mood</h2>
+      <span class="see-all" style="color:var(--muted);font-size:.8rem;">How are you feeling?</span>
+    </div>
+    <div class="mood-grid" id="moodGrid"></div>
+    <div class="mood-results" id="moodResults">
+      <div class="mood-result-header">
+        <div class="mood-result-label" id="moodResultLabel"></div>
+        <button class="btn-mood-close" onclick="closeMoodResults()"><i class="fas fa-times"></i> Clear</button>
+      </div>
+      <div class="cards-row" id="moodResultsRow"></div>
+    </div>
   </section>
 
   <!-- MOVIES -->
@@ -146,6 +185,30 @@
     <div class="cards-row" id="seriesRow"></div>
   </section>
 
+  <!-- COMMUNITY & WATCH PARTIES -->
+  <section class="social-section">
+    <div class="community-banner">
+      <div class="community-text">
+        <h3><i class="fas fa-users"></i> Watch Together — NexTV Watch Parties</h3>
+        <p>Create a private room and invite friends to watch the same movie at the same time. Synchronized playback, shared fun.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;">
+          <div class="community-avatars">
+            <div class="comm-avatar" style="background:#e50914;">A</div>
+            <div class="comm-avatar" style="background:#8b5cf6;">K</div>
+            <div class="comm-avatar" style="background:#00d4b4;color:#000;">S</div>
+            <div class="comm-avatar" style="background:#f97316;">J</div>
+          </div>
+          <span class="comm-count">127 watching now</span>
+        </div>
+        <button class="btn-watch-party" onclick="openWatchParty()">
+          <i class="fas fa-play-circle"></i> Start Watch Party
+        </button>
+      </div>
+    </div>
+  </section>
+
   <!-- ANIME -->
   <section class="row-section">
     <div class="row-header">
@@ -161,6 +224,17 @@
       <h2><i class="fas fa-bolt"></i> Quick Watch <span class="badge-tag">Under 2hrs</span></h2>
     </div>
     <div class="cards-row" id="quickWatchRow"></div>
+  </section>
+
+  <!-- USER REVIEWS -->
+  <section class="reviews-section">
+    <div class="row-header">
+      <h2><i class="fas fa-star" style="color:var(--teal);"></i> Community Reviews</h2>
+      <div class="review-bar">
+        <button class="btn-write-review" onclick="openWriteReview()"><i class="fas fa-pen"></i> Write a Review</button>
+      </div>
+    </div>
+    <div id="reviewsList"></div>
   </section>
 
   <!-- CARTOONS -->
@@ -195,6 +269,9 @@
     </div>
     <div class="cards-row" id="originRow"></div>
   </section>
+
+  <!-- ADMIN PANEL (admin only) -->
+  <section id="adminPanelSection"></section>
 
   <!-- GENRES -->
   <section class="categories-section">
@@ -237,6 +314,46 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<!-- WATCH PARTY MODAL -->
+<div class="party-modal" id="watchPartyModal">
+  <div class="party-box">
+    <h3><i class="fas fa-users"></i> Your Watch Party is Ready!</h3>
+    <p>Share the room code with friends. Everyone opens NexTV and enters the same code to sync playback together.</p>
+    <div class="party-room-code">
+      <div class="code-label">Room Code</div>
+      <div class="party-code" id="partyCode">ABC123</div>
+      <div class="party-share-url" id="partyShareUrl"></div>
+    </div>
+    <div class="party-actions">
+      <button class="btn-copy-code" onclick="copyPartyCode()"><i class="fas fa-copy"></i> Copy Invite Link</button>
+      <button class="btn-party-close" onclick="closeWatchParty()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- WRITE REVIEW MODAL -->
+<div class="write-review-modal" id="writeReviewModal">
+  <div class="review-box">
+    <h3><i class="fas fa-star" style="color:var(--teal);"></i> Write a Review</h3>
+    <select class="review-movie-select" id="reviewMovieSelect"></select>
+    <div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:.4rem;">Your Rating</div>
+      <div class="star-picker">
+        <span class="star-pick" data-star="1">★</span>
+        <span class="star-pick" data-star="2">★</span>
+        <span class="star-pick" data-star="3">★</span>
+        <span class="star-pick" data-star="4">★</span>
+        <span class="star-pick" data-star="5">★</span>
+      </div>
+    </div>
+    <textarea class="review-textarea" id="reviewText" placeholder="Share your thoughts about this title..."></textarea>
+    <div class="review-submit-row">
+      <button class="btn-write-review" onclick="submitReview()" style="flex:1;justify-content:center;"><i class="fas fa-paper-plane"></i> Post Review</button>
+      <button class="btn-party-close" onclick="closeWriteReview()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script src="db.js"></script>
 <script src="app.js"></script>
 <script>
@@ -244,6 +361,12 @@
   renderNav();
   renderHero();
   const all = DB.getMovies();
+
+  // Personalized recommendations
+  renderPersonalizedRow();
+
+  // Trust section
+  renderTrustSection();
 
   // Continue Watching
   const session = DB.getSession();
@@ -280,11 +403,20 @@
   // Featured Collections
   renderCollections();
 
+  // Shuffle section
+  renderShuffleSection();
+
+  // Top 10
+  renderTop10Row('top10Row', [...all].sort((a,b)=>b.rating-a.rating));
+
   // Top Rated (with rank badge)
   renderTopRated('topRatedRow', [...all].sort((a,b)=>b.rating-a.rating).slice(0,15));
 
   // New Releases (2022+)
   renderRow('newReleasesRow', [...all].filter(m=>m.year>=2022).sort((a,b)=>b.year-a.year).slice(0,12));
+
+  // Mood browser
+  renderMoodSection();
 
   // Movies
   renderRow('moviesRow', all.filter(m=>m.category==='movies'));
@@ -298,7 +430,7 @@
   // Anime
   renderRow('animeRow', all.filter(m=>m.category==='anime'));
 
-  // Quick Watch - movies under 2h (duration contains 1h or starts with a number < 120)
+  // Quick Watch - movies under 2h
   const quickMovies = all.filter(m => {
     const d = m.duration || '';
     const match = d.match(/(\d+)h\s*(\d+)?m?/);
@@ -307,6 +439,10 @@
     return mins < 120;
   }).slice(0, 12);
   renderRow('quickWatchRow', quickMovies);
+
+  // Reviews
+  renderReviewsSection();
+  populateReviewMovieSelect();
 
   // Cartoons
   renderRow('cartoonsRow', all.filter(m=>m.category==='cartoons'));
@@ -318,6 +454,9 @@
 
   // Origin - default show all
   renderRow('originRow', [...all].sort(()=>Math.random()-0.5).slice(0,12));
+
+  // Admin panel
+  renderAdminPanel();
 
   renderGenres();
 

@@ -599,3 +599,677 @@ function closeTrailerAndWatch(id) {
   document.body.style.overflow = '';
   window.location.href = `watch.html?id=${id}`;
 }
+
+// ════════════════════════════════════════════════════════════════
+// NEXTV 2.0 — ALL NEW FEATURES
+// ════════════════════════════════════════════════════════════════
+
+// ── NOTIFICATION SYSTEM ───────────────────────────────────────
+const NOTIFICATIONS = [
+  { id:'n1', type:'new-ep', icon:'fa-tv', title:'New Episodes Available', body:'Stranger Things S5 just dropped!', unread:true, time:'2m ago' },
+  { id:'n2', type:'new-title', icon:'fa-film', title:'Just Added', body:'Dune: Part Two is now streaming for free', unread:true, time:'1h ago' },
+  { id:'n3', type:'trending', icon:'fa-fire', title:'Trending Now', body:'Oppenheimer is #1 in your region today', unread:true, time:'3h ago' },
+  { id:'n4', type:'new-title', icon:'fa-certificate', title:'New Release', body:'Spider-Man: No Way Home added this week', unread:false, time:'2d ago' },
+  { id:'n5', type:'new-ep', icon:'fa-dragon', title:'Anime Update', body:'Attack on Titan final arc is now complete', unread:false, time:'5d ago' },
+];
+
+function renderNotifBtn() {
+  const navRight = document.querySelector('.nav-right');
+  if (!navRight || document.getElementById('notifBtn')) return;
+  
+  const stored = JSON.parse(localStorage.getItem('nextv_notifs') || 'null') || NOTIFICATIONS;
+  const unreadCount = stored.filter(n=>n.unread).length;
+  
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'relative';
+  wrapper.innerHTML = `
+    <button class="notif-btn" id="notifBtn" onclick="toggleNotifPanel()">
+      <i class="fas fa-bell"></i>
+      ${unreadCount > 0 ? '<span class="notif-dot"></span>' : ''}
+    </button>
+    <div class="notif-panel" id="notifPanel">
+      <div class="notif-header">
+        <h4><i class="fas fa-bell" style="color:var(--red);margin-right:.4rem;"></i> Notifications</h4>
+        <button class="notif-mark-all" onclick="markAllRead()">Mark all read</button>
+      </div>
+      <div class="notif-list" id="notifList"></div>
+      <div class="notif-footer"><a href="#" onclick="return false;">View all notifications</a></div>
+    </div>`;
+  
+  const searchIcon = navRight.querySelector('.nav-icon');
+  navRight.insertBefore(wrapper, searchIcon);
+  renderNotifList();
+}
+
+function renderNotifList() {
+  const el = document.getElementById('notifList');
+  if (!el) return;
+  const stored = JSON.parse(localStorage.getItem('nextv_notifs') || 'null') || NOTIFICATIONS;
+  el.innerHTML = stored.map(n => `
+    <div class="notif-item ${n.unread?'unread':''}" onclick="readNotif('${n.id}')">
+      <div class="notif-ico ${n.type}"><i class="fas ${n.icon}"></i></div>
+      <div class="notif-body">
+        <strong>${n.title}</strong>
+        <span>${n.body}</span><br>
+        <span style="color:var(--muted);font-size:.7rem;">${n.time}</span>
+      </div>
+    </div>`).join('');
+}
+
+function toggleNotifPanel() {
+  const panel = document.getElementById('notifPanel');
+  panel?.classList.toggle('show');
+}
+
+function markAllRead() {
+  let notifs = JSON.parse(localStorage.getItem('nextv_notifs') || 'null') || NOTIFICATIONS;
+  notifs = notifs.map(n=>({...n, unread:false}));
+  localStorage.setItem('nextv_notifs', JSON.stringify(notifs));
+  document.querySelector('.notif-dot')?.remove();
+  renderNotifList();
+  showToast('All notifications marked as read');
+}
+
+function readNotif(id) {
+  let notifs = JSON.parse(localStorage.getItem('nextv_notifs') || 'null') || NOTIFICATIONS;
+  notifs = notifs.map(n => n.id===id ? {...n, unread:false} : n);
+  localStorage.setItem('nextv_notifs', JSON.stringify(notifs));
+  renderNotifList();
+}
+
+document.addEventListener('click', e => {
+  const nb = document.getElementById('notifBtn');
+  const np = document.getElementById('notifPanel');
+  if (nb && np && !nb.closest('div').contains(e.target)) {
+    np.classList.remove('show');
+  }
+});
+
+// ── PWA INSTALL BANNER ────────────────────────────────────────
+let pwaInstallEvent = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  pwaInstallEvent = e;
+  if (!localStorage.getItem('nextv_pwa_dismissed')) {
+    setTimeout(() => {
+      const banner = document.getElementById('pwa-banner');
+      if (banner) banner.classList.add('show');
+    }, 3000);
+  }
+});
+
+function installPWA() {
+  if (pwaInstallEvent) {
+    pwaInstallEvent.prompt();
+    pwaInstallEvent.userChoice.then(r => {
+      if (r.outcome === 'accepted') {
+        showToast('🎉 NexTV installed! Check your home screen.');
+      }
+      document.getElementById('pwa-banner')?.classList.remove('show');
+    });
+  } else {
+    showToast('💡 Tip: Use your browser menu → "Add to Home Screen" to install NexTV!');
+  }
+}
+
+function dismissPWA() {
+  localStorage.setItem('nextv_pwa_dismissed', '1');
+  document.getElementById('pwa-banner')?.classList.remove('show');
+}
+
+// ── MOOD BROWSER ──────────────────────────────────────────────
+const MOOD_CONFIG = {
+  happy: { emoji:'😄', label:'Happy', genres:['Comedy','Animation','Adventure'], color:'#f5c518' },
+  thrilling: { emoji:'😱', label:'Thrilling', genres:['Thriller','Horror','Crime'], color:'#e50914' },
+  chill: { emoji:'😌', label:'Chill', genres:['Drama','Romance','Fantasy'], color:'#00d4b4' },
+  emotional: { emoji:'😢', label:'Emotional', genres:['Drama','History','War'], color:'#8b5cf6' },
+  action: { emoji:'💥', label:'Action', genres:['Action','Sci-Fi','Adventure'], color:'#f97316' },
+  mystery: { emoji:'🕵️', label:'Mystery', genres:['Mystery','Crime','Thriller'], color:'#64748b' },
+};
+
+function renderMoodSection() {
+  const el = document.getElementById('moodGrid');
+  if (!el) return;
+  el.innerHTML = Object.entries(MOOD_CONFIG).map(([key, m]) => `
+    <div class="mood-card" data-mood="${key}" onclick="browseMood('${key}')">
+      <span class="mood-emoji">${m.emoji}</span>
+      <span class="mood-label" style="color:${m.color}">${m.label}</span>
+    </div>`).join('');
+}
+
+function browseMood(mood) {
+  const config = MOOD_CONFIG[mood];
+  const all = DB.getMovies();
+  const results = all.filter(m => m.genre.some(g => config.genres.includes(g)))
+    .sort((a,b)=>b.rating-a.rating).slice(0,12);
+  
+  const resultsEl = document.getElementById('moodResults');
+  const labelEl = document.getElementById('moodResultLabel');
+  if (!resultsEl || !labelEl) return;
+  
+  labelEl.innerHTML = `${config.emoji} Feeling ${config.label}? Here are ${results.length} picks for you`;
+  renderRow('moodResultsRow', results);
+  resultsEl.classList.add('show');
+  resultsEl.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  
+  document.querySelectorAll('.mood-card').forEach(c=>c.style.opacity=c.dataset.mood===mood?'1':'.5');
+}
+
+function closeMoodResults() {
+  document.getElementById('moodResults')?.classList.remove('show');
+  document.querySelectorAll('.mood-card').forEach(c=>c.style.opacity='1');
+}
+
+// ── SHUFFLE / "I'M FEELING LUCKY" ─────────────────────────────
+function shufflePlay() {
+  const all = DB.getMovies();
+  const random = all[Math.floor(Math.random()*all.length)];
+  if (!random) return;
+  showToast(`🎲 Opening: ${random.title}`);
+  setTimeout(() => window.location.href = `watch.html?id=${random.id}`, 800);
+}
+
+function renderShuffleSection() {
+  const el = document.getElementById('shuffleSection');
+  if (!el) return;
+  const all = DB.getMovies();
+  const previews = [...all].sort(()=>Math.random()-0.5).slice(0,6);
+  el.innerHTML = `
+    <div class="shuffle-card">
+      <div>
+        <div class="shuffle-text">
+          <h3><i class="fas fa-shuffle" style="color:var(--red);"></i> Can't Decide? Let Us Choose!</h3>
+          <p>Hit shuffle and we'll pick something great from our 198+ title library.</p>
+        </div>
+        <div class="shuffle-preview">
+          ${previews.map(m=>`<img src="${m.poster}" class="shuffle-mini-poster" alt="${m.title}" onclick="openModal('${m.id}')" title="${m.title}" loading="lazy">`).join('')}
+        </div>
+      </div>
+      <button class="btn-shuffle" onclick="shufflePlay()">
+        <i class="fas fa-shuffle"></i> Surprise Me!
+      </button>
+    </div>`;
+}
+
+// ── PERSONALIZED RECOMMENDATIONS ─────────────────────────────
+function renderPersonalizedRow() {
+  const session = DB.getSession();
+  const el = document.getElementById('personalizedSection');
+  if (!el) return;
+  
+  if (!session) { el.style.display='none'; return; }
+  
+  const user = DB.getUserById(session.id);
+  const history = user?.watchHistory || [];
+  
+  if (history.length < 2) { el.style.display='none'; return; }
+  
+  const all = DB.getMovies();
+  const watchedIds = history.map(h=>h.movieId);
+  const watchedMovies = watchedIds.map(id=>all.find(m=>m.id===id)).filter(Boolean);
+  
+  // Find top genres from history
+  const genreCounts = {};
+  watchedMovies.forEach(m => m.genre.forEach(g => { genreCounts[g]=(genreCounts[g]||0)+1; }));
+  const topGenres = Object.entries(genreCounts).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]);
+  
+  // Find movies not yet watched, matching top genres
+  const recs = all
+    .filter(m => !watchedIds.includes(m.id) && m.genre.some(g=>topGenres.includes(g)))
+    .sort((a,b)=>b.rating-a.rating).slice(0,10);
+  
+  if (!recs.length) { el.style.display='none'; return; }
+  
+  const firstName = session.name.split(' ')[0];
+  document.getElementById('personalizedTitle').textContent = `Because You Watch ${topGenres[0]} · For ${firstName}`;
+  renderRow('personalizedRow', recs);
+  el.style.display='block';
+}
+
+// ── WATCH PARTY ───────────────────────────────────────────────
+function openWatchParty() {
+  const session = DB.getSession();
+  if (!session) { window.location.href='login.html'; return; }
+  
+  // Generate room code
+  const code = Math.random().toString(36).substr(2,6).toUpperCase();
+  const shareUrl = `${window.location.origin}${window.location.pathname}?party=${code}`;
+  
+  const modal = document.getElementById('watchPartyModal');
+  const codeEl = document.getElementById('partyCode');
+  const urlEl = document.getElementById('partyShareUrl');
+  if (modal && codeEl) {
+    codeEl.textContent = code;
+    if (urlEl) urlEl.textContent = shareUrl;
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeWatchParty() {
+  document.getElementById('watchPartyModal')?.classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function copyPartyCode() {
+  const code = document.getElementById('partyCode')?.textContent || '';
+  const shareUrl = document.getElementById('partyShareUrl')?.textContent || '';
+  navigator.clipboard?.writeText(`Join my NexTV Watch Party! Room: ${code}\n${shareUrl}`)
+    .then(()=>showToast('📋 Invite link copied! Share with friends'))
+    .catch(()=>showToast(`Room Code: ${code}`));
+}
+
+// ── USER REVIEWS ──────────────────────────────────────────────
+const SAMPLE_REVIEWS = [
+  { user:'Alex K.', color:'#e50914', movie:'Interstellar', movieId:'m1', stars:5, text:'Absolutely mind-blowing. The emotional weight combined with the sci-fi elements makes this the greatest film ever made.', date:'2d ago' },
+  { user:'Priya M.', color:'#8b5cf6', movie:'Attack on Titan', movieId:'a2', stars:5, text:'The finale genuinely left me speechless. No show has ever affected me this deeply. A masterpiece of anime storytelling.', date:'5d ago' },
+  { user:'Jake T.', color:'#00d4b4', movie:'The Dark Knight', movieId:'m2', stars:5, text:"Heath Ledger's Joker transcends acting. This movie defined an entire generation of superhero films.", date:'1w ago' },
+  { user:'Sofia R.', color:'#f97316', movie:'Parasite', movieId:'m4', stars:5, text:'Watching this in English then rewatching with subtitles completely changed my perspective. Bong is a genius.', date:'2w ago' },
+];
+
+function renderReviewsSection() {
+  const el = document.getElementById('reviewsList');
+  if (!el) return;
+  
+  const stored = JSON.parse(localStorage.getItem('nextv_reviews') || '[]');
+  const all = [...stored, ...SAMPLE_REVIEWS];
+  
+  el.innerHTML = all.slice(0,4).map(r => `
+    <div class="review-card fade-in-up">
+      <div class="review-movie-title"><i class="fas fa-film"></i> ${r.movie}</div>
+      <div class="review-header">
+        <div class="reviewer">
+          <div class="reviewer-avatar" style="background:${r.color}">${r.user[0]}</div>
+          <div>
+            <div class="reviewer-name">${r.user}</div>
+            <div class="reviewer-date">${r.date}</div>
+          </div>
+        </div>
+        <div class="review-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
+      </div>
+      <p class="review-text">${r.text}</p>
+    </div>`).join('');
+}
+
+function openWriteReview() {
+  const session = DB.getSession();
+  if (!session) { window.location.href='login.html'; return; }
+  const modal = document.getElementById('writeReviewModal');
+  if (modal) { modal.classList.add('show'); document.body.style.overflow='hidden'; }
+}
+
+function closeWriteReview() {
+  document.getElementById('writeReviewModal')?.classList.remove('show');
+  document.body.style.overflow='';
+}
+
+function submitReview() {
+  const session = DB.getSession();
+  if (!session) return;
+  const stars = document.querySelectorAll('.star-pick.lit').length;
+  const text = document.getElementById('reviewText')?.value?.trim();
+  const movieSel = document.getElementById('reviewMovieSelect');
+  const selectedOption = movieSel?.options[movieSel?.selectedIndex];
+  const movieTitle = selectedOption?.text;
+  const movieId = movieSel?.value;
+  
+  if (!stars) { showToast('Please select a star rating', 'error'); return; }
+  if (!text || text.length < 10) { showToast('Write at least 10 characters', 'error'); return; }
+  if (!movieId) { showToast('Please select a movie/show', 'error'); return; }
+  
+  const review = {
+    user: session.name.split(' ')[0] + ' ' + session.name.split(' ')[1]?.[0] + '.',
+    color: '#e50914', movie: movieTitle, movieId,
+    stars, text, date: 'Just now'
+  };
+  
+  const stored = JSON.parse(localStorage.getItem('nextv_reviews') || '[]');
+  stored.unshift(review);
+  localStorage.setItem('nextv_reviews', JSON.stringify(stored));
+  
+  closeWriteReview();
+  renderReviewsSection();
+  showToast('✓ Review posted! Thanks for sharing.');
+}
+
+let selectedStars = 0;
+function setupStarPicker() {
+  const stars = document.querySelectorAll('.star-pick');
+  stars.forEach((star, i) => {
+    star.addEventListener('click', () => {
+      selectedStars = i+1;
+      stars.forEach((s,j) => s.classList.toggle('lit', j<=i));
+    });
+    star.addEventListener('mouseenter', () => {
+      stars.forEach((s,j) => s.classList.toggle('lit', j<=i));
+    });
+    star.addEventListener('mouseleave', () => {
+      stars.forEach((s,j) => s.classList.toggle('lit', j<selectedStars));
+    });
+  });
+}
+
+function populateReviewMovieSelect() {
+  const sel = document.getElementById('reviewMovieSelect');
+  if (!sel) return;
+  const all = DB.getMovies();
+  const session = DB.getSession();
+  const user = session ? DB.getUserById(session.id) : null;
+  const history = user?.watchHistory || [];
+  
+  // Sort by history first, then all
+  const histIds = history.map(h=>h.movieId);
+  const histMovies = histIds.map(id=>all.find(m=>m.id===id)).filter(Boolean);
+  const otherMovies = all.filter(m=>!histIds.includes(m.id));
+  const sorted = [...histMovies, ...otherMovies];
+  
+  sel.innerHTML = '<option value="">-- Select a title you watched --</option>' +
+    sorted.map(m=>`<option value="${m.id}">${m.title} (${m.year})</option>`).join('');
+}
+
+// ── TOP 10 ROW ─────────────────────────────────────────────────
+function renderTop10Row(containerId, movies) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = movies.slice(0,10).map((m, i) => `
+    <div class="top10-card" onclick="openModal('${m.id}')">
+      <div class="top10-number">${i+1}</div>
+      <div class="top10-poster">
+        <img src="${m.poster}" alt="${m.title}" loading="lazy"
+          onerror="this.onerror=null;this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent('${m.title.substring(0,8)}')">
+        <div class="top10-overlay">
+          <button class="card-play" onclick="event.stopPropagation();window.location.href='watch.html?id=${m.id}'"><i class="fas fa-play"></i></button>
+        </div>
+      </div>
+      <div class="top10-info">
+        <div class="top10-title">${m.title}</div>
+        <div class="top10-year">${m.year}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── SEARCH AUTOCOMPLETE ───────────────────────────────────────
+function initSearchAutocomplete() {
+  const input = document.getElementById('searchInputLg') || document.getElementById('searchInput');
+  if (!input) return;
+  
+  const wrap = input.closest('.search-box-wrap');
+  if (!wrap) return;
+  
+  // Create autocomplete dropdown
+  const dropdown = document.createElement('div');
+  dropdown.className = 'search-autocomplete';
+  dropdown.id = 'searchAC';
+  wrap.style.position = 'relative';
+  wrap.appendChild(dropdown);
+  
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    if (q.length < 2) { dropdown.classList.remove('show'); return; }
+    
+    const all = DB.getMovies();
+    const matches = all.filter(m =>
+      m.title.toLowerCase().includes(q) ||
+      m.director?.toLowerCase().includes(q) ||
+      m.cast?.some(c=>c.toLowerCase().includes(q)) ||
+      m.genre?.some(g=>g.toLowerCase().includes(q))
+    ).slice(0,6);
+    
+    if (!matches.length) { dropdown.classList.remove('show'); return; }
+    
+    const catLabel = {movies:'MOVIE',series:'SERIES',anime:'ANIME',cartoons:'CARTOON'};
+    const catColor = {movies:'var(--red)',series:'#60a5fa',anime:'#c084fc',cartoons:'#4ade80'};
+    dropdown.innerHTML = matches.map(m=>`
+      <div class="ac-item" onclick="openModal('${m.id}');document.getElementById('searchAC').classList.remove('show');">
+        <img class="ac-poster" src="${m.poster}" alt="${m.title}" loading="lazy">
+        <div class="ac-info">
+          <strong>${m.title} <span class="ac-cat" style="background:${catColor[m.category]}22;color:${catColor[m.category]}">${catLabel[m.category]||'MOVIE'}</span></strong>
+          <span>${m.year} · ${m.genre[0]} · ⭐ ${m.rating}</span>
+        </div>
+      </div>`).join('');
+    dropdown.classList.add('show');
+  });
+  
+  input.addEventListener('blur', () => setTimeout(()=>dropdown.classList.remove('show'),200));
+  input.addEventListener('keydown', e => { if(e.key==='Escape') dropdown.classList.remove('show'); });
+}
+
+// ── KEYBOARD SHORTCUTS ─────────────────────────────────────────
+function initKeyboardShortcuts() {
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    
+    if (e.key === '/' || e.key === 's') {
+      e.preventDefault();
+      window.location.href = 'search.html';
+    }
+    if (e.key === 'h') window.location.href = 'index.html';
+    if (e.key === 'w') window.location.href = 'watchlist.html';
+    if (e.key === 'r') {
+      e.preventDefault();
+      shufflePlay();
+    }
+  });
+}
+
+// ── ADMIN PANEL ENHANCEMENTS ───────────────────────────────────
+function renderAdminPanel() {
+  const el = document.getElementById('adminPanelSection');
+  if (!el) return;
+  
+  const session = DB.getSession();
+  if (!session || session.role !== 'admin') { el.style.display='none'; return; }
+  
+  const all = DB.getMovies();
+  const users = DB.getUsers();
+  const featured = all.filter(m=>m.featured).length;
+  
+  el.innerHTML = `
+    <div class="admin-header" style="margin-bottom:1rem;">
+      <i class="fas fa-shield-alt"></i> Admin Dashboard — Welcome, ${session.name.split(' ')[0]}!
+    </div>
+    <div class="admin-panel-grid">
+      <div class="admin-card">
+        <div class="admin-card-title"><i class="fas fa-film"></i> Total Titles</div>
+        <div class="admin-card-value">${all.length}</div>
+        <div class="admin-card-sub">${featured} featured · ${all.filter(m=>m.category==='movies').length} movies · ${all.filter(m=>m.category==='series').length} series</div>
+      </div>
+      <div class="admin-card">
+        <div class="admin-card-title"><i class="fas fa-users"></i> Registered Users</div>
+        <div class="admin-card-value">${users.length}</div>
+        <div class="admin-card-sub">${users.filter(u=>u.role==='admin').length} admin · ${users.filter(u=>u.role==='user').length} members</div>
+      </div>
+      <div class="admin-card" style="grid-column:1/-1;">
+        <div class="admin-card-title"><i class="fas fa-list"></i> Manage Featured Titles</div>
+        <div class="admin-title-list" id="adminTitleList"></div>
+      </div>
+    </div>`;
+  
+  renderAdminTitleList();
+}
+
+function renderAdminTitleList() {
+  const el = document.getElementById('adminTitleList');
+  if (!el) return;
+  const all = DB.getMovies();
+  // Show featured + top rated non-featured (first 20 total)
+  const featured = all.filter(m=>m.featured);
+  const others = all.filter(m=>!m.featured).sort((a,b)=>b.rating-a.rating).slice(0,12);
+  const list = [...featured, ...others].slice(0,20);
+  
+  el.innerHTML = list.map(m=>`
+    <div class="admin-title-row">
+      <img src="${m.poster}" alt="${m.title}" loading="lazy">
+      <div class="title-info">
+        <strong>${m.title}</strong>
+        <span>${m.year} · ⭐ ${m.rating} · ${m.category}</span>
+      </div>
+      <button class="btn-feature-toggle ${m.featured?'featured':''}" onclick="toggleFeatured('${m.id}', this)">
+        ${m.featured?'★ Featured':'☆ Feature'}
+      </button>
+    </div>`).join('');
+}
+
+function toggleFeatured(id, btn) {
+  showToast(`Feature toggle is view-only in this demo (DB is static)`);
+  btn.classList.toggle('featured');
+  btn.textContent = btn.classList.contains('featured') ? '★ Featured' : '☆ Feature';
+}
+
+// ── TRUST SECTION ──────────────────────────────────────────────
+function renderTrustSection() {
+  const el = document.getElementById('trustSection');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="trust-item">
+      <i class="fas fa-ban"></i>
+      <div><h4>100% Ad-Free</h4><p>No ads, no popups, no interruptions. Ever.</p></div>
+    </div>
+    <div class="trust-item">
+      <i class="fas fa-lock"></i>
+      <div><h4>Privacy First</h4><p>We don't sell your data or track your behavior externally.</p></div>
+    </div>
+    <div class="trust-item">
+      <i class="fas fa-infinity"></i>
+      <div><h4>Completely Free</h4><p>198+ movies, series, anime & cartoons — zero cost.</p></div>
+    </div>
+    <div class="trust-item">
+      <i class="fas fa-server"></i>
+      <div><h4>5 Backup Servers</h4><p>If one server fails, we switch automatically.</p></div>
+    </div>`;
+}
+
+// ── ABOUT MODAL ────────────────────────────────────────────────
+function openAboutModal() {
+  const existing = document.getElementById('aboutModal');
+  if (existing) { existing.classList.add('show'); document.body.style.overflow='hidden'; return; }
+  
+  const modal = document.createElement('div');
+  modal.className = 'about-modal'; modal.id = 'aboutModal';
+  modal.innerHTML = `
+    <div class="about-box">
+      <h3>NEX<span>TV</span> — About Us</h3>
+      <p>NexTV is a completely free streaming platform built for real entertainment lovers. We believe great movies, series, anime, and cartoons should be accessible to everyone — no subscriptions, no credit cards, no ads.</p>
+      <div class="about-features">
+        <div class="about-feature"><i class="fas fa-film"></i><div><strong>198+ Titles</strong><span>Movies, series, anime & cartoons</span></div></div>
+        <div class="about-feature"><i class="fas fa-server"></i><div><strong>5 Streaming Servers</strong><span>Automatic failover for reliability</span></div></div>
+        <div class="about-feature"><i class="fas fa-ban"></i><div><strong>Zero Ads</strong><span>Completely ad-free experience</span></div></div>
+        <div class="about-feature"><i class="fas fa-globe"></i><div><strong>Global Content</strong><span>Hollywood, Korean, Japanese & British</span></div></div>
+        <div class="about-feature"><i class="fas fa-mobile-alt"></i><div><strong>Fully Responsive</strong><span>Works on any device</span></div></div>
+        <div class="about-feature"><i class="fas fa-lock"></i><div><strong>Privacy Focused</strong><span>Your data stays private</span></div></div>
+      </div>
+      <p>Built with passion for cinema by people who love great storytelling. Have feedback? We'd love to hear from you.</p>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem;">
+        <button class="btn-play" onclick="document.getElementById('aboutModal').classList.remove('show');document.body.style.overflow='';" style="flex:1;">
+          <i class="fas fa-play"></i> Start Watching
+        </button>
+        <button class="btn-more" onclick="document.getElementById('aboutModal').classList.remove('show');document.body.style.overflow='';" style="flex-shrink:0;">
+          Close
+        </button>
+      </div>
+    </div>`;
+  modal.addEventListener('click', e => { if(e.target===modal) { modal.classList.remove('show'); document.body.style.overflow=''; }});
+  document.body.appendChild(modal);
+  setTimeout(()=>modal.classList.add('show'),10);
+  document.body.style.overflow='hidden';
+}
+
+// ── MOBILE BOTTOM NAV ──────────────────────────────────────────
+function injectMobileNav() {
+  if (document.getElementById('mobileBottomNav')) return;
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  const navItems = [
+    { href:'index.html', icon:'fa-home', label:'Home' },
+    { href:'search.html', icon:'fa-search', label:'Search' },
+    { href:'movies.html', icon:'fa-film', label:'Movies' },
+    { href:'anime.html', icon:'fa-dragon', label:'Anime' },
+    { href:'watchlist.html', icon:'fa-bookmark', label:'My List' },
+  ];
+  const nav = document.createElement('nav');
+  nav.className = 'mobile-bottom-nav'; nav.id = 'mobileBottomNav';
+  nav.innerHTML = navItems.map(item=>`
+    <a href="${item.href}" class="mob-nav-item ${currentPage===item.href?'active':''}">
+      <i class="fas ${item.icon}"></i>
+      ${item.label}
+    </a>`).join('');
+  document.body.appendChild(nav);
+}
+
+// ── ENHANCED FOOTER ───────────────────────────────────────────
+function enhanceFooter() {
+  const footer = document.querySelector('.site-footer .footer-inner');
+  if (!footer || document.querySelector('.footer-about')) return;
+  
+  const aboutSection = document.createElement('div');
+  aboutSection.className = 'footer-about';
+  aboutSection.innerHTML = `
+    <div class="footer-col">
+      <h4>NEX<span style="color:var(--red);">TV</span></h4>
+      <p>Free streaming for everyone. 198+ titles across movies, series, anime, and cartoons.</p>
+      <div class="footer-social">
+        <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="#" title="Discord"><i class="fab fa-discord"></i></a>
+        <a href="#" title="Reddit"><i class="fab fa-reddit"></i></a>
+        <a href="#" title="YouTube"><i class="fab fa-youtube"></i></a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Browse</h4>
+      <a href="movies.html">Movies</a>
+      <a href="series.html">TV Shows</a>
+      <a href="anime.html">Anime</a>
+      <a href="cartoons.html">Cartoons</a>
+      <a href="watchlist.html">My Watchlist</a>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="#" onclick="openAboutModal();return false;">About NexTV</a>
+      <a href="#" onclick="return false;">Help Center</a>
+      <a href="#" onclick="return false;">Contact Us</a>
+      <a href="#" onclick="return false;">Report an Issue</a>
+      <a href="#" onclick="return false;">Suggest a Title</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="#" onclick="return false;">Privacy Policy</a>
+      <a href="#" onclick="return false;">Terms of Service</a>
+      <a href="#" onclick="return false;">Cookie Policy</a>
+      <a href="#" onclick="return false;">DMCA</a>
+    </div>`;
+  footer.insertBefore(aboutSection, footer.firstChild);
+}
+
+// ── INIT ALL NEW FEATURES ─────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderNotifBtn();
+  injectMobileNav();
+  initKeyboardShortcuts();
+  initSearchAutocomplete();
+  enhanceFooter();
+  
+  // Setup star picker if write review modal exists
+  setupStarPicker();
+  
+  // PWA banner inject
+  if (!document.getElementById('pwa-banner')) {
+    const banner = document.createElement('div');
+    banner.id = 'pwa-banner';
+    banner.innerHTML = `
+      <div class="pwa-icon">📱</div>
+      <div class="pwa-text">
+        <h4>Install NexTV App</h4>
+        <p>Add to your home screen for the best experience — works offline too!</p>
+      </div>
+      <div class="pwa-actions">
+        <button class="btn-install" onclick="installPWA()">Install</button>
+        <button class="btn-pwa-dismiss" onclick="dismissPWA()">Not now</button>
+      </div>`;
+    document.body.appendChild(banner);
+    
+    // Show banner after 5s if not dismissed and on mobile
+    if (!localStorage.getItem('nextv_pwa_dismissed') && window.innerWidth < 768) {
+      setTimeout(()=>banner.classList.add('show'), 5000);
+    }
+  }
+});
+

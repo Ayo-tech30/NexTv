@@ -33,10 +33,19 @@
   <h1 style="font-family:'Bebas Neue',sans-serif; font-size:2rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:.5rem;">
     <i class="fas fa-search" style="color:var(--red)"></i> Search
   </h1>
-  <div class="search-box-wrap" style="margin-bottom:2rem;">
+  <div class="search-box-wrap" style="margin-bottom:.75rem;" id="searchBoxWrap">
     <i class="fas fa-search search-icon-lg"></i>
-    <input type="text" class="search-input-lg" id="searchInput" placeholder="Search movies, shows, anime, cartoons..." oninput="doSearch()" autofocus>
+    <input type="text" class="search-input-lg" id="searchInput" placeholder="Search by title, actor, director, genre..." oninput="doSearch()" autofocus>
     <button class="search-clear" id="searchClear" onclick="clearSearch()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="search-filters-row" id="searchFilters">
+    <button class="filter-pill active" data-cat="all" onclick="setSearchCat(this,'all')">All</button>
+    <button class="filter-pill" data-cat="movies" onclick="setSearchCat(this,'movies')">🎬 Movies</button>
+    <button class="filter-pill" data-cat="series" onclick="setSearchCat(this,'series')">📺 Series</button>
+    <button class="filter-pill" data-cat="anime" onclick="setSearchCat(this,'anime')">🐉 Anime</button>
+    <button class="filter-pill" data-cat="cartoons" onclick="setSearchCat(this,'cartoons')">⭐ Cartoons</button>
+    <button class="filter-pill" data-cat="top" onclick="setSearchCat(this,'top')">⭐ 8.5+ Rated</button>
+    <button class="filter-pill" data-cat="recent" onclick="setSearchCat(this,'recent')">🆕 2022+</button>
   </div>
 
   <!-- IDLE SECTION — shown when idle -->
@@ -84,26 +93,43 @@
 <script src="db.js"></script>
 <script src="app.js"></script>
 <script>
-  DB.init(); renderNav();
+  DB.init(); renderNav(); injectMobileNav();
 
   const inp = document.getElementById('searchInput');
   const clr = document.getElementById('searchClear');
   const resultsEl = document.getElementById('searchResults');
   const idleEl    = document.getElementById('idleSection');
+  let currentCat = 'all';
 
   // Populate idle section
   const all = DB.getMovies();
-  // Trailers section on search page
   const trailerIds = ['m1','m2','m3','m13','m6','m11'];
   const trailerMovies = trailerIds.map(id=>all.find(m=>m.id===id)).filter(Boolean);
   renderTrailersRow('searchTrailersRow', trailerMovies);
   renderRow('trendingRow', [...all].sort((a,b) => b.rating - a.rating).slice(0, 12));
 
+  // Autocomplete
+  initSearchAutocomplete();
+
+  function setSearchCat(btn, cat) {
+    document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    currentCat = cat;
+    doSearch();
+  }
+
+  function filterByCat(movies, cat) {
+    if (cat === 'all') return movies;
+    if (cat === 'top') return movies.filter(m=>m.rating>=8.5);
+    if (cat === 'recent') return movies.filter(m=>m.year>=2022);
+    return movies.filter(m=>m.category===cat);
+  }
+
   function doSearch() {
     const q = inp.value.trim().toLowerCase();
     clr.style.display = q ? 'block' : 'none';
 
-    if (!q) {
+    if (!q && currentCat === 'all') {
       idleEl.style.display = 'block';
       resultsEl.style.display = 'none';
       return;
@@ -112,18 +138,20 @@
     idleEl.style.display = 'none';
     resultsEl.style.display = 'block';
 
-    const found = all.filter(m =>
+    let found = all.filter(m =>
+      !q ||
       m.title.toLowerCase().includes(q) ||
       m.genre.some(g => g.toLowerCase().includes(q)) ||
       m.description.toLowerCase().includes(q) ||
       (m.director && m.director.toLowerCase().includes(q)) ||
       m.cast.some(c => c.toLowerCase().includes(q))
     );
+    found = filterByCat(found, currentCat);
 
     if (!found.length) {
-      resultsEl.innerHTML = `<div class="empty-state"><i class="fas fa-film"></i><p>No results for "<strong>${q}</strong>"</p></div>`;
+      resultsEl.innerHTML = `<div class="empty-state"><i class="fas fa-film"></i><p>No results${q?' for "<strong>'+q+'</strong>"':''}</p></div>`;
     } else {
-      resultsEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem;">${found.length} result${found.length!==1?'s':''} for "<strong>${q}</strong>"</p><div class="grid-full" id="searchGrid"></div>`;
+      resultsEl.innerHTML = `<p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem;">${found.length} result${found.length!==1?'s':''} ${q?'for "<strong>'+q+'</strong>"':''}</p><div class="grid-full" id="searchGrid"></div>`;
       renderGrid('searchGrid', found);
     }
   }
