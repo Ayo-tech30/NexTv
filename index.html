@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
-<title>Nex TV – Stream Free Movies & Shows</title>
+<title>Nex TV - Stream Free Movies and Shows</title>
 <link rel="icon" type="image/jpeg" href="logo.jpg">
 <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
 <link rel="dns-prefetch" href="https://image.tmdb.org">
@@ -11,30 +11,124 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="style.css">
+<style>
+/* LANDING */
+.guest-landing{min-height:100vh;background:#000;color:#fff;font-family:Outfit,sans-serif;}
+.landing-nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 4%;background:linear-gradient(to bottom,rgba(0,0,0,.85),transparent);transition:background .3s;}
+.landing-nav.scrolled{background:rgba(0,0,0,.96);}
+.landing-logo{font-family:"Bebas Neue",sans-serif;font-size:2rem;letter-spacing:.04em;color:#fff;text-decoration:none;}
+.landing-logo span{color:#e50914;}
+.btn-land-signin{background:#e50914;color:#fff;border:none;padding:.5rem 1.4rem;border-radius:4px;font-family:Outfit,sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;text-decoration:none;transition:background .2s;display:inline-flex;align-items:center;gap:.4rem;}
+.btn-land-signin:hover{background:#b81213;}
+.landing-hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden;}
+.landing-hero-bg{position:absolute;inset:0;background:url("https://image.tmdb.org/t/p/original/xJHokMbljvjADYdit5fK5VQsXEG.jpg") center/cover no-repeat;filter:brightness(.42);}
+.landing-hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.92) 35%,transparent 100%),linear-gradient(to top,rgba(0,0,0,.9) 0%,transparent 45%);}
+.landing-hero-content{position:relative;z-index:2;max-width:640px;padding:0 4%;padding-top:110px;}
+.landing-hero-content h1{font-family:"Bebas Neue",sans-serif;font-size:clamp(3rem,8vw,5.5rem);line-height:.95;letter-spacing:.02em;margin-bottom:1.1rem;}
+.landing-hero-content h1 span{color:#e50914;}
+.landing-hero-content p{font-size:clamp(1rem,2.5vw,1.25rem);color:rgba(255,255,255,.8);line-height:1.6;margin-bottom:2rem;font-weight:300;max-width:520px;}
+.landing-cta-group{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1.5rem;}
+.btn-land-start{background:#e50914;color:#fff;border:none;padding:.9rem 2.4rem;border-radius:5px;font-family:Outfit,sans-serif;font-size:1.05rem;font-weight:700;cursor:pointer;text-decoration:none;transition:.2s;display:inline-flex;align-items:center;gap:.5rem;}
+.btn-land-start:hover{background:#b81213;transform:translateY(-2px);}
+.btn-land-browse{background:rgba(255,255,255,.14);color:#fff;border:1.5px solid rgba(255,255,255,.45);padding:.9rem 2rem;border-radius:5px;font-family:Outfit,sans-serif;font-size:1.05rem;font-weight:600;cursor:pointer;text-decoration:none;transition:.2s;display:inline-flex;align-items:center;gap:.5rem;backdrop-filter:blur(8px);}
+.btn-land-browse:hover{background:rgba(255,255,255,.25);}
+.landing-badges{display:flex;flex-wrap:wrap;gap:.6rem;}
+.land-badge{display:flex;align-items:center;gap:.35rem;font-size:.8rem;color:rgba(255,255,255,.65);background:rgba(255,255,255,.07);padding:.28rem .7rem;border-radius:20px;border:1px solid rgba(255,255,255,.1);}
+.land-badge i{color:#e50914;font-size:.75rem;}
+.landing-preview-section{position:relative;padding:3rem 4%;background:#141414;overflow:hidden;}
+.landing-preview-label{position:relative;z-index:20;text-align:center;margin-bottom:1.5rem;}
+.landing-preview-label h2{font-size:clamp(1.3rem,3vw,1.8rem);font-weight:700;margin-bottom:.4rem;}
+.landing-preview-label p{color:rgba(255,255,255,.55);font-size:.95rem;}
+.preview-scroll-row{display:flex;gap:.65rem;overflow:hidden;position:relative;z-index:15;padding-bottom:.5rem;filter:blur(4px) brightness(.6);pointer-events:none;user-select:none;}
+.preview-poster{flex-shrink:0;width:130px;height:195px;border-radius:8px;overflow:hidden;background:#222;}
+.preview-poster img{width:100%;height:100%;object-fit:cover;}
+.preview-lock-overlay{position:absolute;bottom:0;left:0;right:0;top:60px;z-index:25;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;background:linear-gradient(to top,rgba(20,20,20,1) 0%,rgba(20,20,20,.7) 60%,transparent 100%);}
+.preview-lock-overlay .lock-icon{font-size:2.4rem;color:rgba(255,255,255,.55);}
+.preview-lock-overlay p{font-size:1rem;color:rgba(255,255,255,.7);font-weight:500;text-align:center;max-width:280px;line-height:1.45;}
+.preview-lock-overlay a{background:#e50914;color:#fff;text-decoration:none;padding:.65rem 1.8rem;border-radius:4px;font-weight:700;font-size:.95rem;transition:background .2s;}
+.preview-lock-overlay a:hover{background:#b81213;}
+.landing-features{padding:4rem 4%;background:#000;border-top:8px solid #222;}
+.landing-features h2{text-align:center;font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:700;margin-bottom:2.5rem;}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;max-width:1100px;margin:0 auto;}
+.feature-card{background:linear-gradient(135deg,#141414,#1a1a2e);border:1px solid #2a2a3e;border-radius:12px;padding:2rem;transition:transform .2s,border-color .2s;}
+.feature-card:hover{transform:translateY(-4px);border-color:#e50914;}
+.feature-icon{font-size:2.2rem;margin-bottom:.9rem;color:#e50914;}
+.feature-card h3{font-size:1.25rem;font-weight:700;margin-bottom:.5rem;}
+.feature-card p{color:rgba(255,255,255,.6);line-height:1.6;font-size:.93rem;}
+.landing-final-cta{padding:5rem 4%;text-align:center;background:#000;border-top:8px solid #222;}
+.landing-final-cta h2{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;margin-bottom:.75rem;}
+.landing-final-cta p{color:rgba(255,255,255,.6);font-size:1rem;margin-bottom:2rem;}
+.landing-footer{background:#141414;border-top:1px solid #2a2a2a;padding:2.5rem 4%;text-align:center;}
+.landing-footer .footer-logo{font-family:"Bebas Neue",sans-serif;font-size:1.8rem;letter-spacing:.04em;margin-bottom:.75rem;}
+.landing-footer .footer-logo span{color:#e50914;}
+.landing-footer p{color:rgba(255,255,255,.4);font-size:.83rem;}
+.landing-footer-links{display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;margin:.75rem 0;}
+.landing-footer-links a{color:rgba(255,255,255,.45);font-size:.82rem;text-decoration:none;}
+.landing-footer-links a:hover{color:#fff;}
+@media(max-width:600px){.landing-hero-content{padding-top:120px;}.preview-poster{width:100px;height:150px;}.features-grid{grid-template-columns:1fr;}}
+</style>
 </head>
 <body>
-
-<!-- NAV -->
-<nav id="navbar">
-  <div class="nav-left">
-    <button class="hamburger" id="menuToggle"><i class="fas fa-bars"></i></button>
-    <a href="index.html" class="logo">NEX<span>TV</span></a>
-    <ul class="nav-links" id="navLinks">
-      <li><a href="index.html" class="active">Home</a></li>
-      <li><a href="movies.html">Movies</a></li>
-      <li><a href="series.html">TV Shows</a></li>
-      <li><a href="anime.html">Anime</a></li>
-      <li><a href="cartoons.html">Cartoons</a></li>
-      <li><a href="watchlist.html">My List</a></li>
-      <li><a href="history.html">History</a></li>
-      <li><a href="downloads.html">Downloads</a></li>
-      <li><a href="filter.html">Filter</a></li>
-      <li><a href="faq.html">FAQ</a></li>
-    </ul>
+<div id="guestLanding" class="guest-landing" style="display:none;">
+<nav class="landing-nav" id="landingNav">
+  <a href="index.html" class="landing-logo">NEX<span>TV</span></a>
+  <a href="login.html" class="btn-land-signin"><i class="fas fa-sign-in-alt"></i> Sign In</a>
+</nav>
+<section class="landing-hero">
+  <div class="landing-hero-bg"></div>
+  <div class="landing-hero-content">
+    <h1>Movies, Shows &amp;<br><span>Anime.</span> All Free.</h1>
+    <p>Stream 229+ titles across movies, TV series, anime and cartoons. Completely free, zero ads, forever. Sign in to unlock everything.</p>
+    <div class="landing-cta-group">
+      <a href="register.html" class="btn-land-start"><i class="fas fa-play"></i> Get Started Free</a>
+      <a href="login.html" class="btn-land-browse"><i class="fas fa-sign-in-alt"></i> Sign In</a>
+    </div>
+    <div class="landing-badges">
+      <span class="land-badge"><i class="fas fa-ban"></i> Zero Ads</span>
+      <span class="land-badge"><i class="fas fa-infinity"></i> Always Free</span>
+      <span class="land-badge"><i class="fas fa-film"></i> 229+ Titles</span>
+      <span class="land-badge"><i class="fas fa-server"></i> 5 Servers</span>
+      <span class="land-badge"><i class="fas fa-mobile-alt"></i> All Devices</span>
+    </div>
   </div>
-  <div class="nav-right">
-    <a href="search.html" class="nav-icon" title="Search"><i class="fas fa-search"></i></a>
-    <div id="authArea"></div>
+</section>
+<section class="landing-preview-section">
+  <div class="landing-preview-label">
+    <h2>Your Next Favourite Is Waiting</h2>
+    <p>Sign in to browse and watch everything</p>
+  </div>
+  <div class="preview-scroll-row" id="previewRow"></div>
+  <div class="preview-lock-overlay">
+    <i class="fas fa-lock lock-icon"></i>
+    <p>Create a free account to access all 229+ movies, series, anime and cartoons</p>
+    <a href="register.html">Start Watching Free</a>
+  </div>
+</section>
+<section class="landing-features">
+  <h2>Why NexTV?</h2>
+  <div class="features-grid">
+    <div class="feature-card"><div class="feature-icon"><i class="fas fa-ban"></i></div><h3>100% Ad-Free</h3><p>No interruptions, no popups, no forced ads. Pure content from start to finish.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fas fa-server"></i></div><h3>5 Backup Servers</h3><p>If one stream fails, we automatically switch to a backup. Your show never stops.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fas fa-infinity"></i></div><h3>Always Free</h3><p>No credit card. No subscription. No hidden fees. 229+ titles — forever free.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fas fa-mobile-alt"></i></div><h3>Any Device</h3><p>Works perfectly on phone, tablet, laptop or desktop. Stream anywhere, anytime.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fas fa-dragon"></i></div><h3>Anime &amp; More</h3><p>Hollywood blockbusters, Korean dramas, anime classics, cartoons — all in one place.</p></div>
+    <div class="feature-card"><div class="feature-icon"><i class="fas fa-lock"></i></div><h3>Privacy First</h3><p>We don&apos;t sell your data. Your watch history stays private and secure.</p></div>
+  </div>
+</section>
+<section class="landing-final-cta">
+  <h2>Ready to Watch?</h2>
+  <p>Join thousands of viewers streaming for free. No subscription ever needed.</p>
+  <a href="register.html" class="btn-land-start" style="font-size:1.1rem;padding:1rem 3rem;"><i class="fas fa-play"></i> Create Free Account</a>
+</section>
+<footer class="landing-footer">
+  <div class="footer-logo">NEX<span>TV</span></div>
+  <div class="landing-footer-links">
+    <a href="faq.html">FAQ</a><a href="login.html">Sign In</a><a href="register.html">Register</a><a href="#">Privacy</a><a href="#">Terms</a>
+  </div>
+  <p>&copy; 2025 Nex TV. Free streaming for everyone.</p>
+</footer>
+</div>
+<div id="appHome" style="display:none;">    <div id="authArea"></div>
   </div>
 </nav>
 
