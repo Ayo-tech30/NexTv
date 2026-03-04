@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact – NexTV</title>
+<link rel="icon" type="image/jpeg" href="logo.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.contact-hero { margin-top:var(--nav-h); background:linear-gradient(135deg,#0a0a0a,#1a0505); padding:3rem 2rem 2rem; border-bottom:1px solid var(--border); }
+.contact-hero h1 { font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:.04em; display:flex; align-items:center; gap:.6rem; }
+.contact-hero h1 i { color:#e50914; }
+.contact-hero p { color:var(--muted); font-size:.9rem; margin-top:.4rem; }
+.contact-content { max-width:700px; margin:0 auto; padding:3rem 2rem 6rem; }
+.contact-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; margin-bottom:3rem; }
+.contact-card { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:1.5rem; text-align:center; text-decoration:none; color:var(--text); transition:.2s; }
+.contact-card:hover { border-color:rgba(229,9,20,.4); background:rgba(229,9,20,.05); transform:translateY(-3px); }
+.contact-card i { font-size:2rem; color:#e50914; margin-bottom:.75rem; display:block; }
+.contact-card h3 { font-size:.95rem; font-weight:700; margin-bottom:.3rem; }
+.contact-card p { font-size:.8rem; color:var(--muted); }
+.contact-form-wrap { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:2rem; }
+.contact-form-wrap h2 { font-size:1.2rem; font-weight:700; margin-bottom:1.25rem; }
+.cf-group { margin-bottom:1rem; }
+.cf-label { display:block; font-size:.8rem; color:var(--muted); font-weight:500; margin-bottom:.4rem; }
+.cf-input { width:100%; background:var(--bg3); border:1.5px solid var(--border); color:var(--text); padding:.65rem .9rem; border-radius:8px; font-size:.9rem; font-family:'Outfit',sans-serif; outline:none; transition:.2s; box-sizing:border-box; }
+.cf-input:focus { border-color:#e50914; box-shadow:0 0 0 3px rgba(229,9,20,.12); }
+textarea.cf-input { resize:vertical; min-height:120px; }
+.cf-select { appearance:none; }
+.cf-btn { width:100%; background:#e50914; color:#fff; border:none; padding:.8rem; border-radius:8px; font-size:.95rem; font-weight:600; font-family:'Outfit',sans-serif; cursor:pointer; transition:.2s; margin-top:.5rem; }
+.cf-btn:hover { background:#c8060f; transform:translateY(-1px); }
+.cf-success { display:none; text-align:center; padding:2rem; }
+.cf-success i { font-size:3rem; color:#16a34a; display:block; margin-bottom:1rem; }
+.cf-success h3 { font-size:1.1rem; margin-bottom:.5rem; }
+.cf-success p { color:var(--muted); font-size:.88rem; }
+@media(max-width:600px){ .contact-hero { padding:2rem 1rem 1.5rem; } .contact-content { padding:2rem 1rem 5rem; } }
+</style>
+</head>
+<body class="player-body">
+<nav id="navbar" class="nav-player">
+  <div class="nav-left">
+    <a href="javascript:history.back()" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+    <a href="index.html" class="logo">NEX<span>TV</span></a>
+  </div>
+  <div class="nav-right"><div id="authArea"></div></div>
+</nav>
+
+<div class="contact-hero">
+  <h1><i class="fas fa-envelope"></i> Contact Us</h1>
+  <p>We're here to help. Reach out anytime.</p>
+</div>
+
+<div class="contact-content">
+  <div class="contact-cards">
+    <a href="faq.html" class="contact-card">
+      <i class="fas fa-question-circle"></i>
+      <h3>FAQ</h3>
+      <p>Quick answers to common questions</p>
+    </a>
+    <a href="mailto:support@nextv.app" class="contact-card">
+      <i class="fas fa-envelope"></i>
+      <h3>Email</h3>
+      <p>support@nextv.app</p>
+    </a>
+    <a href="#report" class="contact-card" onclick="document.getElementById('subjectSelect').value='content-issue';return false;">
+      <i class="fas fa-flag"></i>
+      <h3>Report Content</h3>
+      <p>DMCA or broken stream</p>
+    </a>
+  </div>
+
+  <div class="contact-form-wrap">
+    <h2><i class="fas fa-paper-plane" style="color:#e50914;margin-right:.5rem;"></i> Send a Message</h2>
+    <div id="contactFormArea">
+      <div class="cf-group">
+        <label class="cf-label">Your Name</label>
+        <input class="cf-input" id="cfName" type="text" placeholder="Enter your name">
+      </div>
+      <div class="cf-group">
+        <label class="cf-label">Email Address</label>
+        <input class="cf-input" id="cfEmail" type="email" placeholder="your@email.com">
+      </div>
+      <div class="cf-group">
+        <label class="cf-label">Subject</label>
+        <select class="cf-input cf-select" id="subjectSelect">
+          <option value="">Choose a topic...</option>
+          <option value="stream-issue">Stream not working</option>
+          <option value="content-issue">Content / DMCA issue</option>
+          <option value="account">Account help</option>
+          <option value="suggestion">Suggestion / Feature request</option>
+          <option value="bug">Bug report</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="cf-group">
+        <label class="cf-label">Message</label>
+        <textarea class="cf-input" id="cfMessage" placeholder="Describe your issue or question in detail..."></textarea>
+      </div>
+      <button class="cf-btn" onclick="submitContact()"><i class="fas fa-paper-plane"></i> Send Message</button>
+    </div>
+    <div class="cf-success" id="cfSuccess">
+      <i class="fas fa-check-circle"></i>
+      <h3>Message Sent!</h3>
+      <p>Thanks for reaching out. We'll get back to you within 24–48 hours.</p>
+    </div>
+  </div>
+</div>
+
+<script src="db.js"></script>
+<script src="app.js"></script>
+<script>
+DB.init(); renderNav();
+
+function submitContact() {
+  const name = document.getElementById('cfName').value.trim();
+  const email = document.getElementById('cfEmail').value.trim();
+  const subject = document.getElementById('subjectSelect').value;
+  const message = document.getElementById('cfMessage').value.trim();
+
+  if (!name || !email || !subject || !message) {
+    showToast('Please fill in all fields', 'error');
+    return;
+  }
+  if (!email.includes('@')) {
+    showToast('Please enter a valid email', 'error');
+    return;
+  }
+
+  // Simulate send (in a real app this would POST to a backend)
+  document.getElementById('contactFormArea').style.display = 'none';
+  document.getElementById('cfSuccess').style.display = 'block';
+}
+</script>
+</body>
+</html>

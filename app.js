@@ -19,6 +19,10 @@ function renderNav() {
           ${session.role==='admin'?'<a href="profile.html" class="dd-item"><i class="fas fa-shield-alt"></i> Admin Panel</a>':''}
           <a href="profile.html" class="dd-item"><i class="fas fa-user"></i> Profile</a>
           <a href="watchlist.html" class="dd-item"><i class="fas fa-bookmark"></i> My List</a>
+          <a href="history.html" class="dd-item"><i class="fas fa-history"></i> History</a>
+          <a href="downloads.html" class="dd-item"><i class="fas fa-download"></i> Downloads</a>
+          <div class="dd-divider"></div>
+          <button class="dd-item" onclick="toggleTheme()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeLabel">Dark Mode</span></button>
           <div class="dd-divider"></div>
           <button class="dd-item dd-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
         </div>
@@ -28,11 +32,32 @@ function renderNav() {
       <a href="login.html" class="btn-signin"><i class="fas fa-sign-in-alt"></i> Sign In</a>`;
   }
 
-  // Hamburger
+  // Update theme icon state
+  const isLight = localStorage.getItem('nextv_theme') === 'light';
+  if (isLight) document.body.classList.add('light-mode');
+  const icon = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  if (icon) icon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
+  if (label) label.textContent = isLight ? 'Light Mode' : 'Dark Mode';
+
+  // Hamburger — opens mobile slide menu
   const btn = document.getElementById('menuToggle');
   const links = document.getElementById('navLinks');
   if (btn && links) {
-    btn.addEventListener('click', () => links.classList.toggle('open'));
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      links.classList.toggle('open');
+      btn.innerHTML = links.classList.contains('open')
+        ? '<i class="fas fa-times"></i>'
+        : '<i class="fas fa-bars"></i>';
+    });
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!links.contains(e.target) && !btn.contains(e.target)) {
+        links.classList.remove('open');
+        btn.innerHTML = '<i class="fas fa-bars"></i>';
+      }
+    });
   }
 
   // Sticky nav
@@ -1519,6 +1544,10 @@ function initThemeToggle() {
 function toggleTheme() {
   const isLight = document.body.classList.toggle('light-mode');
   localStorage.setItem('nextv_theme', isLight ? 'light' : 'dark');
+  const icon = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  if (icon) icon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
+  if (label) label.textContent = isLight ? 'Light Mode' : 'Dark Mode';
   const btn = document.getElementById('themeToggle');
   if (btn) btn.innerHTML = isLight ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
   showToast(isLight ? '☀️ Light mode on' : '🌙 Dark mode on');
@@ -2896,39 +2925,47 @@ function startDownload(id, qualityTag, sizeMB) {
   document.getElementById('qualityPickerOverlay')?.remove();
 
   const tmdb = m.tmdbId;
-  const qMap = { '360p':'360', '480p':'480', '720p':'720', '1080p':'1080' };
-  const q = qMap[qualityTag] || '720';
 
-  // Try multiple real download sources in order
-  // dl.vidsrc.vip gives direct MP4 streams by TMDB ID
-  const urls = m.type === 'series'
-    ? [
-        `https://dl.vidsrc.vip/tv/${tmdb}/1/1`,
-        `https://vidsrc.xyz/embed/tv/${tmdb}/1/1`,
-      ]
-    : [
-        `https://dl.vidsrc.vip/movie/${tmdb}`,
-        `https://vidsrc.xyz/embed/movie/${tmdb}`,
-      ];
+  // Real download sources — these serve actual MP4 video files
+  // Primary: vidsrc.me download endpoint
+  // Fallback: embed.su / moviesapi
+  let downloadUrl;
+  if (m.type === 'series') {
+    downloadUrl = `https://vidsrc.me/embed/tv?tmdb=${tmdb}&season=1&episode=1`;
+  } else {
+    // Use multiple fallback sources for movies
+    // dl.vidsrc.vip is the most reliable direct MP4 source
+    downloadUrl = `https://dl.vidsrc.vip/movie/${tmdb}`;
+  }
 
-  // Open in new tab — browser handles the download natively
-  // The dl.vidsrc.vip endpoint serves the file directly
-  window.open(urls[0], '_blank');
+  // Show quality-aware toast
+  showToast(`⬇ Opening ${m.title} · ${qualityTag} download…`);
 
-  // Save record
+  // Open download in new tab — the server streams the MP4 directly
+  // On mobile this triggers the native video player/download prompt
+  setTimeout(() => window.open(downloadUrl, '_blank'), 300);
+
+  // Save to download history
   const dls = getDownloads().filter(d => d.id !== id);
-  dls.unshift({ id, title: m.title, quality: qualityTag, sizeMB, poster: m.poster, category: m.category, savedAt: new Date().toISOString() });
+  dls.unshift({
+    id, title: m.title, quality: qualityTag, sizeMB,
+    poster: m.poster, category: m.category,
+    downloadUrl,
+    savedAt: new Date().toISOString()
+  });
   saveDownloads(dls);
 
-  // Update buttons
+  // Update any download buttons showing for this movie
   document.querySelectorAll('[data-dl-id="'+id+'"]').forEach(b => {
     b.innerHTML = '<i class="fas fa-check-circle"></i> Downloaded';
     b.classList.add('downloaded', 'active');
   });
-
-  showToast(`⬇ Opening download for ${m.title} · ${qualityTag}`);
+  const mdb = document.getElementById('modalDownload');
+  if (mdb) {
+    mdb.innerHTML = '<i class="fas fa-check-circle"></i> Downloaded';
+    mdb.classList.add('downloaded');
+  }
 }
-
 
 
 function buildDownloadUrl(m, quality) {

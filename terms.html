@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Use – NexTV</title>
+<link rel="icon" type="image/jpeg" href="logo.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.legal-hero { margin-top:var(--nav-h); background:linear-gradient(135deg,#0a0a0a,#1a0505); padding:3rem 2rem 2rem; border-bottom:1px solid var(--border); }
+.legal-hero h1 { font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:.04em; display:flex; align-items:center; gap:.6rem; }
+.legal-hero h1 i { color:#e50914; }
+.legal-hero p { color:var(--muted); font-size:.875rem; margin-top:.4rem; }
+.legal-content { max-width:800px; margin:0 auto; padding:3rem 2rem 6rem; }
+.legal-section { margin-bottom:2.5rem; }
+.legal-section h2 { font-size:1.15rem; font-weight:700; color:#fff; margin-bottom:.75rem; padding-bottom:.4rem; border-bottom:1px solid var(--border); }
+.legal-section p, .legal-section li { font-size:.9rem; color:rgba(255,255,255,.65); line-height:1.8; margin-bottom:.6rem; }
+.legal-section ul { padding-left:1.25rem; }
+.legal-section li { margin-bottom:.4rem; }
+.legal-badge { display:inline-block; background:rgba(229,9,20,.12); border:1px solid rgba(229,9,20,.3); color:#e50914; font-size:.72rem; font-weight:700; padding:.2rem .6rem; border-radius:5px; margin-bottom:1.5rem; letter-spacing:.5px; }
+@media(max-width:600px){ .legal-hero { padding:2rem 1rem 1.5rem; } .legal-content { padding:2rem 1rem 5rem; } }
+</style>
+</head>
+<body class="player-body">
+<nav id="navbar" class="nav-player">
+  <div class="nav-left">
+    <a href="javascript:history.back()" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+    <a href="index.html" class="logo">NEX<span>TV</span></a>
+  </div>
+  <div class="nav-right"><div id="authArea"></div></div>
+</nav>
+
+<div class="legal-hero">
+  <h1><i class="fas fa-file-contract"></i> Terms of Use</h1>
+  <p>Last updated: January 2025</p>
+</div>
+
+<div class="legal-content">
+  <span class="legal-badge">PLEASE READ CAREFULLY</span>
+
+  <div class="legal-section">
+    <h2>1. Acceptance of Terms</h2>
+    <p>By accessing or using NexTV, you agree to be bound by these Terms of Use. If you do not agree, please do not use the service.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>2. Nature of the Service</h2>
+    <p>NexTV is a free streaming aggregator that embeds publicly accessible video content from third-party providers. We do not host, upload, or distribute any video content ourselves. All streams are sourced from external providers.</p>
+    <p>NexTV is intended for personal, non-commercial use only.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>3. User Accounts</h2>
+    <p>When you create an account, you agree to:</p>
+    <ul>
+      <li>Provide accurate information</li>
+      <li>Keep your credentials secure</li>
+      <li>Not share your account with others</li>
+      <li>Not create accounts for automated use or bots</li>
+    </ul>
+    <p>Account data is stored locally in your browser. We have no access to your password or personal information.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>4. Prohibited Uses</h2>
+    <p>You may not use NexTV to:</p>
+    <ul>
+      <li>Violate any applicable law or regulation</li>
+      <li>Attempt to reverse-engineer or scrape the platform</li>
+      <li>Interfere with or disrupt the service</li>
+      <li>Use automated tools to access content at scale</li>
+      <li>Redistribute or commercially exploit any content</li>
+    </ul>
+  </div>
+
+  <div class="legal-section">
+    <h2>5. Content & Copyright</h2>
+    <p>All movies, shows, and media displayed on NexTV are the property of their respective copyright holders. NexTV does not claim ownership of any content. If you are a rights holder and believe content is being displayed improperly, please <a href="contact.html" style="color:#e50914;">contact us</a> and we will address your concern promptly.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>6. Disclaimer of Warranties</h2>
+    <p>NexTV is provided "as is" without any warranties. We do not guarantee that streams will always be available, uninterrupted, or error-free. Video quality and availability depends on third-party providers.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>7. Limitation of Liability</h2>
+    <p>NexTV and its operators shall not be liable for any direct, indirect, incidental, or consequential damages arising from your use of the service, including issues with third-party content providers.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>8. Changes to Terms</h2>
+    <p>We reserve the right to modify these terms at any time. Continued use after changes constitutes acceptance of the new terms.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>9. Contact</h2>
+    <p>Questions about these terms? <a href="contact.html" style="color:#e50914;">Contact us here.</a></p>
+  </div>
+</div>
+
+<script src="db.js"></script>
+<script src="app.js"></script>
+<script>DB.init(); renderNav();</script>
+</body>
+</html>
