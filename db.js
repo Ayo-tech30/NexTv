@@ -2315,8 +2315,9 @@ const MOVIES = [
     try {
       var link = document.createElement('link');
       link.rel = 'preload'; link.as = 'image'; link.href = url;
+      link.referrerPolicy = 'no-referrer';
       head.appendChild(link);
     } catch(e) {}
-    var img = new Image(); img.src = url;
+    var img = new Image(); img.referrerPolicy = 'no-referrer'; img.src = url;
   });
 })();

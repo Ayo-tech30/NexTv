@@ -82,9 +82,9 @@ function makeCard(movie) {
   const inWL = session && DB.getUserById(session.id)?.watchlist?.includes(movie.id);
   return `<div class="movie-card" data-id="${movie.id}">
     <div class="card-poster">
-      <img src="${movie.poster}" alt="${movie.title}"
+      <img src="${movie.poster}" alt="${movie.title}" referrerpolicy="no-referrer" crossorigin="anonymous"
            onload="this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')"
-           onerror="this.onerror=null;this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(movie.title.substring(0,12));this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')">
+           onerror="this.onerror=null;this.src='https://via.placeholder.com/300x450/1a1a2e/e50914?text='+encodeURIComponent(movie.title.substring(0,12));this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')">
       <div class="card-overlay">
         <button class="card-play" onclick="openModal('${movie.id}')"><i class="fas fa-play"></i></button>
         <button class="card-wl ${inWL?'active':''}" onclick="handleWL(event,'${movie.id}')">
@@ -200,9 +200,10 @@ function openModal(id) {
 
   const mp = document.getElementById('modalPoster');
   mp.classList.remove('loaded');
+  mp.referrerPolicy = 'no-referrer';
   mp.src = m.poster;
   mp.onload = function(){ this.classList.add('loaded'); };
-  mp.onerror = function(){ this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(m.title); this.classList.add('loaded'); };
+  mp.onerror = function(){ this.src='https://via.placeholder.com/300x450/1a1a2e/e50914?text='+encodeURIComponent(m.title); this.classList.add('loaded'); };
   document.getElementById('modalBackdrop').style.backgroundImage = `url('${m.backdrop}')`;
   document.getElementById('modalTitle').textContent = m.title;
   document.getElementById('modalMeta').innerHTML =
@@ -295,7 +296,7 @@ function renderMostSearched(containerId, allMovies) {
     <div class="ms-card" data-id="${m.id}" onclick="openModal('${m.id}')">
       <div class="ms-rank" style="color:${rankColors[i]||'#aaa'}">${i + 1}</div>
       <div class="ms-poster">
-        <img src="${m.poster}" alt="${m.title}"
+        <img src="${m.poster}" alt="${m.title}" referrerpolicy="no-referrer"
              onload="this.classList.add('loaded')"
              onerror="this.onerror=null;this.src='https://placehold.co/120x180/1a1a2e/e50914?text='+encodeURIComponent('${m.title.substring(0,10)}');this.classList.add('loaded')">
         <div class="ms-overlay">
@@ -326,7 +327,7 @@ function renderTopRated(containerId, movies) {
     return `<div class="movie-card rank-card" data-id="${m.id}">
       <div class="rank-badge">#${i+1}</div>
       <div class="card-poster">
-        <img src="${m.poster}" alt="${m.title}"
+        <img src="${m.poster}" alt="${m.title}" referrerpolicy="no-referrer"
              onload="this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')"
              onerror="this.onerror=null;this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(m.title);this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')">
         <div class="card-overlay">
@@ -368,7 +369,7 @@ function renderCollections() {
     return `<div class="collection-card" onclick="openCollectionModal('${col.ids.join(',')}','${col.title}')">
       <div class="collection-bg" style="background:linear-gradient(135deg,${col.color}22,${col.color}44);">
         <div class="collection-posters">
-          ${posters.map((m,i)=>`<img src="${m.poster}" alt="${m.title}" style="transform:rotate(${(i-1.5)*6}deg) translateY(${Math.abs(i-1.5)*8}px);">`).join('')}
+          ${posters.map((m,i)=>`<img src="${m.poster}" alt="${m.title}" referrerpolicy="no-referrer" style="transform:rotate(${(i-1.5)*6}deg) translateY(${Math.abs(i-1.5)*8}px);">`).join('')}
         </div>
         <div class="collection-icon" style="color:${col.color};"><i class="fas ${col.icon}"></i></div>
       </div>
@@ -416,7 +417,7 @@ function renderStaffPicks() {
         <div class="staff-ribbon"><i class="fas fa-hand-sparkles"></i> Staff Pick</div>
       </div>
       <div class="staff-info">
-        <img src="${m.poster}" alt="${m.title}" class="staff-mini-poster">
+        <img src="${m.poster}" alt="${m.title}" referrerpolicy="no-referrer" class="staff-mini-poster">
         <div>
           <h4>${m.title}</h4>
           <span class="staff-year">${m.year} · <i class="fas fa-star" style="color:#f5c518;font-size:.7rem;"></i> ${m.rating}</span>
@@ -988,7 +989,7 @@ function renderTop10Row(containerId, movies) {
     <div class="top10-card" onclick="openModal('${m.id}')">
       <div class="top10-number">${i+1}</div>
       <div class="top10-poster">
-        <img src="${m.poster}" alt="${m.title}"
+        <img src="${m.poster}" alt="${m.title}" referrerpolicy="no-referrer"
           onerror="this.onerror=null;this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent('${m.title.substring(0,8)}')">
         <div class="top10-overlay">
           <button class="card-play" onclick="event.stopPropagation();window.location.href='watch.html?id=${m.id}'"><i class="fas fa-play"></i></button>
@@ -1112,7 +1113,7 @@ function renderAdminTitleList() {
   
   el.innerHTML = list.map(m=>`
     <div class="admin-title-row">
-      <img src="${m.poster}" alt="${m.title}">
+      <img src="${m.poster}" alt="${m.title}" referrerpolicy="no-referrer">
       <div class="title-info">
         <strong>${m.title}</strong>
         <span>${m.year} · ⭐ ${m.rating} · ${m.category}</span>
@@ -2021,7 +2022,7 @@ function showQuizResults() {
     <div class="quiz-result-cards">
       ${picks.map(m=>`
         <div class="quiz-result-card" onclick="openModal('${m.id}')">
-          <img src="${m.poster}" alt="${m.title}">
+          <img src="${m.poster}" alt="${m.title}" referrerpolicy="no-referrer">
           <span>${m.title}</span>
           <span style="font-size:.72rem;color:var(--muted)">⭐ ${m.rating}</span>
         </div>`).join('')}
@@ -2178,6 +2179,7 @@ let aiChatOpen = false;
 const aiHistory = [];
 
 function initAIChat() {
+  if (!DB.getSession()) return; // only for logged-in users
   if (document.getElementById('aiChatBtn')) return;
 
   const btn = document.createElement('button');
@@ -2536,7 +2538,7 @@ function renderHiddenGems(containerId) {
     const inWL = session && DB.getUserById(session.id)?.watchlist?.includes(m.id);
     return `<div class="movie-card" data-id="${m.id}">
       <div class="card-poster">
-        <img src="${m.poster}" alt="${m.title}"
+        <img src="${m.poster}" alt="${m.title}" referrerpolicy="no-referrer"
           onload="this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')"
           onerror="this.onerror=null;this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(m.title.substring(0,10))">
         <div class="gem-badge"><i class="fas fa-gem"></i> Hidden Gem</div>
@@ -3405,7 +3407,7 @@ function renderReleaseCalendar(containerId) {
       <div class="calendar-list">
         ${upcoming.map(m=>`
           <div class="cal-item" onclick="openModal('${m.id}')">
-            <img src="${m.poster}" alt="${m.title}" onerror="this.src=''" class="cal-poster">
+            <img src="${m.poster}" alt="${m.title}" referrerpolicy="no-referrer" onerror="this.src=''" class="cal-poster">
             <div class="cal-info">
               <div class="cal-title">${m.title}</div>
               <div class="cal-year">${m.year} · ${m.genre?.[0]||''}</div>
