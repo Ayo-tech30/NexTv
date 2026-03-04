@@ -2174,172 +2174,6 @@ function initSplash() {
   setTimeout(() => splash.remove(), 2400);
 }
 
-// ── AI CHAT ───────────────────────────────────────────────────
-let aiChatOpen = false;
-const aiHistory = [];
-
-function initAIChat() {
-  if (!DB.getSession()) return; // only for logged-in users
-  if (document.getElementById('aiChatBtn')) return;
-
-  const btn = document.createElement('button');
-  btn.id = 'aiChatBtn'; btn.title = 'AI Movie Assistant';
-  btn.innerHTML = '<i class="fas fa-robot"></i>';
-  btn.onclick = toggleAIChat;
-  document.body.appendChild(btn);
-
-  const panel = document.createElement('div');
-  panel.id = 'aiChatPanel';
-  panel.innerHTML = `
-    <div class="ai-chat-header">
-      <div class="ai-avatar"><i class="fas fa-robot"></i></div>
-      <div>
-        <h4>NexTV AI</h4>
-        <span><span class="ai-online-dot"></span> Ready to help</span>
-      </div>
-      <button class="btn-close-chat" onclick="toggleAIChat()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="ai-messages" id="aiMessages">
-      <div class="ai-msg bot">👋 Hey! I'm your AI movie assistant. Tell me what you're in the mood for — I'll find the perfect match from our library!<br><br>Try: <em>"something like Parasite but shorter"</em> or <em>"best anime under 2 hours"</em></div>
-    </div>
-    <div class="ai-suggestions" id="aiSuggestions">
-      <button class="ai-sugg" onclick="sendAIMessage(this.textContent)">🎬 Best movies tonight</button>
-      <button class="ai-sugg" onclick="sendAIMessage(this.textContent)">🐉 Top anime picks</button>
-      <button class="ai-sugg" onclick="sendAIMessage(this.textContent)">😂 Make me laugh</button>
-      <button class="ai-sugg" onclick="sendAIMessage(this.textContent)">😱 Scare me</button>
-    </div>
-    <div class="ai-input-row">
-      <input class="ai-input" id="aiInput" placeholder="Ask me anything about movies..." 
-        onkeydown="if(event.key==='Enter')sendAIMessage()">
-      <button class="ai-send" onclick="sendAIMessage()"><i class="fas fa-paper-plane"></i></button>
-    </div>`;
-  document.body.appendChild(panel);
-}
-
-function toggleAIChat() {
-  aiChatOpen = !aiChatOpen;
-  document.getElementById('aiChatPanel')?.classList.toggle('open', aiChatOpen);
-  if (aiChatOpen) setTimeout(() => document.getElementById('aiInput')?.focus(), 300);
-}
-
-async function sendAIMessage(text) {
-  const input = document.getElementById('aiInput');
-  const msg = text || input?.value?.trim();
-  if (!msg) return;
-  if (input) input.value = '';
-
-  appendAIMessage(msg, 'user');
-  const typingId = showAITyping();
-
-  const all = DB.getMovies();
-  const catalog = all.map(m => `${m.id}|${m.title}|${m.year}|${m.genre.join(',')}|${m.category}|${m.rating}|${m.duration}`).join('\n');
-
-  const systemPrompt = `You are NexTV's AI movie assistant. You help users find movies from NexTV's catalog.
-
-CATALOG (id|title|year|genres|category|rating|duration):
-${catalog}
-
-RULES:
-- Recommend 2-4 titles from the catalog that match the user's request
-- Reply conversationally in 1-2 sentences, then list recommendations
-- Format each recommendation as: [MOVIE:id:title:rating]
-- Keep responses short and friendly
-- If user asks for something not in catalog, pick the closest match
-- Never make up titles not in the catalog`;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 600,
-        system: systemPrompt,
-        messages: [
-          ...aiHistory,
-          { role: 'user', content: msg }
-        ]
-      })
-    });
-    const data = await res.json();
-    const reply = data.content?.[0]?.text || "I couldn't find anything specific, but check out our Trending section!";
-    aiHistory.push({ role: 'user', content: msg });
-    aiHistory.push({ role: 'assistant', content: reply });
-    if (aiHistory.length > 12) aiHistory.splice(0, 2);
-    removeAITyping(typingId);
-    renderAIReply(reply);
-  } catch (e) {
-    removeAITyping(typingId);
-    // Fallback: local search
-    const q = msg.toLowerCase();
-    const matches = all.filter(m =>
-      m.genre.some(g => q.includes(g.toLowerCase())) ||
-      q.includes(m.category) ||
-      (q.includes('anime') && m.category === 'anime') ||
-      (q.includes('cartoon') && m.category === 'cartoons') ||
-      (q.includes('series') && m.category === 'series')
-    ).sort((a,b)=>b.rating-a.rating).slice(0,3);
-    if (matches.length) {
-      const reply = `Here are some great picks for you! ${matches.map(m=>`[MOVIE:${m.id}:${m.title}:${m.rating}]`).join(' ')}`;
-      renderAIReply(reply);
-    } else {
-      appendAIMessage("Here are our top picks right now! " + all.sort((a,b)=>b.rating-a.rating).slice(0,3).map(m=>`[MOVIE:${m.id}:${m.title}:${m.rating}]`).join(' '), 'bot');
-    }
-  }
-}
-
-function renderAIReply(text) {
-  // Parse [MOVIE:id:title:rating] chips
-  const parts = text.split(/(\[MOVIE:[^\]]+\])/g);
-  const msgs = document.getElementById('aiMessages');
-  if (!msgs) return;
-  const wrapper = document.createElement('div');
-  wrapper.className = 'ai-msg bot';
-  parts.forEach(part => {
-    const match = part.match(/\[MOVIE:([^:]+):([^:]+):([^\]]+)\]/);
-    if (match) {
-      const [, id, title, rating] = match;
-      const m = DB.getMovie(id);
-      const chip = document.createElement('div');
-      chip.className = 'ai-movie-chip';
-      chip.onclick = () => openModal(id);
-      chip.innerHTML = m ? `<img src="${m.poster}" alt="${title}"><span><strong>${title}</strong> ⭐${rating}</span>` : `<span>${title} ⭐${rating}</span>`;
-      wrapper.appendChild(chip);
-    } else if (part.trim()) {
-      const t = document.createElement('span');
-      t.textContent = part;
-      wrapper.appendChild(t);
-    }
-  });
-  msgs.appendChild(wrapper);
-  msgs.scrollTop = msgs.scrollHeight;
-}
-
-function appendAIMessage(text, role) {
-  const msgs = document.getElementById('aiMessages');
-  if (!msgs) return;
-  const div = document.createElement('div');
-  div.className = `ai-msg ${role}`;
-  div.textContent = text;
-  msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
-}
-
-function showAITyping() {
-  const msgs = document.getElementById('aiMessages');
-  if (!msgs) return null;
-  const id = 'typing-' + Date.now();
-  const div = document.createElement('div');
-  div.className = 'ai-msg typing'; div.id = id;
-  div.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
-  msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
-  return id;
-}
-
-function removeAITyping(id) {
-  document.getElementById(id)?.remove();
-}
 
 // ── NEXTV WRAPPED ─────────────────────────────────────────────
 function openWrapped() {
@@ -2909,7 +2743,6 @@ function removeFromHistory(e, id) {
 // ── INIT ALL v4 FEATURES ──────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initSplash();
-  initAIChat();
   initCinemaMode();
   initSkipIntro();
   addShareToModal();
@@ -2931,7 +2764,7 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('click', e => {
   if (!document.body.classList.contains('sheet-open')) return;
   // If click is directly on body::after backdrop (outside any panel)
-  const panels = ['notifPanel', 'aiChatPanel'];
+  const panels = ['notifPanel'];
   const dropdowns = document.querySelectorAll('.nav-dropdown.show, .notif-panel.show');
   let clickedInsidePanel = false;
   panels.forEach(id => {
@@ -2944,7 +2777,6 @@ document.addEventListener('click', e => {
   if (!clickedInsidePanel) {
     // Close all sheets
     document.querySelectorAll('.notif-panel.show, .nav-dropdown.show').forEach(el => el.classList.remove('show'));
-    const aiPanel = document.getElementById('aiChatPanel');
     if (aiPanel) aiPanel.classList.remove('open');
     document.body.classList.remove('sheet-open');
   }
