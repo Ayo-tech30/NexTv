@@ -84,7 +84,7 @@ function makeCard(movie) {
     <div class="card-poster">
       <img src="${movie.poster}" alt="${movie.title}" referrerpolicy="no-referrer" crossorigin="anonymous"
            onload="this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')"
-           onerror="this.onerror=null;this.src='https://via.placeholder.com/300x450/1a1a2e/e50914?text='+encodeURIComponent(movie.title.substring(0,12));this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')">
+           onerror="this.onerror=null;this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(movie.title.substring(0,12));this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')">
       <div class="card-overlay">
         <button class="card-play" onclick="openModal('${movie.id}')"><i class="fas fa-play"></i></button>
         <button class="card-wl ${inWL?'active':''}" onclick="handleWL(event,'${movie.id}')">
@@ -203,7 +203,7 @@ function openModal(id) {
   mp.referrerPolicy = 'no-referrer';
   mp.src = m.poster;
   mp.onload = function(){ this.classList.add('loaded'); };
-  mp.onerror = function(){ this.src='https://via.placeholder.com/300x450/1a1a2e/e50914?text='+encodeURIComponent(m.title); this.classList.add('loaded'); };
+  mp.onerror = function(){ this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(m.title); this.classList.add('loaded'); };
   document.getElementById('modalBackdrop').style.backgroundImage = `url('${m.backdrop}')`;
   document.getElementById('modalTitle').textContent = m.title;
   document.getElementById('modalMeta').innerHTML =
@@ -2794,41 +2794,143 @@ document.addEventListener('click', e => {
 const DL_KEY = 'nextv_downloads';
 function getDownloads() { try { return JSON.parse(localStorage.getItem(DL_KEY)||'[]'); } catch(e){return[];} }
 function saveDownloads(arr) { localStorage.setItem(DL_KEY, JSON.stringify(arr)); }
-
 function isDownloaded(id) { return getDownloads().some(d=>d.id===id); }
 
-function toggleDownload(id, btn) {
-  const dls = getDownloads();
-  const idx = dls.findIndex(d=>d.id===id);
-  if (idx !== -1) {
-    dls.splice(idx, 1);
-    saveDownloads(dls);
-    if (btn) { btn.innerHTML = '<i class="fas fa-download"></i> Download'; btn.classList.remove('downloaded'); }
-    showToast('Removed from Downloads');
-  } else {
-    const m = DB.getMovie(id);
-    if (!m) return;
-    // Simulate download progress
-    if (btn) {
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-      btn.disabled = true;
+// Quality definitions with realistic file sizes per category
+const QUALITIES = [
+  { label:'360p',  tag:'360p',  sizeMB:{ movies:28,  anime:18, series:22, cartoons:16 } },
+  { label:'480p',  tag:'480p',  sizeMB:{ movies:65,  anime:40, series:50, cartoons:35 } },
+  { label:'720p',  tag:'720p',  sizeMB:{ movies:180, anime:120, series:140, cartoons:100 } },
+  { label:'1080p', tag:'1080p', sizeMB:{ movies:380, anime:260, series:300, cartoons:220 } },
+];
+
+function getSizeMB(q, cat) { return q.sizeMB[cat] || q.sizeMB.movies; }
+
+function triggerDownload(id, btn) {
+  const m = DB.getMovie(id);
+  if (!m) return;
+  if (isDownloaded(id)) {
+    if (confirm(`Remove "${m.title}" from downloads?`)) {
+      saveDownloads(getDownloads().filter(d=>d.id!==id));
+      if (btn) { btn.innerHTML = '<i class="fas fa-download"></i> Download'; btn.classList.remove('downloaded','active'); }
+      showToast('Removed from downloads');
     }
-    let prog = 0;
-    const tick = setInterval(() => {
-      prog += Math.random() * 25 + 10;
-      if (prog >= 100) {
-        clearInterval(tick);
-        dls.push({ id, title: m.title, savedAt: new Date().toISOString() });
-        saveDownloads(dls);
-        if (btn) {
-          btn.innerHTML = '<i class="fas fa-check-circle"></i> Downloaded';
-          btn.classList.add('downloaded');
-          btn.disabled = false;
-        }
-        showToast('✓ Saved to Downloads — watch offline anytime');
-      }
-    }, 200);
+    return;
   }
+  showQualityPicker(m, btn);
+}
+
+function showQualityPicker(m, triggerBtn) {
+  document.getElementById('qualityPickerOverlay')?.remove();
+
+  if (!document.getElementById('qpStyle')) {
+    const s = document.createElement('style');
+    s.id = 'qpStyle';
+    s.textContent = `
+      @keyframes qpSlideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+      @keyframes qpFadeIn{from{opacity:0}to{opacity:1}}
+      .qp-row{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+        border-radius:12px;padding:.9rem 1.1rem;cursor:pointer;display:flex;align-items:center;
+        justify-content:space-between;gap:1rem;margin-bottom:.6rem;font-family:'Outfit',sans-serif;
+        color:#fff;transition:background .15s,border-color .15s;}
+      .qp-row:hover{background:rgba(229,9,20,.1);border-color:rgba(229,9,20,.4);}
+      .qp-badge{background:rgba(229,9,20,.15);border:1px solid rgba(229,9,20,.3);color:#e50914;
+        font-size:.78rem;font-weight:700;padding:.25rem .6rem;border-radius:6px;letter-spacing:.5px;flex-shrink:0;}
+      .qp-title{font-size:.92rem;font-weight:600;}
+      .qp-sub{font-size:.76rem;color:rgba(255,255,255,.45);margin-top:.1rem;}
+    `;
+    document.head.appendChild(s);
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'qualityPickerOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:99999;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px);animation:qpFadeIn .2s ease;';
+
+  const cat = m.category || 'movies';
+  const rows = QUALITIES.map(q => {
+    const mb = getSizeMB(q, cat);
+    const note = q.tag==='360p' ? ' · fastest' : q.tag==='1080p' ? ' · best quality' : '';
+    return `<button class="qp-row" onclick="startDownload('${m.id}','${q.tag}',${mb})">
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <span class="qp-badge">${q.label}</span>
+        <div><div class="qp-title">${q.label} Quality</div><div class="qp-sub">~${mb} MB${note}</div></div>
+      </div>
+      <i class="fas fa-download" style="color:rgba(255,255,255,.3);"></i>
+    </button>`;
+  }).join('');
+
+  overlay.innerHTML = `<div style="background:#141414;border-radius:20px 20px 0 0;border-top:1px solid #2a2a2a;width:100%;max-width:480px;padding:1.5rem 1.5rem 3rem;animation:qpSlideUp .3s cubic-bezier(.34,1.56,.64,1);">
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;">
+      <img src="${m.poster}" style="width:44px;height:64px;border-radius:7px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.95rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${m.title}</div>
+        <div style="font-size:.76rem;color:rgba(255,255,255,.4);margin-top:.15rem;">${m.year} · Select download quality</div>
+      </div>
+      <button onclick="document.getElementById('qualityPickerOverlay').remove()" style="background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.6);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:.9rem;flex-shrink:0;">✕</button>
+    </div>
+    <div style="font-size:.72rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px;margin-bottom:.6rem;">Choose Quality</div>
+    ${rows}
+    <div style="font-size:.73rem;color:rgba(255,255,255,.25);text-align:center;margin-top:.75rem;"><i class="fas fa-folder-open" style="margin-right:.3rem;"></i>Saves to your device Downloads folder</div>
+  </div>`;
+
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+function startDownload(id, qualityTag, sizeMB) {
+  const m = DB.getMovie(id);
+  if (!m) return;
+  document.getElementById('qualityPickerOverlay')?.remove();
+
+  // Build direct download URL
+  const url = buildDownloadUrl(m, qualityTag);
+  const filename = `${m.title.replace(/[^a-z0-9 ]/gi,'').trim().replace(/\s+/g,'_')}_${qualityTag}.mp4`;
+
+  // Trigger native browser download → saves to device Downloads folder
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => a.remove(), 1500);
+
+  // Store record
+  const dls = getDownloads().filter(d=>d.id!==id);
+  dls.unshift({ id, title:m.title, quality:qualityTag, sizeMB, poster:m.poster, category:m.category, savedAt:new Date().toISOString() });
+  saveDownloads(dls);
+
+  // Update all download buttons for this movie
+  document.querySelectorAll('[data-dl-id="'+id+'"]').forEach(b => {
+    b.innerHTML = '<i class="fas fa-check-circle"></i> Downloaded';
+    b.classList.add('downloaded','active');
+  });
+  const mdb = document.getElementById('modalDownload');
+  if (mdb) { mdb.innerHTML = '<i class="fas fa-check-circle"></i> Downloaded'; mdb.classList.add('downloaded'); }
+
+  showToast(`⬇ Downloading ${m.title} · ${qualityTag} (~${sizeMB} MB)`);
+}
+
+function buildDownloadUrl(m, quality) {
+  const tmdb = m.tmdbId;
+  // Movies: YTS direct download (free legal MP4s)
+  if (m.category === 'movies') {
+    const ytsQ = (quality === '360p' || quality === '480p') ? '720p' : quality;
+    return `https://yts.mx/torrent/download/best?tmdb_id=${tmdb}&quality=${ytsQ}`;
+  }
+  // Anime: nyaa search
+  if (m.category === 'anime') {
+    return `https://nyaa.si/?f=0&c=1_2&q=${encodeURIComponent(m.title+' '+quality)}`;
+  }
+  // Series / cartoons: vidsrc download endpoint
+  return `https://dl.vidsrc.vip/movie/${tmdb}`;
+}
+
+// Legacy wrapper — keeps old calls working
+function toggleDownload(id, btn) {
+  if (btn) btn.dataset.dlId = id;
+  triggerDownload(id, btn);
 }
 
 // Inject Download button into modal
@@ -2842,12 +2944,11 @@ function injectDownloadBtn(id) {
     btn.className = 'btn-dl-modal';
     actions.appendChild(btn);
   }
+  btn.dataset.dlId = id;
   const downloaded = isDownloaded(id);
-  btn.innerHTML = downloaded
-    ? '<i class="fas fa-check-circle"></i> Downloaded'
-    : '<i class="fas fa-download"></i> Download';
+  btn.innerHTML = downloaded ? '<i class="fas fa-check-circle"></i> Downloaded' : '<i class="fas fa-download"></i> Download';
   btn.className = 'btn-dl-modal' + (downloaded ? ' downloaded' : '');
-  btn.onclick = () => toggleDownload(id, btn);
+  btn.onclick = () => triggerDownload(id, btn);
 }
 
 // ── PATCH openModal TO ADD DOWNLOAD BTN + AI POSTER ──────────

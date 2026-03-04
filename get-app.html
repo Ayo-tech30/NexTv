@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Get NexTV App – Install on Any Device</title>
+<link rel="icon" type="image/jpeg" href="logo.jpg">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#e50914">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NexTV">
+<link rel="apple-touch-icon" href="/icons/icon-152.png">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --red: #e50914; --dark: #0d0d0d; --card: #141414; }
+  body { background: var(--dark); color: #fff; font-family: 'Outfit', sans-serif; min-height: 100vh; }
+
+  /* NAV */
+  nav { display:flex; align-items:center; justify-content:space-between; padding:1.2rem 2rem; background:rgba(0,0,0,.9); position:sticky; top:0; z-index:100; border-bottom:1px solid #1a1a1a; }
+  .nav-logo { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:#fff; text-decoration:none; letter-spacing:2px; }
+  .nav-logo span { color:var(--red); }
+  .nav-back { color:rgba(255,255,255,.6); text-decoration:none; font-size:.9rem; display:flex; align-items:center; gap:.4rem; transition:color .2s; }
+  .nav-back:hover { color:#fff; }
+
+  /* HERO */
+  .hero { text-align:center; padding:5rem 2rem 4rem; position:relative; overflow:hidden; }
+  .hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(229,9,20,.12), transparent); pointer-events:none; }
+  .hero-eyebrow { display:inline-flex; align-items:center; gap:.4rem; background:rgba(229,9,20,.12); border:1px solid rgba(229,9,20,.3); color:var(--red); padding:.3rem .9rem; border-radius:20px; font-size:.75rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:1.5rem; }
+  .hero h1 { font-size:clamp(2rem,6vw,4rem); font-weight:700; line-height:1.1; margin-bottom:1rem; }
+  .hero h1 em { color:var(--red); font-style:normal; }
+  .hero p { color:rgba(255,255,255,.6); font-size:1.05rem; max-width:520px; margin:0 auto 3rem; line-height:1.7; }
+
+  /* DEVICE TABS */
+  .device-tabs { display:flex; justify-content:center; gap:.5rem; margin-bottom:3rem; flex-wrap:wrap; }
+  .dtab { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); color:rgba(255,255,255,.6); padding:.55rem 1.3rem; border-radius:30px; cursor:pointer; font-size:.88rem; font-family:'Outfit',sans-serif; font-weight:500; transition:all .2s; }
+  .dtab.active, .dtab:hover { background:var(--red); border-color:var(--red); color:#fff; }
+
+  /* INSTALL CARDS */
+  .cards-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:1.25rem; max-width:960px; margin:0 auto; padding:0 1.5rem 5rem; }
+  .install-card { background:var(--card); border:1px solid #222; border-radius:20px; padding:2rem; position:relative; overflow:hidden; transition:border-color .25s, transform .2s; }
+  .install-card:hover { border-color:rgba(229,9,20,.4); transform:translateY(-3px); }
+  .install-card.featured { border-color:rgba(229,9,20,.35); background:linear-gradient(135deg,#1a0000,#141414); }
+  .install-card.featured::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(229,9,20,.06),transparent); pointer-events:none; }
+  .card-badge { position:absolute; top:1rem; right:1rem; background:var(--red); color:#fff; font-size:.65rem; font-weight:700; padding:.2rem .6rem; border-radius:4px; text-transform:uppercase; letter-spacing:.5px; }
+  .card-icon { font-size:2.8rem; margin-bottom:1.25rem; display:block; }
+  .card-title { font-size:1.2rem; font-weight:700; margin-bottom:.4rem; }
+  .card-subtitle { color:rgba(255,255,255,.45); font-size:.8rem; margin-bottom:1rem; letter-spacing:.3px; text-transform:uppercase; }
+  .card-desc { color:rgba(255,255,255,.65); font-size:.9rem; line-height:1.65; margin-bottom:1.5rem; }
+  .card-steps { list-style:none; margin-bottom:1.75rem; }
+  .card-steps li { display:flex; align-items:flex-start; gap:.75rem; padding:.5rem 0; border-bottom:1px solid rgba(255,255,255,.06); font-size:.88rem; color:rgba(255,255,255,.7); }
+  .card-steps li:last-child { border-bottom:none; }
+  .step-num { background:rgba(229,9,20,.15); color:var(--red); width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; flex-shrink:0; margin-top:.05rem; }
+  .card-btn { display:flex; align-items:center; justify-content:center; gap:.5rem; width:100%; padding:.8rem; border-radius:10px; font-size:.95rem; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; border:none; text-decoration:none; transition:background .2s, transform .15s; }
+  .card-btn.primary { background:var(--red); color:#fff; }
+  .card-btn.primary:hover { background:#c8060f; transform:scale(1.02); }
+  .card-btn.secondary { background:rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.18); }
+  .card-btn.secondary:hover { background:rgba(255,255,255,.14); }
+  .card-btn:disabled, .card-btn.disabled { opacity:.45; cursor:not-allowed; transform:none; }
+
+  /* FEATURES ROW */
+  .features-row { display:flex; gap:2.5rem; justify-content:center; flex-wrap:wrap; padding:1rem 2rem 5rem; max-width:800px; margin:0 auto; }
+  .feat-item { display:flex; align-items:center; gap:.6rem; color:rgba(255,255,255,.5); font-size:.88rem; }
+  .feat-item i { color:var(--red); font-size:.9rem; }
+
+  /* SECTION DIVIDER */
+  .section-divider { border:none; border-top:1px solid #1a1a1a; margin:0 2rem; }
+
+  /* PWABUILDER SECTION */
+  .pwa-section { max-width:720px; margin:0 auto; padding:4rem 2rem; text-align:center; }
+  .pwa-section h2 { font-size:1.6rem; font-weight:700; margin-bottom:.6rem; }
+  .pwa-section p { color:rgba(255,255,255,.55); font-size:.95rem; line-height:1.7; margin-bottom:2rem; }
+  .pwa-link-box { background:#141414; border:1px solid #2a2a2a; border-radius:12px; padding:1.25rem 1.5rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; justify-content:space-between; margin-bottom:1rem; }
+  .pwa-link-box code { color:rgba(255,255,255,.7); font-size:.88rem; font-family:monospace; flex:1; word-break:break-all; }
+  .pwa-copy-btn { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:#fff; padding:.45rem 1rem; border-radius:8px; cursor:pointer; font-size:.8rem; font-family:'Outfit',sans-serif; white-space:nowrap; transition:background .2s; }
+  .pwa-copy-btn:hover { background:rgba(255,255,255,.18); }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(80px); background:#1a1a1a; border:1px solid #333; color:#fff; padding:.75rem 1.5rem; border-radius:10px; font-size:.88rem; font-weight:500; transition:transform .35s; z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,.6); }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+
+  /* INSTALL BANNER (same as index) */
+  .pwa-install-banner { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(120px); background:#1a1a1a; border:1px solid #333; border-radius:16px; padding:1rem 1.5rem; display:flex; align-items:center; gap:1rem; box-shadow:0 8px 40px rgba(0,0,0,.8); z-index:9999; min-width:320px; max-width:90vw; transition:transform .4s cubic-bezier(.34,1.56,.64,1); }
+  .pwa-install-banner.show { transform:translateX(-50%) translateY(0); }
+  .pwa-banner-icon { width:48px; height:48px; border-radius:12px; flex-shrink:0; }
+  .pwa-banner-text strong { display:block; color:#fff; font-size:.95rem; margin-bottom:.15rem; }
+  .pwa-banner-text span { color:rgba(255,255,255,.55); font-size:.8rem; }
+  .pwa-banner-actions { display:flex; gap:.5rem; flex-shrink:0; }
+  .pwa-install-btn { background:var(--red); color:#fff; border:none; padding:.5rem 1rem; border-radius:8px; font-size:.82rem; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; }
+  .pwa-dismiss-btn { background:transparent; color:rgba(255,255,255,.4); border:none; font-size:1.1rem; cursor:pointer; padding:.3rem; }
+  .pwa-dismiss-btn:hover { color:#fff; }
+
+  @media(max-width:600px) {
+    .hero { padding:3rem 1.5rem 2.5rem; }
+    .cards-grid { padding:0 1rem 4rem; grid-template-columns:1fr; }
+    .pwa-install-banner { bottom:0; left:0; right:0; transform:translateY(120px); border-radius:16px 16px 0 0; min-width:unset; }
+    .pwa-install-banner.show { transform:translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">NEX<span>TV</span></a>
+  <a href="index.html" class="nav-back"><i class="fas fa-arrow-left"></i> Back to Home</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow"><i class="fas fa-mobile-alt"></i> App Download</div>
+  <h1>NexTV on <em>Every Device</em></h1>
+  <p>Install NexTV as a full native-feeling app — no app store required. Works perfectly on iPhone, Android, tablet, laptop, and desktop.</p>
+</section>
+
+<!-- INSTALL CARDS -->
+<div class="cards-grid" id="cardsGrid">
+
+  <!-- PWA - iOS -->
+  <div class="install-card featured" id="iosCard">
+    <span class="card-badge">iPhone / iPad</span>
+    <span class="card-icon">🍎</span>
+    <div class="card-title">Install on iPhone & iPad</div>
+    <div class="card-subtitle">iOS / iPadOS · Safari required</div>
+    <div class="card-desc">Add NexTV directly to your home screen. Works like a native app — full screen, no browser bars.</div>
+    <ol class="card-steps">
+      <li><span class="step-num">1</span><span>Open this page in <strong>Safari</strong> (not Chrome)</span></li>
+      <li><span class="step-num">2</span><span>Tap the <strong>Share button ⎋</strong> at the bottom</span></li>
+      <li><span class="step-num">3</span><span>Scroll and tap <strong>"Add to Home Screen"</strong></span></li>
+      <li><span class="step-num">4</span><span>Tap <strong>"Add"</strong> — NexTV appears on your home screen!</span></li>
+    </ol>
+    <a href="https://support.apple.com/guide/iphone/bookmark-favorite-webpages-iph42ab2f3a7/ios" target="_blank" class="card-btn secondary">
+      <i class="fab fa-apple"></i> View Apple Guide
+    </a>
+  </div>
+
+  <!-- PWA - Android -->
+  <div class="install-card featured" id="androidPwaCard">
+    <span class="card-badge">Easiest</span>
+    <span class="card-icon">🤖</span>
+    <div class="card-title">Install on Android</div>
+    <div class="card-subtitle">Android · Chrome required</div>
+    <div class="card-desc">Chrome will show an install prompt automatically. Full-screen app with home screen icon.</div>
+    <ol class="card-steps">
+      <li><span class="step-num">1</span><span>Open NexTV in <strong>Chrome</strong></span></li>
+      <li><span class="step-num">2</span><span>Tap <strong>⋮ menu</strong> (top right corner)</span></li>
+      <li><span class="step-num">3</span><span>Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong></span></li>
+      <li><span class="step-num">4</span><span>Tap <strong>"Install"</strong> to confirm</span></li>
+    </ol>
+    <button class="card-btn primary" id="androidInstallBtn" onclick="triggerInstall()">
+      <i class="fas fa-download"></i> <span id="installBtnText">Install Now</span>
+    </button>
+  </div>
+
+  <!-- APK Download -->
+  <div class="install-card" id="apkCard">
+    <span class="card-icon">📦</span>
+    <div class="card-title">Android APK</div>
+    <div class="card-subtitle">Android 5.0+ · Direct install</div>
+    <div class="card-desc">Download the APK file directly. Includes the full NexTV app in a WebView — no Play Store needed.</div>
+    <ol class="card-steps">
+      <li><span class="step-num">1</span><span>Download the <strong>NexTV.apk</strong> file below</span></li>
+      <li><span class="step-num">2</span><span>Go to <strong>Settings → Security</strong> and enable <strong>"Unknown Sources"</strong></span></li>
+      <li><span class="step-num">3</span><span>Open the downloaded APK and tap <strong>"Install"</strong></span></li>
+      <li><span class="step-num">4</span><span>Open <strong>NexTV</strong> from your app drawer!</span></li>
+    </ol>
+    <a href="NexTV.apk" download class="card-btn primary" id="apkBtn">
+      <i class="fab fa-android"></i> Download APK (Android)
+    </a>
+  </div>
+
+  <!-- Desktop / Laptop -->
+  <div class="install-card" id="desktopCard">
+    <span class="card-icon">💻</span>
+    <div class="card-title">Desktop & Laptop</div>
+    <div class="card-subtitle">Windows · Mac · Linux · Chromebook</div>
+    <div class="card-desc">Install NexTV as a desktop app from Chrome or Edge. Appears in your taskbar like a real application.</div>
+    <ol class="card-steps">
+      <li><span class="step-num">1</span><span>Open NexTV in <strong>Chrome</strong> or <strong>Edge</strong></span></li>
+      <li><span class="step-num">2</span><span>Click the <strong>install icon ⊕</strong> in the address bar</span></li>
+      <li><span class="step-num">3</span><span>Click <strong>"Install"</strong> in the popup</span></li>
+      <li><span class="step-num">4</span><span>NexTV opens in its own window — no browser chrome!</span></li>
+    </ol>
+    <button class="card-btn primary" onclick="triggerInstall()">
+      <i class="fas fa-desktop"></i> Install Desktop App
+    </button>
+  </div>
+
+</div>
+
+<!-- FEATURES -->
+<div class="features-row">
+  <div class="feat-item"><i class="fas fa-check-circle"></i> No app store required</div>
+  <div class="feat-item"><i class="fas fa-check-circle"></i> Full-screen experience</div>
+  <div class="feat-item"><i class="fas fa-check-circle"></i> Home screen icon</div>
+  <div class="feat-item"><i class="fas fa-check-circle"></i> Auto-updates with site</div>
+  <div class="feat-item"><i class="fas fa-check-circle"></i> 100% free</div>
+</div>
+
+<hr class="section-divider">
+
+<!-- PWABUILDER INFO -->
+<div class="pwa-section">
+  <h2>Building from Source</h2>
+  <p>The NexTV Android APK is built from the open-source project. You can also generate your own signed APK using PWABuilder — just enter your deployed NexTV URL.</p>
+  <div class="pwa-link-box">
+    <code id="pwaBuilderUrl">https://www.pwabuilder.com</code>
+    <button class="pwa-copy-btn" onclick="copyUrl()"><i class="fas fa-copy"></i> Copy</button>
+  </div>
+  <p style="font-size:.82rem;color:rgba(255,255,255,.35);">The Android Studio source project is included in the NexTV download package for developers.</p>
+</div>
+
+<!-- PWA INSTALL BANNER -->
+<div class="pwa-install-banner" id="pwaBanner">
+  <img src="/icons/icon-192.png" class="pwa-banner-icon" alt="NexTV">
+  <div class="pwa-banner-text">
+    <strong>Install NexTV App</strong>
+    <span>Add to home screen for the full app experience</span>
+  </div>
+  <div class="pwa-banner-actions">
+    <button class="pwa-install-btn" onclick="triggerInstall()">Install</button>
+    <button class="pwa-dismiss-btn" onclick="dismissBanner()">✕</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Update install button text
+  const btn = document.getElementById('installBtnText');
+  if (btn) btn.textContent = 'Install Now — 1 Click';
+  // Show banner
+  if (!localStorage.getItem('pwa-dismissed')) {
+    setTimeout(() => {
+      document.getElementById('pwaBanner')?.classList.add('show');
+    }, 2000);
+  }
+});
+
+async function triggerInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    dismissBanner();
+    if (outcome === 'accepted') {
+      showToast('✓ NexTV installed successfully!');
+      const btn = document.getElementById('androidInstallBtn');
+      if (btn) { btn.innerHTML = '<i class="fas fa-check"></i> Installed!'; btn.style.background = '#16a34a'; }
+    }
+  } else {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    document.getElementById(isIOS ? 'iosCard' : 'androidPwaCard')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    showToast('Follow the steps above to install!');
+  }
+}
+
+function dismissBanner() {
+  document.getElementById('pwaBanner')?.classList.remove('show');
+  localStorage.setItem('pwa-dismissed', '1');
+}
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  dismissBanner();
+  showToast('✓ NexTV installed!');
+});
+
+function copyUrl() {
+  navigator.clipboard?.writeText('https://www.pwabuilder.com').then(() => showToast('Copied!'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Detect device and highlight the right card
+const ua = navigator.userAgent;
+if (/iPad|iPhone|iPod/.test(ua)) {
+  document.getElementById('iosCard')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+} else if (/Android/.test(ua)) {
+  document.getElementById('androidPwaCard')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

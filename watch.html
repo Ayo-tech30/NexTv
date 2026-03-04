@@ -106,6 +106,17 @@
 }
 .tip-bar i { color:var(--red); flex-shrink:0; }
 </style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#e50914">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NexTV">
+<link rel="apple-touch-icon" href="/icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png">
+<meta name="msapplication-TileImage" content="/icons/icon-144.png">
+<meta name="msapplication-TileColor" content="#e50914">
 </head>
 <body class="player-body">
 
@@ -496,17 +507,18 @@ document.addEventListener('keydown', e => {
 function initWatchDlBtn() {
   const dlBtn = document.getElementById('watchDlBtn');
   if (!id || !dlBtn) return;
-  toggleDownload(id, dlBtn);
+  triggerDownload(id, dlBtn);
 }
 // Set initial download state
 setTimeout(() => {
   const dlBtn = document.getElementById('watchDlBtn');
   if (dlBtn && id) {
+    dlBtn.dataset.dlId = id;
     if (isDownloaded(id)) {
       dlBtn.innerHTML = '<i class="fas fa-check-circle"></i> Downloaded';
       dlBtn.classList.add('active');
     }
-    dlBtn.onclick = () => toggleDownload(id, dlBtn);
+    dlBtn.onclick = () => triggerDownload(id, dlBtn);
   }
 }, 300);
 
