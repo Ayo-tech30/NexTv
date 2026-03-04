@@ -153,7 +153,6 @@
     <button class="srv-btn"        id="srv4" onclick="setServer(4)"><span class="srv-dot"></span>SuperEmbed</button>
     <button class="srv-btn"        id="srv5" onclick="setServer(5)"><span class="srv-dot"></span>2Embed</button>
     <div style="flex:1"></div>
-    <button class="srv-btn" id="watchDlBtn" onclick="initWatchDlBtn()"><i class="fas fa-download"></i> Download</button>
     <button class="srv-btn" id="sleepBtn" onclick="openSleepTimer()"><i class="fas fa-moon"></i> Sleep</button>
   </div>
 
@@ -503,24 +502,6 @@ document.addEventListener('keydown', e => {
   if (e.key === 'r') shufflePlay();
 });
 
-// Download button init
-function initWatchDlBtn() {
-  const dlBtn = document.getElementById('watchDlBtn');
-  if (!id || !dlBtn) return;
-  triggerDownload(id, dlBtn);
-}
-// Set initial download state
-setTimeout(() => {
-  const dlBtn = document.getElementById('watchDlBtn');
-  if (dlBtn && id) {
-    dlBtn.dataset.dlId = id;
-    if (isDownloaded(id)) {
-      dlBtn.innerHTML = '<i class="fas fa-check-circle"></i> Downloaded';
-      dlBtn.classList.add('active');
-    }
-    dlBtn.onclick = () => triggerDownload(id, dlBtn);
-  }
-}, 300);
 
 // Inject mobile nav
 injectMobileNav();

@@ -215,6 +215,19 @@ function openModal(id) {
   document.getElementById('modalCast').innerHTML = `<i class="fas fa-users"></i> <strong>Cast:</strong> ${m.cast.join(', ')}`;
   document.getElementById('modalPlay').onclick = () => { closeModal(); window.location.href = `watch.html?id=${id}`; };
   
+  // Download button — single quality picker trigger
+  let dlBtn = document.getElementById('modalDownload');
+  if (!dlBtn) {
+    dlBtn = document.createElement('button');
+    dlBtn.id = 'modalDownload';
+    dlBtn.className = 'btn-dl-modal';
+    document.querySelector('.modal-actions')?.appendChild(dlBtn);
+  }
+  const alreadyDl = isDownloaded(id);
+  dlBtn.innerHTML = alreadyDl ? '<i class="fas fa-check-circle"></i> Downloaded' : '<i class="fas fa-download"></i> Download';
+  dlBtn.className = 'btn-dl-modal' + (alreadyDl ? ' downloaded' : '');
+  dlBtn.onclick = () => triggerDownload(id, dlBtn);
+
   // Add/update trailer button
   let trailerBtn = document.getElementById('modalTrailer');
   if (!trailerBtn) {
@@ -2882,80 +2895,60 @@ function startDownload(id, qualityTag, sizeMB) {
   if (!m) return;
   document.getElementById('qualityPickerOverlay')?.remove();
 
-  // Build direct download URL
-  const url = buildDownloadUrl(m, qualityTag);
-  const filename = `${m.title.replace(/[^a-z0-9 ]/gi,'').trim().replace(/\s+/g,'_')}_${qualityTag}.mp4`;
+  const tmdb = m.tmdbId;
+  const qMap = { '360p':'360', '480p':'480', '720p':'720', '1080p':'1080' };
+  const q = qMap[qualityTag] || '720';
 
-  // Trigger native browser download → saves to device Downloads folder
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.rel = 'noopener';
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => a.remove(), 1500);
+  // Try multiple real download sources in order
+  // dl.vidsrc.vip gives direct MP4 streams by TMDB ID
+  const urls = m.type === 'series'
+    ? [
+        `https://dl.vidsrc.vip/tv/${tmdb}/1/1`,
+        `https://vidsrc.xyz/embed/tv/${tmdb}/1/1`,
+      ]
+    : [
+        `https://dl.vidsrc.vip/movie/${tmdb}`,
+        `https://vidsrc.xyz/embed/movie/${tmdb}`,
+      ];
 
-  // Store record
-  const dls = getDownloads().filter(d=>d.id!==id);
-  dls.unshift({ id, title:m.title, quality:qualityTag, sizeMB, poster:m.poster, category:m.category, savedAt:new Date().toISOString() });
+  // Open in new tab — browser handles the download natively
+  // The dl.vidsrc.vip endpoint serves the file directly
+  window.open(urls[0], '_blank');
+
+  // Save record
+  const dls = getDownloads().filter(d => d.id !== id);
+  dls.unshift({ id, title: m.title, quality: qualityTag, sizeMB, poster: m.poster, category: m.category, savedAt: new Date().toISOString() });
   saveDownloads(dls);
 
-  // Update all download buttons for this movie
+  // Update buttons
   document.querySelectorAll('[data-dl-id="'+id+'"]').forEach(b => {
     b.innerHTML = '<i class="fas fa-check-circle"></i> Downloaded';
-    b.classList.add('downloaded','active');
+    b.classList.add('downloaded', 'active');
   });
-  const mdb = document.getElementById('modalDownload');
-  if (mdb) { mdb.innerHTML = '<i class="fas fa-check-circle"></i> Downloaded'; mdb.classList.add('downloaded'); }
 
-  showToast(`⬇ Downloading ${m.title} · ${qualityTag} (~${sizeMB} MB)`);
+  showToast(`⬇ Opening download for ${m.title} · ${qualityTag}`);
 }
+
+
 
 function buildDownloadUrl(m, quality) {
   const tmdb = m.tmdbId;
-  // Movies: YTS direct download (free legal MP4s)
-  if (m.category === 'movies') {
-    const ytsQ = (quality === '360p' || quality === '480p') ? '720p' : quality;
-    return `https://yts.mx/torrent/download/best?tmdb_id=${tmdb}&quality=${ytsQ}`;
+  const qMap = { '360p':'360', '480p':'480', '720p':'720', '1080p':'1080' };
+  const q = qMap[quality] || '720';
+  if (m.type === 'series') {
+    return `https://dl.vidsrc.vip/tv/${tmdb}/1/1`;
   }
-  // Anime: nyaa search
-  if (m.category === 'anime') {
-    return `https://nyaa.si/?f=0&c=1_2&q=${encodeURIComponent(m.title+' '+quality)}`;
-  }
-  // Series / cartoons: vidsrc download endpoint
   return `https://dl.vidsrc.vip/movie/${tmdb}`;
 }
 
-// Legacy wrapper — keeps old calls working
-function toggleDownload(id, btn) {
-  if (btn) btn.dataset.dlId = id;
-  triggerDownload(id, btn);
-}
 
-// Inject Download button into modal
-function injectDownloadBtn(id) {
-  const actions = document.querySelector('.modal-actions');
-  if (!actions) return;
-  let btn = document.getElementById('modalDownload');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.id = 'modalDownload';
-    btn.className = 'btn-dl-modal';
-    actions.appendChild(btn);
-  }
-  btn.dataset.dlId = id;
-  const downloaded = isDownloaded(id);
-  btn.innerHTML = downloaded ? '<i class="fas fa-check-circle"></i> Downloaded' : '<i class="fas fa-download"></i> Download';
-  btn.className = 'btn-dl-modal' + (downloaded ? ' downloaded' : '');
-  btn.onclick = () => triggerDownload(id, btn);
-}
+
+
 
 // ── PATCH openModal TO ADD DOWNLOAD BTN + AI POSTER ──────────
 const _origOpenModal = openModal;
 openModal = function(id) {
   _origOpenModal(id);
-  injectDownloadBtn(id);
   checkAndGenerateAIPoster(id);
 };
 
@@ -3352,24 +3345,6 @@ function renderReleaseCalendar(containerId) {
 }
 
 // ── INJECT DOWNLOAD BTN INTO WATCH PAGE PLAYER BAR ───────────
-function injectWatchPageDownloadBtn() {
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get('id');
-  if (!id) return;
-  const serverBar = document.querySelector('.server-bar');
-  if (!serverBar) return;
-  if (document.getElementById('watchDlBtn')) return;
-
-  const btn = document.createElement('button');
-  btn.id = 'watchDlBtn';
-  btn.className = 'srv-btn' + (isDownloaded(id) ? ' active' : '');
-  btn.innerHTML = isDownloaded(id)
-    ? '<i class="fas fa-check-circle"></i> Downloaded'
-    : '<i class="fas fa-download"></i> Download';
-  btn.title = 'Save for offline viewing';
-  btn.onclick = () => toggleDownload(id, btn);
-  serverBar.appendChild(btn);
-}
 
 // ── INJECT SLEEP TIMER BTN INTO WATCH PAGE ────────────────────
 function injectSleepTimerBtn() {
@@ -3388,7 +3363,6 @@ function injectSleepTimerBtn() {
 if (window.location.pathname.includes('watch.html')) {
   document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
-      injectWatchPageDownloadBtn();
       injectSleepTimerBtn();
     }, 800);
   });
