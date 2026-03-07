@@ -107,7 +107,7 @@ function makeCard(movie) {
   const inWL = session && DB.getUserById(session.id)?.watchlist?.includes(movie.id);
   return `<div class="movie-card" data-id="${movie.id}">
     <div class="card-poster">
-      <img src="${movie.poster}" alt="${movie.title}" referrerpolicy="no-referrer" crossorigin="anonymous"
+      <img src="${movie.poster}" alt="${movie.title}" referrerpolicy="no-referrer"
            onload="this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')"
            onerror="this.onerror=null;this.src='https://placehold.co/300x450/1a1a2e/e50914?text='+encodeURIComponent(movie.title.substring(0,12));this.classList.add('loaded');this.closest('.card-poster')?.classList.add('loaded')">
       <div class="card-overlay">
@@ -3437,3 +3437,55 @@ initSearchAutocomplete = function() {
   });
 };
 
+
+// ── ROW SCROLL ARROWS ────────────────────────────────────────────────────────
+function initRowArrows() {
+  const SCROLL_AMOUNT = 900;
+
+  document.querySelectorAll('.row-section').forEach(section => {
+    const row = section.querySelector('.cards-row');
+    if (!row) return;
+
+    // Create arrows
+    const left  = document.createElement('button');
+    const right = document.createElement('button');
+    left.className  = 'row-arrow arrow-left';
+    right.className = 'row-arrow arrow-right';
+    left.setAttribute('aria-label', 'Scroll left');
+    right.setAttribute('aria-label', 'Scroll right');
+    left.innerHTML  = '<i class="fas fa-chevron-left"></i>';
+    right.innerHTML = '<i class="fas fa-chevron-right"></i>';
+
+    section.appendChild(left);
+    section.appendChild(right);
+
+    // Update visibility based on scroll position
+    function updateArrows() {
+      const atStart = row.scrollLeft <= 10;
+      const atEnd   = row.scrollLeft + row.clientWidth >= row.scrollWidth - 10;
+      left.classList.toggle('hidden', atStart);
+      right.classList.toggle('hidden', atEnd);
+    }
+
+    // Click handlers
+    left.addEventListener('click', e => {
+      e.stopPropagation();
+      row.scrollBy({ left: -SCROLL_AMOUNT, behavior: 'smooth' });
+    });
+    right.addEventListener('click', e => {
+      e.stopPropagation();
+      row.scrollBy({ left: SCROLL_AMOUNT, behavior: 'smooth' });
+    });
+
+    row.addEventListener('scroll', updateArrows, { passive: true });
+    // Initial state check (after content is rendered)
+    setTimeout(updateArrows, 300);
+  });
+}
+
+// Run after all rows are rendered
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(initRowArrows, 600));
+} else {
+  setTimeout(initRowArrows, 600);
+}

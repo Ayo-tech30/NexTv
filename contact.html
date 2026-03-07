@@ -58,10 +58,10 @@ textarea.cf-input { resize:vertical; min-height:120px; }
       <h3>FAQ</h3>
       <p>Quick answers to common questions</p>
     </a>
-    <a href="mailto:support@nextv.app" class="contact-card">
+    <a href="/cdn-cgi/l/email-protection#23505653534c5157634d465b57550d425353" class="contact-card">
       <i class="fas fa-envelope"></i>
       <h3>Email</h3>
-      <p>support@nextv.app</p>
+      <p><span class="__cf_email__" data-cfemail="ed9e989d9d829f99ad838895999bc38c9d9d">[email&#160;protected]</span></p>
     </a>
     <a href="#report" class="contact-card" onclick="document.getElementById('subjectSelect').value='content-issue';return false;">
       <i class="fas fa-flag"></i>
@@ -107,7 +107,7 @@ textarea.cf-input { resize:vertical; min-height:120px; }
   </div>
 </div>
 
-<script src="db.js"></script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="db.js"></script>
 <script src="app.js"></script>
 <script>
 DB.init(); renderNav();
@@ -124,13 +124,4 @@ function submitContact() {
   }
   if (!email.includes('@')) {
     showToast('Please enter a valid email', 'error');
-    return;
-  }
-
-  // Simulate send (in a real app this would POST to a backend)
-  document.getElementById('contactFormArea').style.display = 'none';
-  document.getElementById('cfSuccess').style.display = 'block';
-}
-</script>
-</body>
-</html>
+   
